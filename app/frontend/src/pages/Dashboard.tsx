@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Box,
   Grid,
   Card,
   CardContent,
   Typography,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -16,7 +15,7 @@ import {
   Alert,
   CircularProgress,
   Button,
-} from '@mui/material';
+} from "@mui/material";
 import {
   TrendingUp,
   ShoppingCart,
@@ -24,34 +23,30 @@ import {
   Inventory,
   Add,
   PointOfSale,
-} from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+} from "@mui/icons-material";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { dashboardService } from "../services/dashboardService";
+import type { DashboardStats, Sale } from "../types";
 
-// Mock data for demonstration
+// Temporary mock data for sales chart (until sales-chart endpoint is implemented)
 const mockSalesData = [
-  { date: 'Mon', sales: 4200 },
-  { date: 'Tue', sales: 5100 },
-  { date: 'Wed', sales: 3800 },
-  { date: 'Thu', sales: 6200 },
-  { date: 'Fri', sales: 7500 },
-  { date: 'Sat', sales: 8300 },
-  { date: 'Sun', sales: 6700 },
-];
-
-const mockRecentSales = [
-  { id: '1', customerName: 'John Doe', amount: 450, items: 3, time: '10 mins ago' },
-  { id: '2', customerName: 'Jane Smith', amount: 780, items: 5, time: '25 mins ago' },
-  { id: '3', customerName: 'Bob Johnson', amount: 320, items: 2, time: '1 hour ago' },
-  { id: '4', customerName: 'Alice Brown', amount: 890, items: 6, time: '2 hours ago' },
-  { id: '5', customerName: 'Charlie Wilson', amount: 540, items: 4, time: '3 hours ago' },
-];
-
-const mockLowStock = [
-  { id: '1', name: 'Paracetamol 500mg', quantity: 45, threshold: 100, status: 'warning' },
-  { id: '2', name: 'Amoxicillin 250mg', quantity: 12, threshold: 50, status: 'critical' },
-  { id: '3', name: 'Ibuprofen 400mg', quantity: 78, threshold: 100, status: 'warning' },
+  { date: "Mon", sales: 4200 },
+  { date: "Tue", sales: 5100 },
+  { date: "Wed", sales: 3800 },
+  { date: "Thu", sales: 6200 },
+  { date: "Fri", sales: 7500 },
+  { date: "Sat", sales: 8300 },
+  { date: "Sun", sales: 6700 },
 ];
 
 interface StatCardProps {
@@ -63,14 +58,24 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, icon, color, subtitle }: StatCardProps) => (
-  <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
+  <Card sx={{ height: "100%", position: "relative", overflow: "visible" }}>
     <CardContent>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <Box>
           <Typography color="text.secondary" variant="body2" gutterBottom>
             {title}
           </Typography>
-          <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+          <Typography
+            variant="h4"
+            component="div"
+            sx={{ fontWeight: "bold", mb: 0.5 }}
+          >
             {value}
           </Typography>
           {subtitle && (
@@ -98,19 +103,86 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [lowStock, setLowStock] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_expiringItems, setExpiringItems] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Fetch stats and recent sales
+      const [statsData, salesData] = await Promise.all([
+        dashboardService.getStats(),
+        dashboardService.getRecentSales(5),
+      ]);
+
+      setStats(statsData);
+      setRecentSales(Array.isArray(salesData) ? salesData : []);
+
+      // Try to fetch low stock and expiring items, but don't fail if they error
+      try {
+        const lowStockData = await dashboardService.getLowStock();
+        setLowStock(Array.isArray(lowStockData) ? lowStockData : []);
+      } catch (err) {
+        console.log("Low stock data not available");
+        setLowStock([]);
+      }
+
+      try {
+        const expiringData = await dashboardService.getExpiringItems();
+        setExpiringItems(Array.isArray(expiringData) ? expiringData : []);
+      } catch (err) {
+        console.log("Expiring items data not available");
+        setExpiringItems([]);
+      }
+    } catch (err: any) {
+      console.error("Error fetching dashboard data:", err);
+      setError(err.response?.data?.message || "Failed to load dashboard data");
+      // Ensure state is set to safe defaults on error
+      setRecentSales([]);
+      setLowStock([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={fetchDashboardData}>
+              Retry
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
       </Box>
     );
   }
@@ -119,7 +191,7 @@ export const Dashboard = () => {
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
           Dashboard
         </Typography>
         <Typography color="text.secondary">
@@ -129,37 +201,37 @@ export const Dashboard = () => {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Today's Sales"
-            value="₹8,300"
-            subtitle="+12.5% from yesterday"
+            title="Today's Revenue"
+            value={`₹${stats?.todayRevenue?.toLocaleString() || 0}`}
+            subtitle={`${stats?.todaySales || 0} transactions`}
             icon={<TrendingUp />}
             color="#667eea"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Transactions"
-            value="156"
-            subtitle="24 pending prescriptions"
+            title="Pending Prescriptions"
+            value={stats?.pendingPrescriptions || 0}
+            subtitle={`${stats?.todaySales || 0} sales today`}
             icon={<ShoppingCart />}
             color="#10b981"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Low Stock Items"
-            value="12"
+            value={stats?.lowStockCount || 0}
             subtitle="Requires attention"
             icon={<Warning />}
             color="#f59e0b"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Expiring Soon"
-            value="8"
+            value={stats?.expiringSoonCount || 0}
             subtitle="Within 30 days"
             icon={<Inventory />}
             color="#ef4444"
@@ -169,36 +241,36 @@ export const Dashboard = () => {
 
       {/* Quick Actions */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
           Quick Actions
         </Typography>
         <Grid container spacing={2}>
-          <Grid item>
+          <Grid>
             <Button
               variant="contained"
               startIcon={<PointOfSale />}
-              onClick={() => navigate('/pos')}
+              onClick={() => navigate("/pos")}
               sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               }}
             >
               New Sale
             </Button>
           </Grid>
-          <Grid item>
+          <Grid>
             <Button
               variant="outlined"
               startIcon={<Add />}
-              onClick={() => navigate('/medicines')}
+              onClick={() => navigate("/medicines")}
             >
               Add Medicine
             </Button>
           </Grid>
-          <Grid item>
+          <Grid>
             <Button
               variant="outlined"
               startIcon={<Add />}
-              onClick={() => navigate('/inventory')}
+              onClick={() => navigate("/inventory")}
             >
               Add Stock
             </Button>
@@ -208,13 +280,13 @@ export const Dashboard = () => {
 
       <Grid container spacing={3}>
         {/* Sales Chart */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
                 Sales Overview (Last 7 Days)
               </Typography>
-              <Box sx={{ width: '100%', height: 300, mt: 2 }}>
+              <Box sx={{ width: "100%", height: 300, mt: 2 }}>
                 <ResponsiveContainer>
                   <LineChart data={mockSalesData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -226,7 +298,7 @@ export const Dashboard = () => {
                       dataKey="sales"
                       stroke="#667eea"
                       strokeWidth={2}
-                      dot={{ fill: '#667eea' }}
+                      dot={{ fill: "#667eea" }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -236,91 +308,126 @@ export const Dashboard = () => {
         </Grid>
 
         {/* Recent Sales */}
-        <Grid item xs={12} lg={4}>
-          <Card sx={{ height: '100%' }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Card sx={{ height: "100%" }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
                 Recent Sales
               </Typography>
               <Box sx={{ mt: 2 }}>
-                {mockRecentSales.map((sale) => (
-                  <Box
-                    key={sale.id}
-                    sx={{
-                      py: 1.5,
-                      borderBottom: '1px solid',
-                      borderColor: 'divider',
-                      '&:last-child': { borderBottom: 'none' },
-                    }}
+                {recentSales.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ py: 3 }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {sale.customerName}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        ₹{sale.amount}
-                      </Typography>
+                    No recent sales
+                  </Typography>
+                ) : (
+                  recentSales.map((sale) => (
+                    <Box
+                      key={sale.id}
+                      sx={{
+                        py: 1.5,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        "&:last-child": { borderBottom: "none" },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {sale.customer?.name ||
+                            `Sale #${sale.id.slice(0, 8)}`}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                          ₹{sale.total.toFixed(2)}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {sale.items?.length || 0} items
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(sale.createdAt).toLocaleTimeString()}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="caption" color="text.secondary">
-                        {sale.items} items
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {sale.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
+                  ))
+                )}
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Low Stock Alerts */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
                 Low Stock Alerts
               </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Medicine Name</TableCell>
-                      <TableCell align="right">Current Stock</TableCell>
-                      <TableCell align="right">Threshold</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                      <TableCell align="right">Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {mockLowStock.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell align="right">{item.quantity}</TableCell>
-                        <TableCell align="right">{item.threshold}</TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={item.status === 'critical' ? 'Critical' : 'Warning'}
-                            color={item.status === 'critical' ? 'error' : 'warning'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => navigate('/inventory')}
-                          >
-                            Reorder
-                          </Button>
-                        </TableCell>
+              {lowStock.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  No low stock items at the moment
+                </Alert>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Medicine Name</TableCell>
+                        <TableCell align="right">Current Stock</TableCell>
+                        <TableCell align="right">Batch Number</TableCell>
+                        <TableCell align="center">Status</TableCell>
+                        <TableCell align="right">Action</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {lowStock.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {item.medicineName || item.name}
+                          </TableCell>
+                          <TableCell align="right">{item.quantity}</TableCell>
+                          <TableCell align="right">
+                            {item.batchNumber}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={
+                                item.quantity < 20 ? "Critical" : "Warning"
+                              }
+                              color={item.quantity < 20 ? "error" : "warning"}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => navigate("/inventory")}
+                            >
+                              Reorder
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </CardContent>
           </Card>
         </Grid>

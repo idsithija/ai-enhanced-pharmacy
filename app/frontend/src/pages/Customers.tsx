@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -52,6 +52,7 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Customer } from '../types';
+import { customerService } from '../services/customerService';
 
 interface PurchaseHistory {
   id: string;
@@ -151,15 +152,34 @@ const customerValidationSchema = yup.object({
 });
 
 export const Customers = () => {
-  const [customers, setCustomers] = useState<typeof mockCustomers>(mockCustomers);
-  const [filteredCustomers, setFilteredCustomers] = useState<typeof mockCustomers>(mockCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof mockCustomers[0] | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await customerService.getAll();
+      setCustomers(data);
+      setFilteredCustomers(data);
+    } catch (error: any) {
+      console.error('Error fetching customers:', error);
+      setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to load customers', severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -171,37 +191,24 @@ export const Customers = () => {
       notes: '',
     },
     validationSchema: customerValidationSchema,
-    onSubmit: (values) => {
-      if (selectedCustomer) {
-        // Update existing customer
-        const updated = customers.map((c) =>
-          c.id === selectedCustomer.id
-            ? {
-                ...c,
-                ...values,
-                updatedAt: new Date().toISOString(),
-              }
-            : c
-        );
-        setCustomers(updated);
-        setFilteredCustomers(updated);
-        setSnackbar({ open: true, message: 'Customer updated successfully', severity: 'success' });
-      } else {
-        // Create new customer
-        const newCustomer: typeof mockCustomers[0] = {
-          id: Date.now().toString(),
-          ...values,
-          loyaltyPoints: 0,
-          totalSpent: 0,
-          totalPurchases: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setCustomers([newCustomer, ...customers]);
-        setFilteredCustomers([newCustomer, ...customers]);
-        setSnackbar({ open: true, message: 'Customer created successfully', severity: 'success' });
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        if (selectedCustomer) {
+          await customerService.update(selectedCustomer.id, values);
+          setSnackbar({ open: true, message: 'Customer updated successfully', severity: 'success' });
+        } else {
+          await customerService.create(values);
+          setSnackbar({ open: true, message: 'Customer created successfully', severity: 'success' });
+        }
+        handleCloseDialog();
+        fetchCustomers(); // Refresh the list
+      } catch (error: any) {
+        console.error('Error saving customer:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Operation failed', severity: 'error' });
+      } finally {
+        setLoading(false);
       }
-      handleCloseDialog();
     },
   });
 
@@ -236,7 +243,7 @@ export const Customers = () => {
     setFilteredCustomers(filtered);
   };
 
-  const handleOpenDialog = (customer?: typeof mockCustomers[0]) => {
+  const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
       formik.setValues({
         name: customer.name,
@@ -257,7 +264,7 @@ export const Customers = () => {
     formik.resetForm();
   };
 
-  const handleViewCustomer = (customer: typeof mockCustomers[0]) => {
+  const handleViewCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setPurchaseHistory(mockPurchaseHistory[customer.id] || []);
     setOpenViewDialog(true);

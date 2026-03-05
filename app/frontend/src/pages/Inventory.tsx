@@ -40,77 +40,8 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { InventoryItem, Medicine, Supplier } from '../types';
-
-// Mock data for demonstration
-const mockMedicines: Medicine[] = [
-  { id: '1', name: 'Paracetamol 500mg', genericName: 'Acetaminophen', category: 'Analgesic', manufacturer: 'PharmaCorp', unitPrice: 5.99, requiresPrescription: false, createdAt: '', updatedAt: '' },
-  { id: '2', name: 'Amoxicillin 250mg', genericName: 'Amoxicillin', category: 'Antibiotic', manufacturer: 'MediPharm', unitPrice: 12.50, requiresPrescription: true, createdAt: '', updatedAt: '' },
-  { id: '3', name: 'Ibuprofen 400mg', genericName: 'Ibuprofen', category: 'NSAID', manufacturer: 'HealthPlus', unitPrice: 8.75, requiresPrescription: false, createdAt: '', updatedAt: '' },
-];
-
-const mockSuppliers: Supplier[] = [
-  { id: '1', name: 'MedSupply Co.', contactPerson: 'John Doe', phone: '1234567890', email: 'john@medsupply.com', createdAt: '', updatedAt: '' },
-  { id: '2', name: 'PharmaDist', contactPerson: 'Jane Smith', phone: '0987654321', email: 'jane@pharmadist.com', createdAt: '', updatedAt: '' },
-];
-
-const mockInventory: InventoryItem[] = [
-  {
-    id: '1',
-    medicineId: '1',
-    medicine: mockMedicines[0],
-    batchNumber: 'BATCH001',
-    quantity: 450,
-    expiryDate: '2026-12-31',
-    purchasePrice: 4.50,
-    sellingPrice: 5.99,
-    supplierId: '1',
-    supplier: mockSuppliers[0],
-    createdAt: '2024-01-10',
-    updatedAt: '2024-01-10',
-  },
-  {
-    id: '2',
-    medicineId: '2',
-    medicine: mockMedicines[1],
-    batchNumber: 'BATCH002',
-    quantity: 45,
-    expiryDate: '2026-03-15',
-    purchasePrice: 10.00,
-    sellingPrice: 12.50,
-    supplierId: '1',
-    supplier: mockSuppliers[0],
-    createdAt: '2024-01-12',
-    updatedAt: '2024-01-12',
-  },
-  {
-    id: '3',
-    medicineId: '3',
-    medicine: mockMedicines[2],
-    batchNumber: 'BATCH003',
-    quantity: 180,
-    expiryDate: '2026-08-20',
-    purchasePrice: 7.00,
-    sellingPrice: 8.75,
-    supplierId: '2',
-    supplier: mockSuppliers[1],
-    createdAt: '2024-01-15',
-    updatedAt: '2024-01-15',
-  },
-  {
-    id: '4',
-    medicineId: '1',
-    medicine: mockMedicines[0],
-    batchNumber: 'BATCH004',
-    quantity: 12,
-    expiryDate: '2026-04-10',
-    purchasePrice: 4.50,
-    sellingPrice: 5.99,
-    supplierId: '2',
-    supplier: mockSuppliers[1],
-    createdAt: '2024-02-01',
-    updatedAt: '2024-02-01',
-  },
-];
+import { inventoryService } from '../services/inventoryService';
+import { medicineService } from '../services/medicineService';
 
 const validationSchema = yup.object({
   medicineId: yup.string().required('Medicine is required'),
@@ -140,16 +71,44 @@ const getStockStatus = (quantity: number) => {
 };
 
 export const Inventory = () => {
-  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
-  const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>(mockInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  // TODO: Integrate with supplier API when available
+  const [suppliers] = useState<Supplier[]>([
+    { id: '1', name: 'MedSupply Co.', contactPerson: 'John Doe', phone: '1234567890', email: 'john@medsupply.com', createdAt: '', updatedAt: '' },
+    { id: '2', name: 'PharmaDist', contactPerson: 'Jane Smith', phone: '0987654321', email: 'jane@pharmadist.com', createdAt: '', updatedAt: '' },
+  ]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [inventoryData, medicinesData] = await Promise.all([
+        inventoryService.getAll(),
+        medicineService.getAll(),
+      ]);
+      setInventory(inventoryData);
+      setFilteredInventory(inventoryData);
+      setMedicines(medicinesData);
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
+      setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to load data', severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -166,30 +125,17 @@ export const Inventory = () => {
       setLoading(true);
       try {
         if (editingItem) {
-          const updatedItem: InventoryItem = {
-            ...editingItem,
-            ...values,
-            medicine: mockMedicines.find(m => m.id === values.medicineId),
-            supplier: mockSuppliers.find(s => s.id === values.supplierId),
-            updatedAt: new Date().toISOString(),
-          };
-          setInventory(inventory.map(i => i.id === editingItem.id ? updatedItem : i));
+          await inventoryService.update(editingItem.id, values);
           setSnackbar({ open: true, message: 'Stock updated successfully', severity: 'success' });
         } else {
-          const newItem: InventoryItem = {
-            ...values,
-            id: (inventory.length + 1).toString(),
-            medicine: mockMedicines.find(m => m.id === values.medicineId),
-            supplier: mockSuppliers.find(s => s.id === values.supplierId),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          setInventory([...inventory, newItem]);
+          await inventoryService.create(values);
           setSnackbar({ open: true, message: 'Stock added successfully', severity: 'success' });
         }
         handleCloseDialog();
-      } catch (error) {
-        setSnackbar({ open: true, message: 'Operation failed', severity: 'error' });
+        fetchData(); // Refresh the list
+      } catch (error: any) {
+        console.error('Error saving stock:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Operation failed', severity: 'error' });
       } finally {
         setLoading(false);
       }
@@ -251,10 +197,16 @@ export const Inventory = () => {
     formik.resetForm();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this stock entry?')) {
-      setInventory(inventory.filter((i) => i.id !== id));
-      setSnackbar({ open: true, message: 'Stock deleted successfully', severity: 'success' });
+      try {
+        await inventoryService.delete(id);
+        setSnackbar({ open: true, message: 'Stock deleted successfully', severity: 'success' });
+        fetchData(); // Refresh the list
+      } catch (error: any) {
+        console.error('Error deleting stock:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to delete stock', severity: 'error' });
+      }
     }
   };
 
@@ -419,7 +371,7 @@ export const Inventory = () => {
                   error={formik.touched.medicineId && Boolean(formik.errors.medicineId)}
                   helperText={formik.touched.medicineId && formik.errors.medicineId}
                 >
-                  {mockMedicines.map((medicine) => (
+                  {medicines.map((medicine) => (
                     <MenuItem key={medicine.id} value={medicine.id}>
                       {medicine.name}
                     </MenuItem>
@@ -509,7 +461,7 @@ export const Inventory = () => {
                   error={formik.touched.supplierId && Boolean(formik.errors.supplierId)}
                   helperText={formik.touched.supplierId && formik.errors.supplierId}
                 >
-                  {mockSuppliers.map((supplier) => (
+                  {suppliers.map((supplier) => (
                     <MenuItem key={supplier.id} value={supplier.id}>
                       {supplier.name}
                     </MenuItem>

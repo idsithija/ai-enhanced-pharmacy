@@ -109,7 +109,7 @@ export const getRecentSales = async (_req: AuthRequest, res: Response, next: Nex
 
     res.status(200).json({
       success: true,
-      data: { sales },
+      data: sales,
     });
   } catch (error: any) {
     next(error);
@@ -146,6 +146,79 @@ export const getSalesChartData = async (req: AuthRequest, res: Response, next: N
     res.status(200).json({
       success: true,
       data: { salesData },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Get low stock items
+// @route   GET /api/dashboard/low-stock
+// @access  Private
+export const getLowStock = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const lowStockItems = await Inventory.findAll({
+      where: {
+        status: 'low_stock',
+      },
+      include: [
+        { model: Medicine, as: 'medicine', attributes: ['id', 'name', 'genericName'] },
+      ],
+      order: [['quantity', 'ASC']],
+      limit: 10,
+    } as any);
+
+    // Map to the expected format
+    const formattedItems = lowStockItems.map((item: any) => ({
+      id: item.id,
+      medicineName: item.medicine?.name || 'Unknown',
+      quantity: item.quantity,
+      batchNumber: item.batchNumber,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedItems,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Get expiring items
+// @route   GET /api/dashboard/expiring-items
+// @access  Private
+export const getExpiringItems = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    const expiringItems = await Inventory.findAll({
+      where: {
+        expiryDate: {
+          [Op.lte]: thirtyDaysFromNow,
+          [Op.gt]: new Date(),
+        },
+      },
+      include: [
+        { model: Medicine, as: 'medicine', attributes: ['id', 'name', 'genericName'] },
+      ],
+      order: [['expiryDate', 'ASC']],
+      limit: 10,
+    } as any);
+
+    // Map to the expected format
+    const formattedItems = expiringItems.map((item: any) => ({
+      id: item.id,
+      medicineName: item.medicine?.name || 'Unknown',
+      expiryDate: item.expiryDate,
+      quantity: item.quantity,
+      batchNumber: item.batchNumber,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedItems,
     });
   } catch (error: any) {
     next(error);

@@ -3,6 +3,8 @@ import { AuthRequest } from '../middleware/auth.js';
 import { ocrService } from '../services/ocrService.js';
 import { drugInteractionService } from '../services/drugInteractionService.js';
 import { nlpService } from '../services/nlpService.js';
+import { pharmacyChatbot } from '../services/chatbotService.js';
+import { demandPredictionService } from '../services/demandPredictionService.js';
 
 // @desc    Process prescription image with OCR
 // @route   POST /api/ai/ocr/prescription
@@ -82,12 +84,28 @@ export const getMedicationInfo = async (req: AuthRequest, res: Response, next: N
   }
 };
 
-// @desc    Predict medicine demand using historical sales data
-// @route   POST /api/ai/predict-demand
+// @desc    Predict demand for all medicines
+// @route   GET /api/ai/predict-demand
 // @access  Private (admin, inventory_manager)
-export const predictDemand = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+export const predictAllDemand = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { medicineId, days = 30 } = req.body;
+    const summary = await demandPredictionService.predictAllDemand();
+
+    res.status(200).json({
+      success: true,
+      data: summary,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Predict demand for single medicine
+// @route   GET /api/ai/predict-demand/:medicineId
+// @access  Private (admin, inventory_manager)
+export const predictSingleDemand = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { medicineId } = req.params;
 
     if (!medicineId) {
       res.status(400).json({
@@ -97,93 +115,11 @@ export const predictDemand = async (req: AuthRequest, res: Response, next: NextF
       return;
     }
 
-    // Import models here to avoid circular dependencies
-    const { Sale, Inventory, Medicine } = await import('../models/index.js');
-    const { Op } = await import('sequelize');
-
-    // Get historical sales data (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const sales: any = await Sale.findAll({
-      where: {
-        createdAt: {
-          [Op.gte]: sixMonthsAgo,
-        },
-      },
-      attributes: ['items', 'createdAt'],
-      order: [['createdAt', 'ASC']],
-    } as any);
-
-    // Extract quantities for specific medicine from sales items
-    const dailySales: Record<string, number> = {};
-    
-    sales.forEach((sale: any) => {
-      const items = sale.items || [];
-      const date = new Date(sale.createdAt).toISOString().split('T')[0];
-      
-      items.forEach((item: any) => {
-        if (item.medicineId === medicineId) {
-          dailySales[date] = (dailySales[date] || 0) + (item.quantity || 0);
-        }
-      });
-    });
-
-    const salesData = Object.values(dailySales);
-
-    if (salesData.length < 10) {
-      res.status(200).json({
-        success: true,
-        data: {
-          medicineId,
-          error: 'Insufficient historical data (need at least 10 days)',
-          recommendation: 'Please gather more sales history',
-        },
-      });
-      return;
-    }
-
-    // Calculate moving average (simple prediction)
-    const window = Math.min(7, salesData.length);
-    const recentData = salesData.slice(-window);
-    const movingAverage = recentData.reduce((sum, val) => sum + val, 0) / window;
-    const predictedDemand = Math.ceil(movingAverage * Number(days));
-
-    // Get current stock
-    const inventory = await Inventory.sum('quantity', {
-      where: {
-        medicineId,
-        expiryDate: {
-          [Op.gt]: new Date(),
-        },
-      },
-    } as any);
-
-    const currentStock = inventory || 0;
-    const daysOfStock = movingAverage > 0 ? Math.floor(currentStock / movingAverage) : 999;
-    const shouldReorder = daysOfStock < 14;
-    const reorderQuantity = shouldReorder ? Math.ceil(movingAverage * 30 - currentStock) : 0;
-
-    // Get medicine details
-    const medicine = await Medicine.findByPk(medicineId);
+    const prediction = await demandPredictionService.predictSingleMedicine(Number(medicineId));
 
     res.status(200).json({
       success: true,
-      data: {
-        medicine: medicine ? { id: medicine.id, name: medicine.name } : null,
-        prediction: {
-          predictedDemand,
-          period: `${days} days`,
-          dailyAverage: movingAverage.toFixed(2),
-          currentStock,
-          daysOfStock,
-          shouldReorder,
-          reorderQuantity: Math.max(0, reorderQuantity),
-          priority: daysOfStock < 7 ? 'critical' : daysOfStock < 14 ? 'high' : 'medium',
-        },
-        confidence: salesData.length >= 100 ? 'high' : salesData.length >= 50 ? 'medium' : 'low',
-        dataPoints: salesData.length,
-      },
+      data: prediction,
     });
   } catch (error: any) {
     next(error);
@@ -221,7 +157,7 @@ export const analyzePrescriptionText = async (req: AuthRequest, res: Response, n
 // @access  Public
 export const chatbot = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { message, context } = req.body;
+    const { message } = req.body;
 
     if (!message) {
       res.status(400).json({
@@ -231,62 +167,16 @@ export const chatbot = async (req: AuthRequest, res: Response, next: NextFunctio
       return;
     }
 
-    const userMessage = message.toLowerCase();
-
-    // Simple rule-based chatbot (can be enhanced with NLP)
-    let response = '';
-    let suggestions: string[] = [];
-
-    // Medicine inquiry
-    if (userMessage.includes('medicine') || userMessage.includes('drug') || userMessage.includes('medication')) {
-      if (userMessage.includes('available') || userMessage.includes('stock') || userMessage.includes('have')) {
-        response = 'To check medicine availability, please use our search feature or provide the medicine name. Our staff can also help you find alternatives if a specific medicine is out of stock.';
-        suggestions = ['Search medicines', 'Contact pharmacist', 'View alternatives'];
-      } else if (userMessage.includes('price') || userMessage.includes('cost')) {
-        response = 'Medicine prices vary based on brand and quantity. You can search for specific medicines to see their current prices, or contact our pharmacist for detailed pricing information.';
-        suggestions = ['Search medicines', 'View price list', 'Contact us'];
-      } else {
-        response = 'I can help you with medicine information, availability, pricing, and general pharmacy services. What would you like to know?';
-        suggestions = ['Check availability', 'Get pricing', 'Ask about side effects'];
-      }
-    }
-    // Prescription related
-    else if (userMessage.includes('prescription')) {
-      response = 'For prescription services, you can upload your prescription image and our pharmacist will verify it. We accept both digital and physical prescriptions. Would you like to upload a prescription?';
-      suggestions = ['Upload prescription', 'Prescription status', 'Contact pharmacist'];
-    }
-    // Store hours
-    else if (userMessage.includes('hours') || userMessage.includes('open') || userMessage.includes('timing')) {
-      response = 'Our pharmacy is open Monday to Saturday, 9:00 AM to 8:00 PM, and Sunday 10:00 AM to 6:00 PM. We\'re here to serve you!';
-      suggestions = ['View location', 'Contact us', 'Emergency services'];
-    }
-    // Delivery
-    else if (userMessage.includes('delivery') || userMessage.includes('shipping')) {
-      response = 'Yes, we offer home delivery services! Delivery is free for orders above $50. Typical delivery time is 2-4 hours for local areas. Would you like to place an order?';
-      suggestions = ['Check delivery area', 'Place order', 'Track order'];
-    }
-    // Side effects
-    else if (userMessage.includes('side effect') || userMessage.includes('adverse')) {
-      response = 'For medicine side effects and interactions, I recommend consulting with our pharmacist. You can also check the drug interaction checker or contact us for detailed information.';
-      suggestions = ['Check drug interactions', 'Contact pharmacist', 'Emergency services'];
-    }
-    // Contact
-    else if (userMessage.includes('contact') || userMessage.includes('phone') || userMessage.includes('call')) {
-      response = 'You can reach us at: Phone: (123) 456-7890, Email: pharmacy@example.com. Our pharmacist is also available for online consultations during business hours.';
-      suggestions = ['Call now', 'Send email', 'Chat with pharmacist'];
-    }
-    // Default
-    else {
-      response = 'Hello! I\'m here to help you with medicine inquiries, prescriptions, store information, and pharmacy services. How can I assist you today?';
-      suggestions = ['Medicine availability', 'Upload prescription', 'Store hours', 'Contact us'];
-    }
+    // Process message with enhanced chatbot service
+    const result = pharmacyChatbot.processMessage(message);
 
     res.status(200).json({
       success: true,
       data: {
-        message: response,
-        suggestions,
-        context: context || 'general',
+        message: result.response,
+        suggestions: result.suggestions || [],
+        category: result.category,
+        confidence: result.confidence,
         timestamp: new Date().toISOString(),
       },
     });

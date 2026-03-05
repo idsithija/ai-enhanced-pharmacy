@@ -35,70 +35,7 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine } from '../types';
-
-// Mock data for demonstration
-const mockMedicines: Medicine[] = [
-  {
-    id: '1',
-    name: 'Paracetamol',
-    genericName: 'Acetaminophen',
-    category: 'Analgesic',
-    manufacturer: 'PharmaCorp',
-    description: 'Pain reliever and fever reducer',
-    unitPrice: 5.99,
-    requiresPrescription: false,
-    createdAt: '2024-01-15',
-    updatedAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    name: 'Amoxicillin',
-    genericName: 'Amoxicillin',
-    category: 'Antibiotic',
-    manufacturer: 'MediPharm',
-    description: 'Bacterial infection treatment',
-    unitPrice: 12.50,
-    requiresPrescription: true,
-    createdAt: '2024-01-16',
-    updatedAt: '2024-01-16',
-  },
-  {
-    id: '3',
-    name: 'Ibuprofen',
-    genericName: 'Ibuprofen',
-    category: 'NSAID',
-    manufacturer: 'HealthPlus',
-    description: 'Anti-inflammatory medication',
-    unitPrice: 8.75,
-    requiresPrescription: false,
-    createdAt: '2024-01-17',
-    updatedAt: '2024-01-17',
-  },
-  {
-    id: '4',
-    name: 'Omeprazole',
-    genericName: 'Omeprazole',
-    category: 'Proton Pump Inhibitor',
-    manufacturer: 'PharmaCorp',
-    description: 'Reduces stomach acid',
-    unitPrice: 15.25,
-    requiresPrescription: true,
-    createdAt: '2024-01-18',
-    updatedAt: '2024-01-18',
-  },
-  {
-    id: '5',
-    name: 'Cetirizine',
-    genericName: 'Cetirizine HCl',
-    category: 'Antihistamine',
-    manufacturer: 'AllergyRelief Ltd',
-    description: 'Allergy relief medication',
-    unitPrice: 7.50,
-    requiresPrescription: false,
-    createdAt: '2024-01-19',
-    updatedAt: '2024-01-19',
-  },
-];
+import { medicineService } from '../services/medicineService';
 
 const validationSchema = yup.object({
   name: yup.string().required('Medicine name is required'),
@@ -111,15 +48,33 @@ const validationSchema = yup.object({
 });
 
 export const Medicines = () => {
-  const [medicines, setMedicines] = useState<Medicine[]>(mockMedicines);
-  const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>(mockMedicines);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  useEffect(() => {
+    fetchMedicines();
+  }, []);
+
+  const fetchMedicines = async () => {
+    try {
+      setLoading(true);
+      const data = await medicineService.getAll();
+      setMedicines(data);
+      setFilteredMedicines(data);
+    } catch (error: any) {
+      console.error('Error fetching medicines:', error);
+      setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to load medicines', severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -137,27 +92,18 @@ export const Medicines = () => {
       try {
         if (editingMedicine) {
           // Update existing medicine
-          const updatedMedicine = {
-            ...editingMedicine,
-            ...values,
-            updatedAt: new Date().toISOString(),
-          };
-          setMedicines(medicines.map(m => m.id === editingMedicine.id ? updatedMedicine : m));
+          await medicineService.update(editingMedicine.id, values);
           setSnackbar({ open: true, message: 'Medicine updated successfully', severity: 'success' });
         } else {
           // Create new medicine
-          const newMedicine: Medicine = {
-            ...values,
-            id: (medicines.length + 1).toString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          setMedicines([...medicines, newMedicine]);
+          await medicineService.create(values);
           setSnackbar({ open: true, message: 'Medicine added successfully', severity: 'success' });
         }
         handleCloseDialog();
-      } catch (error) {
-        setSnackbar({ open: true, message: 'Operation failed', severity: 'error' });
+        fetchMedicines(); // Refresh the list
+      } catch (error: any) {
+        console.error('Error saving medicine:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Operation failed', severity: 'error' });
       } finally {
         setLoading(false);
       }
@@ -205,10 +151,16 @@ export const Medicines = () => {
     formik.resetForm();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this medicine?')) {
-      setMedicines(medicines.filter((m) => m.id !== id));
-      setSnackbar({ open: true, message: 'Medicine deleted successfully', severity: 'success' });
+      try {
+        await medicineService.delete(id);
+        setSnackbar({ open: true, message: 'Medicine deleted successfully', severity: 'success' });
+        fetchMedicines(); // Refresh the list
+      } catch (error: any) {
+        console.error('Error deleting medicine:', error);
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to delete medicine', severity: 'error' });
+      }
     }
   };
 

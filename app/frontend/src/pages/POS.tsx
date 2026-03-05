@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -23,6 +23,8 @@ import {
   MenuItem,
   Chip,
   Stack,
+  CircularProgress,
+  Collapse,
 } from '@mui/material';
 import {
   Add,
@@ -34,19 +36,29 @@ import {
   Person,
   Receipt,
   Clear,
+  Warning as WarningIcon,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine, Customer, InventoryItem } from '../types';
+import { saleService } from '../services/saleService';
+import { inventoryService } from '../services/inventoryService';
+import { drugInteractionService, type DrugInteraction } from '../services/drugInteractionService';
 
-// Mock data
-const mockMedicines: (Medicine & { stock: number; batchNumber: string; inventoryId: string })[] = [
-  { id: '1', name: 'Paracetamol 500mg', genericName: 'Acetaminophen', category: 'Analgesic', manufacturer: 'PharmaCorp', unitPrice: 5.99, requiresPrescription: false, stock: 450, batchNumber: 'BATCH001', inventoryId: 'INV001', createdAt: '', updatedAt: '' },
-  { id: '2', name: 'Amoxicillin 250mg', genericName: 'Amoxicillin', category: 'Antibiotic', manufacturer: 'MediPharm', unitPrice: 12.50, requiresPrescription: true, stock: 45, batchNumber: 'BATCH002', inventoryId: 'INV002', createdAt: '', updatedAt: '' },
-  { id: '3', name: 'Ibuprofen 400mg', genericName: 'Ibuprofen', category: 'NSAID', manufacturer: 'HealthPlus', unitPrice: 8.75, requiresPrescription: false, stock: 180, batchNumber: 'BATCH003', inventoryId: 'INV003', createdAt: '', updatedAt: '' },
-  { id: '4', name: 'Cetirizine 10mg', genericName: 'Cetirizine HCl', category: 'Antihistamine', manufacturer: 'AllergyRelief', unitPrice: 7.50, requiresPrescription: false, stock: 200, batchNumber: 'BATCH004', inventoryId: 'INV004', createdAt: '', updatedAt: '' },
-  { id: '5', name: 'Omeprazole 20mg', genericName: 'Omeprazole', category: 'PPI', manufacturer: 'PharmaCorp', unitPrice: 15.25, requiresPrescription: true, stock: 120, batchNumber: 'BATCH005', inventoryId: 'INV005', createdAt: '', updatedAt: '' },
-];
+interface MedicineWithStock {
+  id: string;
+  name: string;
+  genericName: string;
+  category: string;
+  manufacturer: string;
+  unitPrice: number;
+  requiresPrescription: boolean;
+  stock: number;
+  batchNumber: string;
+  inventoryId: string;
+}
 
 interface CartItem {
   medicineId: string;
@@ -64,6 +76,8 @@ const customerValidationSchema = yup.object({
 });
 
 export const POS = () => {
+  const [medicines, setMedicines] = useState<MedicineWithStock[]>([]);
+  const [loading, setLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -74,6 +88,80 @@ export const POS = () => {
   const [openInvoiceDialog, setOpenInvoiceDialog] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' });
+  
+  // Drug interaction checking
+  const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
+  const [checkingInteractions, setCheckingInteractions] = useState(false);
+  const [showInteractions, setShowInteractions] = useState(true);
+
+  // Fetch inventory items (medicines with stock) on mount
+  useEffect(() => {
+    fetchMedicines();
+  }, []);
+  
+  // Check drug interactions when cart changes
+  useEffect(() => {
+    if (cart.length >= 2) {
+      checkDrugInteractions();
+    } else {
+      setInteractions([]);
+    }
+  }, [cart]);
+
+  const fetchMedicines = async () => {
+    try {
+      setLoading(true);
+      const response = await inventoryService.getInventory(1, 1000); // Get all inventory
+      
+      // Transform inventory items to medicine format for POS
+      const medicinesWithStock: MedicineWithStock[] = response.data.map((item: any) => ({
+        id: item.medicine?.id || item.medicineId,
+        name: item.medicine?.name || item.medicineName || 'Unknown Medicine',
+        genericName: item.medicine?.genericName || '',
+        category: item.medicine?.category || '',
+        manufacturer: item.medicine?.manufacturer || '',
+        unitPrice: item.medicine?.unitPrice || 0,
+        requiresPrescription: item.medicine?.requiresPrescription || false,
+        stock: item.quantity || 0,
+        batchNumber: item.batchNumber || '',
+        inventoryId: item.id,
+      }));
+      
+      setMedicines(medicinesWithStock);
+    } catch (error: any) {
+      console.error('Error fetching medicines:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Failed to load medicines', 
+        severity: 'error' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkDrugInteractions = async () => {
+    try {
+      setCheckingInteractions(true);
+      const medicineNames = cart.map(item => item.medicineName);
+      const result = await drugInteractionService.checkInteractions(medicineNames);
+      setInteractions(result.interactions);
+      
+      // Show warning if major interactions found
+      const majorInteractions = result.interactions.filter(i => i.severity === 'major');
+      if (majorInteractions.length > 0) {
+        setSnackbar({
+          open: true,
+          message: `⚠️ ${majorInteractions.length} major drug interaction(s) detected!`,
+          severity: 'warning'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking drug interactions:', error);
+    } finally {
+      setCheckingInteractions(false);
+    }
+  };
 
   const customerFormik = useFormik({
     initialValues: {
@@ -81,30 +169,34 @@ export const POS = () => {
       phone: '',
     },
     validationSchema: customerValidationSchema,
-    onSubmit: (values) => {
-      const newCustomer: Customer = {
-        id: Date.now().toString(),
-        name: values.name,
-        phone: values.phone,
-        loyaltyPoints: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setCustomer(newCustomer);
-      setCustomerPhone(values.phone);
-      setOpenCustomerDialog(false);
-      setSnackbar({ open: true, message: 'Customer added successfully', severity: 'success' });
-      customerFormik.resetForm();
+    onSubmit: async (values) => {
+      try {
+        const newCustomer = await saleService.createQuickCustomer({
+          name: values.name,
+          phone: values.phone,
+        });
+        setCustomer(newCustomer);
+        setCustomerPhone(values.phone);
+        setOpenCustomerDialog(false);
+        setSnackbar({ open: true, message: 'Customer added successfully', severity: 'success' });
+        customerFormik.resetForm();
+      } catch (error: any) {
+        setSnackbar({ 
+          open: true, 
+          message: error.response?.data?.message || 'Failed to add customer', 
+          severity: 'error' 
+        });
+      }
     },
   });
 
-  const filteredMedicines = mockMedicines.filter(
+  const filteredMedicines = medicines.filter(
     (medicine) =>
       medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       medicine.genericName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const addToCart = (medicine: typeof mockMedicines[0]) => {
+  const addToCart = (medicine: MedicineWithStock) => {
     const existingItem = cart.find((item) => item.medicineId === medicine.id);
     
     if (existingItem) {
@@ -170,46 +262,84 @@ export const POS = () => {
   const tax = ((subtotal - discountAmount) * 5) / 100; // 5% tax
   const total = subtotal - discountAmount + tax;
 
-  const handleCustomerSearch = () => {
-    if (customerPhone.length === 10) {
-      // Mock customer search
-      const mockCustomer: Customer = {
-        id: '1',
-        name: 'John Doe',
-        phone: customerPhone,
-        loyaltyPoints: 125,
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-      };
-      setCustomer(mockCustomer);
-      setSnackbar({ open: true, message: 'Customer found!', severity: 'success' });
-    } else if (customerPhone.length > 0) {
-      setSnackbar({ open: true, message: 'Invalid phone number', severity: 'error' });
+  const handleCustomerSearch = async () => {
+    if (!customerPhone || customerPhone.length !== 10) {
+      setSnackbar({ open: true, message: 'Please enter a valid 10-digit phone number', severity: 'error' });
+      return;
+    }
+
+    try {
+      const foundCustomer = await saleService.searchCustomerByPhone(customerPhone);
+      if (foundCustomer) {
+        setCustomer(foundCustomer);
+        setSnackbar({ open: true, message: 'Customer found!', severity: 'success' });
+      } else {
+        setSnackbar({ open: true, message: 'Customer not found. Please add new customer.', severity: 'warning' });
+      }
+    } catch (error: any) {
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Error searching for customer', 
+        severity: 'error' 
+      });
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       setSnackbar({ open: true, message: 'Cart is empty', severity: 'error' });
       return;
     }
 
-    const invoice = {
-      invoiceNumber: `INV${Date.now()}`,
-      date: new Date().toLocaleString(),
-      customer: customer || { name: 'Walk-in Customer', phone: 'N/A' },
-      items: cart,
-      subtotal,
-      discount: discountAmount,
-      tax,
-      total,
-      paymentMethod,
-      loyaltyPointsEarned: Math.floor(total / 10),
-    };
+    try {
+      setLoading(true);
+      
+      // Prepare sale data
+      const saleData = {
+        customerId: customer?.id,
+        items: cart.map(item => ({
+          medicineId: item.medicineId,
+          inventoryId: item.inventoryId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        paymentMethod,
+        discount: discount > 0 ? discount : undefined,
+      };
 
-    setInvoiceData(invoice);
-    setOpenInvoiceDialog(true);
-    setSnackbar({ open: true, message: 'Sale completed successfully!', severity: 'success' });
+      // Create sale via API
+      const createdSale = await saleService.createSale(saleData);
+
+      // Prepare invoice data
+      const invoice = {
+        invoiceNumber: `INV${createdSale.id.slice(0, 8).toUpperCase()}`,
+        date: new Date(createdSale.createdAt).toLocaleString(),
+        customer: customer || { name: 'Walk-in Customer', phone: 'N/A' },
+        items: cart,
+        subtotal,
+        discount: discountAmount,
+        tax,
+        total: createdSale.total,
+        paymentMethod,
+        loyaltyPointsEarned: Math.floor(createdSale.total / 10),
+      };
+
+      setInvoiceData(invoice);
+      setOpenInvoiceDialog(true);
+      setSnackbar({ open: true, message: 'Sale completed successfully!', severity: 'success' });
+      
+      // Refresh medicines to update stock
+      fetchMedicines();
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Failed to complete sale', 
+        severity: 'error' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -244,9 +374,20 @@ export const POS = () => {
                 sx={{ mb: 2 }}
               />
 
-              <Box sx={{ maxHeight: '600px', overflowY: 'auto' }}>
-                <Grid container spacing={2}>
-                  {filteredMedicines.map((medicine) => (
+              {loading && medicines.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <CircularProgress />
+                </Box>
+              ) : filteredMedicines.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {searchQuery ? 'No medicines found matching your search' : 'No medicines available'}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ maxHeight: '600px', overflowY: 'auto' }}>
+                  <Grid container spacing={2}>
+                    {filteredMedicines.map((medicine) => (
                     <Grid item xs={12} sm={6} key={medicine.id}>
                       <Card
                         variant="outlined"
@@ -286,6 +427,7 @@ export const POS = () => {
                   ))}
                 </Grid>
               </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -390,6 +532,65 @@ export const POS = () => {
               </CardContent>
             </Card>
 
+            {/* Drug Interaction Warnings */}
+            {cart.length >= 2 && (
+              <Card sx={{ 
+                borderLeft: interactions.length > 0 ? '4px solid' : 'none',
+                borderColor: interactions.some(i => i.severity === 'major') ? 'error.main' : 
+                             interactions.some(i => i.severity === 'moderate') ? 'warning.main' : 'info.main'
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <WarningIcon color={interactions.length > 0 ? 'warning' : 'action'} />
+                      Drug Interactions
+                      {checkingInteractions && <CircularProgress size={16} />}
+                    </Typography>
+                    <IconButton size="small" onClick={() => setShowInteractions(!showInteractions)}>
+                      {showInteractions ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  
+                  <Collapse in={showInteractions}>
+                    {interactions.length === 0 ? (
+                      <Alert severity="success" sx={{ mt: 1 }}>
+                        ✓ No known drug interactions detected
+                      </Alert>
+                    ) : (
+                      <Stack spacing={1} sx={{ mt: 1 }}>
+                        {interactions.map((interaction, index) => (
+                          <Alert 
+                            key={index} 
+                            severity={
+                              interaction.severity === 'major' ? 'error' : 
+                              interaction.severity === 'moderate' ? 'warning' : 'info'
+                            }
+                            sx={{ fontSize: '0.85rem' }}
+                          >
+                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                              {interaction.drugs.join(' + ')}
+                            </Typography>
+                            <Typography variant="caption" display="block">
+                              {interaction.description}
+                            </Typography>
+                            <Chip 
+                              label={interaction.severity.toUpperCase()} 
+                              size="small" 
+                              color={
+                                interaction.severity === 'major' ? 'error' : 
+                                interaction.severity === 'moderate' ? 'warning' : 'info'
+                              }
+                              sx={{ mt: 0.5 }}
+                            />
+                          </Alert>
+                        ))}
+                      </Stack>
+                    )}
+                  </Collapse>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Billing */}
             <Card>
               <CardContent>
@@ -449,14 +650,14 @@ export const POS = () => {
                   fullWidth
                   variant="contained"
                   size="large"
-                  startIcon={<Payment />}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Payment />}
                   onClick={handleCheckout}
-                  disabled={cart.length === 0}
+                  disabled={cart.length === 0 || loading}
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   }}
                 >
-                  Complete Sale
+                  {loading ? 'Processing...' : 'Complete Sale'}
                 </Button>
               </CardContent>
             </Card>

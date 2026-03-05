@@ -49,6 +49,8 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Prescription, Medicine } from '../types';
+import { PrescriptionUploadDialog } from '../components/PrescriptionUploadDialog';
+import type { OCRResult } from '../services/ocrService';
 
 // Mock data
 const mockPrescriptions: Prescription[] = [
@@ -145,6 +147,7 @@ export const Prescriptions = () => {
   const [prescriptionMedicines, setPrescriptionMedicines] = useState<MedicineItem[]>([]);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [openOCRDialog, setOpenOCRDialog] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -376,20 +379,60 @@ export const Prescriptions = () => {
     }
   };
 
+  const handleOCRUploadComplete = (result: OCRResult) => {
+    // Populate form with OCR extracted data
+    formik.setValues({
+      customerName: result.extractedData.patientName || '',
+      customerPhone: '',
+      doctorName: result.extractedData.doctorName || '',
+      doctorLicense: '',
+      notes: `OCR Extracted - Confidence: ${result.confidence.toFixed(1)}%\n${result.extractedData.hospitalName ? `Hospital: ${result.extractedData.hospitalName}\n` : ''}${result.extractedData.date ? `Date: ${result.extractedData.date}` : ''}`,
+    });
+
+    // Convert OCR medications to prescription medicines
+    const medicines: MedicineItem[] = result.extractedData.medications.map((med, index) => ({
+      medicineId: `temp_${index}`,
+      medicineName: med.name,
+      dosage: med.dosage || '',
+      frequency: med.frequency || '',
+      duration: med.duration || '',
+      quantity: 0, // To be filled manually
+    }));
+
+    setPrescriptionMedicines(medicines);
+    setOpenOCRDialog(false);
+    setOpenDialog(true);
+    setSnackbar({ 
+      open: true, 
+      message: `OCR completed! ${medicines.length} medication(s) extracted. Please review and adjust.`, 
+      severity: 'success' 
+    });
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           📋 Prescriptions
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-          sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-        >
-          New Prescription
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Upload />}
+            onClick={() => setOpenOCRDialog(true)}
+            sx={{ borderColor: '#667eea', color: '#667eea', '&:hover': { borderColor: '#764ba2', bgcolor: '#f8f9ff' } }}
+          >
+            Upload with AI OCR
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+            sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          >
+            New Prescription
+          </Button>
+        </Box>
       </Box>
 
       <Card sx={{ mb: 3 }}>
@@ -856,6 +899,13 @@ export const Prescriptions = () => {
           </>
         )}
       </Dialog>
+
+      {/* AI OCR Upload Dialog */}
+      <PrescriptionUploadDialog
+        open={openOCRDialog}
+        onClose={() => setOpenOCRDialog(false)}
+        onUploadComplete={handleOCRUploadComplete}
+      />
 
       {/* Snackbar */}
       <Snackbar

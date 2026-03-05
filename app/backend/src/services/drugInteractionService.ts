@@ -62,33 +62,118 @@ class DrugInteractionService {
    * This is a simplified example - in production, use a comprehensive database
    */
   private checkKnownInteraction(drug1: string, drug2: string): DrugInteraction | null {
-    // Common drug interaction examples (simplified)
+    // Comprehensive drug interaction examples
     const knownInteractions: { [key: string]: DrugInteraction } = {
+      // Major (Severe) Interactions
       'warfarin-aspirin': {
         severity: 'major',
-        description: 'Increased risk of bleeding when warfarin is combined with aspirin',
+        description: 'Increased risk of bleeding when warfarin is combined with aspirin. Both drugs have anticoagulant effects.',
         drugs: ['warfarin', 'aspirin'],
       },
+      'warfarin-ibuprofen': {
+        severity: 'major',
+        description: 'NSAIDs can increase anticoagulant effect and risk of GI bleeding when combined with warfarin.',
+        drugs: ['warfarin', 'ibuprofen'],
+      },
+      'simvastatin-gemfibrozil': {
+        severity: 'major',
+        description: 'Gemfibrozil significantly increases simvastatin levels, greatly increasing risk of rhabdomyolysis (severe muscle breakdown). Avoid this combination.',
+        drugs: ['simvastatin', 'gemfibrozil'],
+      },
+      'lisinopril-spironolactone': {
+        severity: 'major',
+        description: 'Both drugs can increase potassium levels, leading to dangerous hyperkalemia.',
+        drugs: ['lisinopril', 'spironolactone'],
+      },
+      'lisinopril-potassium': {
+        severity: 'moderate',
+        description: 'ACE inhibitors like lisinopril can increase potassium levels. Adding potassium supplements may lead to hyperkalemia. Monitor potassium levels.',
+        drugs: ['lisinopril', 'potassium'],
+      },
+      'lisinopril-potassium supplements': {
+        severity: 'moderate',
+        description: 'ACE inhibitors like lisinopril can increase potassium levels. Adding potassium supplements may lead to hyperkalemia. Monitor potassium levels.',
+        drugs: ['lisinopril', 'potassium supplements'],
+      },
+      'methotrexate-amoxicillin': {
+        severity: 'major',
+        description: 'Penicillins may reduce renal clearance of methotrexate, increasing toxicity risk.',
+        drugs: ['methotrexate', 'amoxicillin'],
+      },
+      'digoxin-verapamil': {
+        severity: 'major',
+        description: 'Verapamil can significantly increase digoxin levels, leading to toxicity.',
+        drugs: ['digoxin', 'verapamil'],
+      },
+      
+      // Moderate Interactions
       'aspirin-ibuprofen': {
         severity: 'moderate',
-        description: 'Combining NSAIDs may increase risk of gastrointestinal bleeding',
+        description: 'Combining NSAIDs may increase risk of gastrointestinal bleeding and reduce aspirin cardioprotective effects.',
         drugs: ['aspirin', 'ibuprofen'],
       },
       'metformin-alcohol': {
         severity: 'moderate',
-        description: 'Alcohol may increase the risk of lactic acidosis with metformin',
+        description: 'Alcohol may increase the risk of lactic acidosis with metformin and affect blood glucose control.',
         drugs: ['metformin', 'alcohol'],
       },
       'simvastatin-amlodipine': {
         severity: 'moderate',
-        description: 'Amlodipine may increase simvastatin levels, increasing risk of side effects',
+        description: 'Amlodipine may increase simvastatin levels, increasing risk of myopathy. Limit simvastatin to 20mg daily.',
         drugs: ['simvastatin', 'amlodipine'],
+      },
+      'levothyroxine-calcium': {
+        severity: 'moderate',
+        description: 'Calcium can reduce absorption of levothyroxine. Take at least 4 hours apart.',
+        drugs: ['levothyroxine', 'calcium'],
+      },
+      'omeprazole-clopidogrel': {
+        severity: 'moderate',
+        description: 'Omeprazole may reduce effectiveness of clopidogrel by affecting its activation.',
+        drugs: ['omeprazole', 'clopidogrel'],
+      },
+      'fluoxetine-tramadol': {
+        severity: 'moderate',
+        description: 'Increased risk of serotonin syndrome when combining SSRIs with tramadol.',
+        drugs: ['fluoxetine', 'tramadol'],
+      },
+      'ciprofloxacin-theophylline': {
+        severity: 'moderate',
+        description: 'Ciprofloxacin can increase theophylline levels, leading to toxicity.',
+        drugs: ['ciprofloxacin', 'theophylline'],
+      },
+      'atorvastatin-clarithromycin': {
+        severity: 'moderate',
+        description: 'Macrolide antibiotics can increase statin levels, raising risk of muscle damage.',
+        drugs: ['atorvastatin', 'clarithromycin'],
+      },
+      
+      // Minor Interactions
+      'acetaminophen-caffeine': {
+        severity: 'minor',
+        description: 'Caffeine may enhance pain-relieving effects of acetaminophen. Generally beneficial.',
+        drugs: ['acetaminophen', 'caffeine'],
+      },
+      'amoxicillin-birth-control': {
+        severity: 'minor',
+        description: 'Antibiotics may reduce effectiveness of oral contraceptives. Use backup contraception.',
+        drugs: ['amoxicillin', 'birth control'] ,
       },
     };
 
+    // Normalize drug names (remove dosages, formulations)
+    const normalize = (name: string) => name.toLowerCase()
+      .replace(/\s+\d+mg.*$/i, '')
+      .replace(/\s+tablet.*$/i, '')
+      .replace(/\s+capsule.*$/i, '')
+      .trim();
+    
+    const norm1 = normalize(drug1);
+    const norm2 = normalize(drug2);
+
     // Check both orderings
-    const key1 = `${drug1}-${drug2}`;
-    const key2 = `${drug2}-${drug1}`;
+    const key1 = `${norm1}-${norm2}`;
+    const key2 = `${norm2}-${norm1}`;
 
     return knownInteractions[key1] || knownInteractions[key2] || null;
   }

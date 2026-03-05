@@ -130,10 +130,16 @@ export interface Notification {
 
 // Dashboard Stats Types
 export interface DashboardStats {
+  todaySales: number;
+  todayRevenue: number;
   totalSalesToday: number;
   totalTransactions: number;
   lowStockCount: number;
   expiringCount: number;
+  expiringSoonCount: number;
+  pendingPrescriptions: number;
+  totalMedicines: number;
+  totalUsers: number;
   recentSales: Sale[];
   topSellingMedicines: {
     medicine: Medicine;

@@ -28,6 +28,9 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useAuthStore } from '../store/authStore';
 
 const drawerWidth = 260;
@@ -45,6 +48,9 @@ const menuItems: MenuItem[] = [
   { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
   { text: 'Point of Sale', icon: <PointOfSaleIcon />, path: '/pos' },
   { text: 'Prescriptions', icon: <DescriptionIcon />, path: '/prescriptions' },
+  { text: 'Drug Checker (AI)', icon: <MedicalServicesIcon />, path: '/drug-checker' },
+  { text: 'AI Assistant', icon: <ChatBubbleIcon />, path: '/chatbot' },
+  { text: 'Demand Prediction', icon: <TrendingUpIcon />, path: '/demand-prediction' },
   { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
   { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },

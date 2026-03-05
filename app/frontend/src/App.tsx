@@ -11,6 +11,9 @@ import { Prescriptions } from './pages/Prescriptions';
 import { Customers } from './pages/Customers';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import { DrugInteractionChecker } from './pages/DrugInteractionChecker';
+import { Chatbot } from './pages/Chatbot';
+import { DemandPrediction } from './pages/DemandPrediction';
 
 const theme = createTheme({
   palette: {
@@ -50,6 +53,9 @@ function App() {
             <Route path="/customers" element={<Customers />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/drug-checker" element={<DrugInteractionChecker />} />
+            <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/demand-prediction" element={<DemandPrediction />} />
           </Route>
         </Routes>
       </BrowserRouter>

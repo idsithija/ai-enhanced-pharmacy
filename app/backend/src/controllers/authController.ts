@@ -5,11 +5,11 @@ import { AuthRequest } from '../middleware/auth.js';
 
 // Generate JWT token
 const generateToken = (userId: number, username: string, email: string, role: string): string => {
-  return jwt.sign(
-    { id: userId, username, email, role },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-  );
+  const payload = { id: userId, username, email, role };
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
+  
+  // @ts-ignore - TypeScript has issues with expiresIn type inference
+  return jwt.sign(payload, secret, { expiresIn: '7d' });
 };
 
 // @desc    Register new user

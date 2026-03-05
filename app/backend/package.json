@@ -15,8 +15,10 @@
     "migrate": "tsx src/utils/migrate.ts",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "seed": "tsx src/scripts/seed.ts",
+    "demo-seed": "tsx src/scripts/demo-seed.ts",
     "db:setup": "npm run migrate && npm run seed",
-    "db:reset": "npm run migrate && npm run seed"
+    "db:reset": "npm run migrate && npm run seed",
+    "db:demo": "npm run migrate && npm run demo-seed"
   },
   "keywords": [
     "pharmacy",
