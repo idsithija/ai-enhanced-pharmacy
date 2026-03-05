@@ -86,12 +86,13 @@ Notification.init(
   {
     sequelize,
     tableName: 'notifications',
+    underscored: true,
     indexes: [
-      { fields: ['userId'] },
+      { fields: ['user_id'] },
       { fields: ['type'] },
-      { fields: ['isRead'] },
+      { fields: ['is_read'] },
       { fields: ['priority'] },
-      { fields: ['createdAt'] },
+      { fields: ['created_at'] },
     ],
   }
 );

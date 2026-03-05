@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { MainLayout } from './layouts/MainLayout';
+import { Login } from './pages/Login';
+import { Dashboard } from './pages/Dashboard';
+import { Medicines } from './pages/Medicines';
+import { Inventory } from './pages/Inventory';
+import { POS } from './pages/POS';
+import { Prescriptions } from './pages/Prescriptions';
+import { Customers } from './pages/Customers';
+import { Reports } from './pages/Reports';
+import { Settings } from './pages/Settings';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#667eea',
+    },
+    secondary: {
+      main: '#764ba2',
+    },
+  },
+  typography: {
+    fontFamily: '"Segoe UI", "Roboto", "Arial", sans-serif',
+  },
+});
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          
+          <Route
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/medicines" element={<Medicines />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/pos" element={<POS />} />
+            <Route path="/prescriptions" element={<Prescriptions />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

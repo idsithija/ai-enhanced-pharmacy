@@ -164,17 +164,14 @@ Prescription.init(
   {
     sequelize,
     tableName: 'prescriptions',
+    underscored: true,
     indexes: [
-      { fields: ['prescriptionNumber'] },
-      { fields: ['patientName'] },
+      { fields: ['prescription_number'] },
+      { fields: ['patient_name'] },
       { fields: ['status'] },
-      { fields: ['prescriptionDate'] },
+      { fields: ['prescription_date'] },
     ],
   }
 );
-
-// Associations
-User.hasMany(Prescription, { foreignKey: 'verifiedBy', as: 'verifiedPrescriptions' });
-Prescription.belongsTo(User, { foreignKey: 'verifiedBy', as: 'verifier' });
 
 export default Prescription;

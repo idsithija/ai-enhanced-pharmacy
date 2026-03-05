@@ -155,10 +155,11 @@ Customer.init(
   {
     sequelize,
     tableName: 'customers',
+    underscored: true,
     indexes: [
-      { fields: ['phoneNumber'] },
+      { fields: ['phone_number'] },
       { fields: ['email'] },
-      { fields: ['firstName', 'lastName'] },
+      { fields: ['first_name', 'last_name'] },
     ],
   }
 );

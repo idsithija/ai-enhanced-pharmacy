@@ -20,19 +20,19 @@ export interface UserAttributes {
 export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isActive' | 'phoneNumber' | 'lastLogin'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: number;
-  public username!: string;
-  public email!: string;
-  public password!: string;
-  public firstName!: string;
-  public lastName!: string;
-  public role!: 'admin' | 'pharmacist' | 'cashier' | 'inventory_manager';
-  public phoneNumber?: string;
-  public isActive!: boolean;
-  public lastLogin?: Date;
+  declare id: number;
+  declare username: string;
+  declare email: string;
+  declare password: string;
+  declare firstName: string;
+  declare lastName: string;
+  declare role: 'admin' | 'pharmacist' | 'cashier' | 'inventory_manager';
+  declare phoneNumber: string | undefined;
+  declare isActive: boolean;
+  declare lastLogin: Date | undefined;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 
   // Method to compare passwords
   public async comparePassword(candidatePassword: string): Promise<boolean> {
@@ -41,9 +41,12 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
 
   // Hook to hash password before saving
   public static async hashPassword(user: User): Promise<void> {
-    if (user.changed('password')) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(user.password, salt);
+    if (user.changed('password') && user.password) {
+      // Check if password is already hashed (bcrypt hashes start with $2)
+      if (!user.password.startsWith('$2')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
     }
   }
 }
@@ -107,6 +110,7 @@ User.init(
   {
     sequelize,
     tableName: 'users',
+    underscored: true,
     hooks: {
       beforeSave: User.hashPassword,
     },

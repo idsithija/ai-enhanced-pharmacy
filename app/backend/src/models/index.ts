@@ -25,11 +25,17 @@ Medicine.hasMany(Inventory, { foreignKey: 'medicineId', as: 'inventory' });
 
 // Sale belongs to User (cashier) and Customer
 Sale.belongsTo(User, { foreignKey: 'cashierId', as: 'cashier' });
+User.hasMany(Sale, { foreignKey: 'cashierId', as: 'userSales' });
 Sale.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
 Customer.hasMany(Sale, { foreignKey: 'customerId', as: 'sales' });
 
+// Sale belongs to Prescription
+Sale.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
+Prescription.hasMany(Sale, { foreignKey: 'prescriptionId', as: 'prescriptionSales' });
+
 // Prescription belongs to User (verified by)
 Prescription.belongsTo(User, { foreignKey: 'verifiedBy', as: 'verifiedByUser' });
+User.hasMany(Prescription, { foreignKey: 'verifiedBy', as: 'verifiedPrescriptions' });
 
 // Notification belongs to User
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });

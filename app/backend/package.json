@@ -12,9 +12,11 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest --coverage",
-    "migrate": "npx sequelize-cli db:migrate",
+    "migrate": "tsx src/utils/migrate.ts",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
-    "seed": "npx sequelize-cli db:seed:all"
+    "seed": "tsx src/scripts/seed.ts",
+    "db:setup": "npm run migrate && npm run seed",
+    "db:reset": "npm run migrate && npm run seed"
   },
   "keywords": [
     "pharmacy",

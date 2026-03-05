@@ -167,21 +167,15 @@ Sale.init(
   {
     sequelize,
     tableName: 'sales',
+    underscored: true,
     indexes: [
-      { fields: ['invoiceNumber'] },
-      { fields: ['cashierId'] },
-      { fields: ['prescriptionId'] },
-      { fields: ['saleDate'] },
-      { fields: ['paymentStatus'] },
+      { fields: ['invoice_number'] },
+      { fields: ['cashier_id'] },
+      { fields: ['prescription_id'] },
+      { fields: ['sale_date'] },
+      { fields: ['payment_status'] },
     ],
   }
 );
-
-// Associations
-User.hasMany(Sale, { foreignKey: 'cashierId', as: 'sales' });
-Sale.belongsTo(User, { foreignKey: 'cashierId', as: 'cashier' });
-
-Prescription.hasMany(Sale, { foreignKey: 'prescriptionId', as: 'sales' });
-Sale.belongsTo(Prescription, { foreignKey: 'prescriptionId', as: 'prescription' });
 
 export default Sale;

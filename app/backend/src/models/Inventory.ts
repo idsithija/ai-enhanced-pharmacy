@@ -130,22 +130,19 @@ Inventory.init(
   {
     sequelize,
     tableName: 'inventory',
+    underscored: true,
     hooks: {
       beforeSave: (inventory: Inventory) => {
         inventory.updateStatus();
       },
     },
     indexes: [
-      { fields: ['medicineId'] },
-      { fields: ['batchNumber'] },
+      { fields: ['medicine_id'] },
+      { fields: ['batch_number'] },
       { fields: ['status'] },
-      { fields: ['expiryDate'] },
+      { fields: ['expiry_date'] },
     ],
   }
 );
-
-// Associations
-Medicine.hasMany(Inventory, { foreignKey: 'medicineId', as: 'inventoryItems' });
-Inventory.belongsTo(Medicine, { foreignKey: 'medicineId', as: 'medicine' });
 
 export default Inventory;

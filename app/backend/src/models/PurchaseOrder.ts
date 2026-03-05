@@ -196,12 +196,13 @@ PurchaseOrder.init(
   {
     sequelize,
     tableName: 'purchase_orders',
+    underscored: true,
     indexes: [
-      { fields: ['orderNumber'] },
-      { fields: ['supplierId'] },
+      { fields: ['order_number'] },
+      { fields: ['supplier_id'] },
       { fields: ['status'] },
-      { fields: ['orderDate'] },
-      { fields: ['createdBy'] },
+      { fields: ['order_date'] },
+      { fields: ['created_by'] },
     ],
   }
 );

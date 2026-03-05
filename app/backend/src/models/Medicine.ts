@@ -134,11 +134,12 @@ Medicine.init(
   {
     sequelize,
     tableName: 'medicines',
+    underscored: true,
     indexes: [
       { fields: ['name'] },
-      { fields: ['genericName'] },
+      { fields: ['generic_name'] },
       { fields: ['category'] },
-      { fields: ['ndcCode'] },
+      { fields: ['ndc_code'] },
       { fields: ['barcode'] },
     ],
   }

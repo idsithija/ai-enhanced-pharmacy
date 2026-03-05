@@ -150,10 +150,11 @@ Supplier.init(
   {
     sequelize,
     tableName: 'suppliers',
+    underscored: true,
     indexes: [
-      { fields: ['companyName'] },
+      { fields: ['company_name'] },
       { fields: ['email'] },
-      { fields: ['isActive'] },
+      { fields: ['is_active'] },
     ],
   }
 );
