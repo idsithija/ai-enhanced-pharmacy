@@ -54,38 +54,47 @@ This AI-Enhanced Pharmacy Management System is a comprehensive solution for mana
 
 ```
 pharmacy/
-├── backend/                 # Node.js + TypeScript backend
-│   ├── src/
-│   │   ├── config/         # Configuration files
-│   │   ├── controllers/    # Route controllers
-│   │   ├── models/         # Database models
-│   │   ├── routes/         # API routes
-│   │   ├── middleware/     # Custom middleware
-│   │   ├── services/       # Business logic & AI services
-│   │   ├── utils/          # Utility functions
-│   │   └── types/          # TypeScript types
-│   ├── uploads/            # File uploads
-│   ├── dist/               # Compiled JavaScript
-│   └── package.json
-│
-├── frontend/               # React + TypeScript frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API services
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── types/         # TypeScript types
-│   │   └── assets/        # Images, fonts, etc.
-│   ├── public/            # Static files
-│   ├── dist/              # Build output
-│   └── package.json
+├── app/                    # Application code
+│   ├── backend/            # Node.js + TypeScript backend
+│   │   ├── src/
+│   │   │   ├── config/     # Configuration files
+│   │   │   ├── controllers/ # Route controllers
+│   │   │   ├── models/     # Database models
+│   │   │   ├── routes/     # API routes
+│   │   │   ├── middleware/ # Custom middleware
+│   │   │   ├── services/   # Business logic & AI services
+│   │   │   ├── utils/      # Utility functions
+│   │   │   └── types/      # TypeScript types
+│   │   ├── uploads/        # File uploads
+│   │   ├── dist/           # Compiled JavaScript
+│   │   └── package.json
+│   │
+│   ├── frontend/           # React + TypeScript frontend
+│   │   ├── src/
+│   │   │   ├── components/ # Reusable components
+│   │   │   ├── pages/      # Page components
+│   │   │   ├── services/   # API services
+│   │   │   ├── hooks/      # Custom React hooks
+│   │   │   ├── types/      # TypeScript types
+│   │   │   └── assets/     # Images, fonts, etc.
+│   │   ├── public/         # Static files
+│   │   ├── dist/           # Build output
+│   │   └── package.json
+│   │
+│   └── ui-mockups/         # HTML/CSS UI mockups & prototypes
 │
 ├── docs/                   # Documentation
+│   ├── API_DOCUMENTATION.md
+│   ├── FINAL_DOCUMENTATION.md
 │   ├── DATABASE_SCHEMA_Version2.md
 │   ├── FLOWCHARTS_Version2.md
 │   ├── FRONTEND_SCREENS_Version2.md
 │   ├── PROJECT_OVERVIEW_Version2.md
 │   └── SYSTEM_ARCHITECTURE_Version2.md
+│
+├── diagrams/               # Mermaid diagrams (architecture, ERD, etc.)
+│
+├── archive/                # Archived working files
 │
 └── README.md              # This file
 ```
@@ -127,7 +136,7 @@ cd pharmacy
 
 ```bash
 # Navigate to backend
-cd backend
+cd app/backend
 
 # Install dependencies
 npm install
@@ -151,7 +160,7 @@ Backend will run at: `http://localhost:5000`
 
 ```bash
 # Navigate to frontend (from project root)
-cd frontend
+cd app/frontend
 
 # Install dependencies
 npm install
