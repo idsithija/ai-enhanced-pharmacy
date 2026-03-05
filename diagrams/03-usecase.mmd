@@ -1,114 +1,62 @@
-graph TB
-    Admin[👨‍💼 Admin]
-    Pharmacist[👨‍⚕️ Pharmacist]
-    Cashier[👨‍💻 Cashier]
-    Customer[👤 Customer]
-    
-    subgraph "User Management"
-        UC1[Create User]
-        UC2[Update User]
-        UC3[Delete User]
-        UC4[Assign Roles]
-        UC5[View Users]
+graph LR
+    subgraph Actors
+        Admin[👨‍💼 Admin]
+        Pharmacist[👨‍⚕️ Pharmacist]
+        Cashier[👨‍💻 Cashier]
+        Customer[👤 Customer]
     end
     
-    subgraph "Medicine Management"
-        UC6[Add Medicine]
-        UC7[Update Medicine]
-        UC8[Search Medicine]
-        UC9[View Medicine Details]
+    subgraph System["Pharmacy Management System"]
+        subgraph Core["Core Operations"]
+            Auth[Authentication & Authorization]
+            POS[Point of Sale & Billing]
+            Inv[Inventory Management]
+            Med[Medicine Management]
+        end
+        
+        subgraph Clinical["Clinical Features"]
+            Presc[Prescription Processing]
+            OCR[OCR Scanning]
+            Drug[Drug Interaction Check]
+        end
+        
+        subgraph Business["Business Management"]
+            Cust[Customer & Loyalty Management]
+            Supp[Supplier & Purchase Orders]
+            Rpt[Reports & Analytics]
+        end
+        
+        subgraph AI["AI Services"]
+            Bot[AI Chatbot]
+            Predict[Demand Prediction]
+        end
     end
     
-    subgraph "Inventory Management"
-        UC10[Add Stock]
-        UC11[Update Stock]
-        UC12[Track Batches]
-        UC13[Monitor Expiry]
-        UC14[View Inventory]
-    end
+    Admin -.-> Auth
+    Admin --> Med
+    Admin --> Rpt
+    Admin -.-> Supp
     
-    subgraph "Prescription Management"
-        UC15[Upload Prescription]
-        UC16[OCR Scan]
-        UC17[Verify Prescription]
-        UC18[Dispense Medicine]
-    end
+    Pharmacist -.-> Auth
+    Pharmacist --> Inv
+    Pharmacist --> Presc
+    Pharmacist --> OCR
+    Pharmacist --> Drug
+    Pharmacist --> Med
+    Pharmacist -.-> Rpt
     
-    subgraph "Point of Sale"
-        UC19[Process Sale]
-        UC20[Generate Invoice]
-        UC21[Process Payment]
-        UC22[Apply Discount]
-    end
+    Cashier -.-> Auth
+    Cashier --> POS
+    Cashier --> Cust
+    Cashier -.-> Med
     
-    subgraph "Customer Management"
-        UC23[Register Customer]
-        UC24[View Purchase History]
-        UC25[Manage Loyalty Points]
-    end
+    Customer -.-> Auth
+    Customer --> Presc
+    Customer -.-> Bot
     
-    subgraph "AI Features"
-        UC26[AI Chatbot]
-        UC27[Drug Interaction Check]
-        UC28[Prescription OCR]
-    end
-    
-    subgraph "Reports & Analytics"
-        UC29[Sales Reports]
-        UC30[Inventory Reports]
-        UC31[Dashboard Analytics]
-        UC32[Export Reports]
-    end
-    
-    subgraph "Authentication"
-        UC33[Login]
-        UC34[Logout]
-        UC35[Register]
-    end
-    
-    Admin --> UC1
-    Admin --> UC2
-    Admin --> UC3
-    Admin --> UC4
-    Admin --> UC5
-    Admin --> UC6
-    Admin --> UC7
-    Admin --> UC29
-    Admin --> UC30
-    Admin --> UC31
-    
-    Pharmacist --> UC8
-    Pharmacist --> UC9
-    Pharmacist --> UC10
-    Pharmacist --> UC11
-    Pharmacist --> UC12
-    Pharmacist --> UC13
-    Pharmacist --> UC14
-    Pharmacist --> UC16
-    Pharmacist --> UC17
-    Pharmacist --> UC18
-    Pharmacist --> UC27
-    Pharmacist --> UC28
-    
-    Cashier --> UC8
-    Cashier --> UC19
-    Cashier --> UC20
-    Cashier --> UC21
-    Cashier --> UC22
-    Cashier --> UC23
-    Cashier --> UC24
-    Cashier --> UC25
-    
-    Customer --> UC15
-    Customer --> UC26
-    Customer --> UC33
-    Customer --> UC35
-    
-    Admin --> UC33
-    Pharmacist --> UC33
-    Cashier --> UC33
-    
-    Admin --> UC34
-    Pharmacist --> UC34
-    Cashier --> UC34
-    Customer --> UC34
+    style Admin fill:#e74c3c,color:#fff
+    style Pharmacist fill:#3498db,color:#fff
+    style Cashier fill:#2ecc71,color:#fff
+    style Customer fill:#95a5a6,color:#fff
+    style AI fill:#f39c12,stroke:#e67e22,stroke-width:2px
+    style Clinical fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
