@@ -1,0 +1,136 @@
+classDiagram
+    class User {
+        +int id
+        +string username
+        +string email
+        +string passwordHash
+        +enum role
+        +timestamp createdAt
+        +login()
+        +logout()
+        +updateProfile()
+        +changePassword()
+    }
+    
+    class Medicine {
+        +int id
+        +string name
+        +string genericName
+        +string manufacturer
+        +string category
+        +decimal price
+        +string dosageForm
+        +bool requiresPrescription
+        +create()
+        +update()
+        +search()
+        +getDetails()
+    }
+    
+    class Inventory {
+        +int id
+        +int medicineId
+        +int supplierId
+        +string batchNumber
+        +int quantity
+        +date expiryDate
+        +decimal purchasePrice
+        +date receivedDate
+        +addStock()
+        +updateStock()
+        +checkExpiry()
+        +getFIFOBatch()
+        +deductStock()
+    }
+    
+    class Customer {
+        +int id
+        +string name
+        +string phone
+        +string email
+        +string address
+        +decimal loyaltyPoints
+        +timestamp createdAt
+        +register()
+        +updateInfo()
+        +getPurchaseHistory()
+        +addLoyaltyPoints()
+    }
+    
+    class Sale {
+        +int id
+        +int customerId
+        +int userId
+        +int prescriptionId
+        +decimal totalAmount
+        +decimal discount
+        +enum paymentMethod
+        +timestamp createdAt
+        +createSale()
+        +addItem()
+        +calculateTotal()
+        +applyDiscount()
+        +generateInvoice()
+    }
+    
+    class SaleItem {
+        +int id
+        +int saleId
+        +int medicineId
+        +int quantity
+        +decimal unitPrice
+        +decimal subtotal
+        +calculateSubtotal()
+    }
+    
+    class Prescription {
+        +int id
+        +int customerId
+        +string imageUrl
+        +text extractedText
+        +text verifiedText
+        +enum status
+        +int verifiedBy
+        +timestamp createdAt
+        +upload()
+        +processOCR()
+        +verify()
+        +checkInteractions()
+        +dispense()
+    }
+    
+    class Supplier {
+        +int id
+        +string name
+        +string contactPerson
+        +string phone
+        +string email
+        +string address
+        +create()
+        +update()
+        +getInventory()
+    }
+    
+    class Notification {
+        +int id
+        +int userId
+        +string title
+        +text message
+        +enum type
+        +bool isRead
+        +timestamp createdAt
+        +create()
+        +markAsRead()
+        +getUnread()
+    }
+    
+    User "1" --> "N" Sale : creates
+    Customer "1" --> "N" Sale : makes
+    Sale "1" --> "N" SaleItem : contains
+    Medicine "1" --> "N" SaleItem : sold_in
+    Medicine "1" --> "N" Inventory : stored_as
+    Supplier "1" --> "N" Inventory : supplies
+    Customer "1" --> "N" Prescription : uploads
+    User "1" --> "N" Prescription : verifies
+    Prescription "1" --> "0..1" Sale : dispensed_via
+    User "1" --> "N" Notification : receives

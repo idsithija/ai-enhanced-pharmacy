@@ -1,0 +1,53 @@
+stateDiagram-v2
+    [*] --> Uploaded: Customer uploads prescription image
+    
+    Uploaded --> Processing: OCR job triggered
+    note right of Processing
+        Tesseract.js processes image
+        Extracts medicine names, dosage
+        Accuracy: 70-85%
+    end note
+    
+    Processing --> Pending: OCR complete
+    Processing --> Failed: OCR error
+    
+    Pending --> UnderReview: Pharmacist opens
+    note right of Pending
+        Status: Awaiting pharmacist review
+        Extracted text visible
+    end note
+    
+    UnderReview --> Verified: Pharmacist approves
+    UnderReview --> Rejected: Invalid prescription
+    UnderReview --> Pending: Pharmacist requests more info
+    
+    Verified --> ReadyToDispense: Drug interaction check passed
+    note right of Verified
+        Status: Approved by pharmacist
+        Ready for dispensing
+    end note
+    
+    ReadyToDispense --> OnHold: Stock unavailable
+    OnHold --> ReadyToDispense: Stock replenished
+    
+    ReadyToDispense --> Dispensing: Sale initiated
+    Dispensing --> Dispensed: Sale completed
+    note right of Dispensed
+        Status: Medicine dispensed
+        Inventory updated
+        Invoice generated
+    end note
+    
+    Dispensed --> [*]
+    Rejected --> [*]
+    Failed --> [*]
+    
+    note left of Failed
+        Status: OCR processing failed
+        Manual entry required
+    end note
+    
+    note left of Rejected
+        Status: Prescription rejected
+        Reason logged
+    end note

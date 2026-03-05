@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicines - Pharmacy Management</title>
+    <link rel="stylesheet" href="common-styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-left">
+            <div class="logo">🏥 Pharmacy System</div>
+        </div>
+        <div class="nav-right">
+            <span class="user-name">Admin User</span>
+            <div class="user-avatar">A</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="sidebar">
+            <a href="02-dashboard.html" class="sidebar-item">
+                <span class="icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="03-medicines.html" class="sidebar-item active">
+                <span class="icon">💊</span>
+                <span>Medicines</span>
+            </a>
+            <a href="04-inventory.html" class="sidebar-item">
+                <span class="icon">📦</span>
+                <span>Inventory</span>
+            </a>
+            <a href="05-pos.html" class="sidebar-item">
+                <span class="icon">🛒</span>
+                <span>POS</span>
+            </a>
+            <a href="index.html" class="sidebar-item">
+                <span class="icon">🏠</span>
+                <span>Menu</span>
+            </a>
+        </div>
+
+        <div class="main-content">
+            <div class="page-header">
+                <h1>💊 Medicines Management</h1>
+                <p>Manage your medicine database</p>
+            </div>
+
+            <div class="card">
+                <div class="search-box">
+                    <input type="text" placeholder="Search medicines by name, category, or NDC code...">
+                    <button class="btn btn-primary">+ Add New Medicine</button>
+                </div>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Medicine Name</th>
+                            <th>Category</th>
+                            <th>Generic Name</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Aspirin 500mg</strong></td>
+                            <td>Analgesics</td>
+                            <td>Acetylsalicylic Acid</td>
+                            <td>$8.99</td>
+                            <td>250</td>
+                            <td><span class="badge badge-success">Available</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn btn-primary">✏️ Edit</button>
+                                    <button class="action-btn btn-danger">🗑️ Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Amoxicillin 250mg</strong></td>
+                            <td>Antibiotics</td>
+                            <td>Amoxicillin</td>
+                            <td>$12.50</td>
+                            <td>180</td>
+                            <td><span class="badge badge-success">Available</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn btn-primary">✏️ Edit</button>
+                                    <button class="action-btn btn-danger">🗑️ Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Paracetamol 500mg</strong></td>
+                            <td>Analgesics</td>
+                            <td>Acetaminophen</td>
+                            <td>$5.99</td>
+                            <td>5</td>
+                            <td><span class="badge badge-warning">Low Stock</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn btn-primary">✏️ Edit</button>
+                                    <button class="action-btn btn-danger">🗑️ Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ibuprofen 400mg</strong></td>
+                            <td>Anti-inflammatory</td>
+                            <td>Ibuprofen</td>
+                            <td>$9.99</td>
+                            <td>320</td>
+                            <td><span class="badge badge-success">Available</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn btn-primary">✏️ Edit</button>
+                                    <button class="action-btn btn-danger">🗑️ Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Omeprazole 20mg</strong></td>
+                            <td>Gastrointestinal</td>
+                            <td>Omeprazole</td>
+                            <td>$15.99</td>
+                            <td>0</td>
+                            <td><span class="badge badge-danger">Out of Stock</span></td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn btn-primary">✏️ Edit</button>
+                                    <button class="action-btn btn-danger">🗑️ Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+graph TB
+    subgraph "Frontend Layer - React 18"
+        UI[UI Components]
+        State[Zustand State Management]
+        API_Client[Axios API Client]
+        UI --> State
+        State --> API_Client
+    end
+    
+    subgraph "API Layer - Express.js"
+        Auth[Authentication Middleware<br/>JWT Verification]
+        Routes[Route Handlers]
+        Controllers[Business Controllers]
+        Auth --> Routes
+        Routes --> Controllers
+    end
+    
+    subgraph "Service Layer"
+        MedicineService[Medicine Service]
+        InventoryService[Inventory Service]
+        SaleService[Sale Service]
+        PrescriptionService[Prescription Service]
+        CustomerService[Customer Service]
+        NotificationService[Notification Service]
+    end
+    
+    subgraph "AI Services Layer"
+        OCRService[OCR Service<br/>Tesseract.js]
+        NLPService[NLP Service<br/>Natural.js]
+        DrugService[Drug Info Service<br/>OpenFDA API]
+        MLService[ML Service<br/>TensorFlow.js]
+    end
+    
+    subgraph "Data Access Layer"
+        Models[Sequelize Models]
+        DB[(PostgreSQL Database)]
+        Models --> DB
+    end
+    
+    API_Client -->|HTTPS| Auth
+    Controllers --> MedicineService
+    Controllers --> InventoryService
+    Controllers --> SaleService
+    Controllers --> PrescriptionService
+    Controllers --> CustomerService
+    Controllers --> NotificationService
+    
+    PrescriptionService --> OCRService
+    PrescriptionService --> DrugService
+    CustomerService --> NLPService
+    InventoryService --> MLService
+    
+    MedicineService --> Models
+    InventoryService --> Models
+    SaleService --> Models
+    PrescriptionService --> Models
+    CustomerService --> Models
+    NotificationService --> Models
+    
+    style UI fill:#9370DB
+    style Auth fill:#FF8C00
+    style DB fill:#228B22
+    style OCRService fill:#ff6b6b
+    style NLPService fill:#ff6b6b
+    style DrugService fill:#ff6b6b
+    style MLService fill:#ff6b6b

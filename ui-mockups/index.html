@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Management System - UI Mockups</title>
+    <script>
+        // Redirect to login if not authenticated
+        window.onload = function() {
+            const currentUser = sessionStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = '01-login.html';
+            }
+        };
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .screen-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .screen-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .screen-card a {
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .screen-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .screen-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Pharmacy Management System</h1>
+        <p class="subtitle">Simple UI Mockups - Click on any screen to view</p>
+
+        <div class="info-box">
+            <h3>📋 About These Mockups</h3>
+            <p>
+                These are simple HTML/CSS mockups to visualize the pharmacy management system UI.
+                Each screen represents a key feature of the system with basic styling.
+                <strong>Total Screens: 15</strong>
+            </p>
+        </div>
+
+        <div class="screens-grid">
+            <div class="screen-card">
+                <a href="01-login.html">
+                    <div class="icon">🔐</div>
+                    <div class="screen-title">Login</div>
+                    <div class="screen-desc">User authentication</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="02-dashboard.html">
+                    <div class="icon">📊</div>
+                    <div class="screen-title">Dashboard</div>
+                    <div class="screen-desc">Overview & statistics</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="03-medicines.html">
+                    <div class="icon">💊</div>
+                    <div class="screen-title">Medicines</div>
+                    <div class="screen-desc">Medicine inventory</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="04-inventory.html">
+                    <div class="icon">📦</div>
+                    <div class="screen-title">Inventory</div>
+                    <div class="screen-desc">Stock management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="05-pos.html">
+                    <div class="icon">🛒</div>
+                    <div class="screen-title">POS / Sales</div>
+                    <div class="screen-desc">Point of sale system</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="06-prescriptions.html">
+                    <div class="icon">📋</div>
+                    <div class="screen-title">Prescriptions</div>
+                    <div class="screen-desc">Prescription management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="07-customers.html">
+                    <div class="icon">👥</div>
+                    <div class="screen-title">Customers</div>
+                    <div class="screen-desc">Customer management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="08-suppliers.html">
+                    <div class="icon">🏢</div>
+                    <div class="screen-title">Suppliers</div>
+                    <div class="screen-desc">Supplier management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="09-purchase-orders.html">
+                    <div class="icon">📝</div>
+                    <div class="screen-title">Purchase Orders</div>
+                    <div class="screen-desc">Order management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="10-reports.html">
+                    <div class="icon">📈</div>
+                    <div class="screen-title">Reports</div>
+                    <div class="screen-desc">Sales & inventory reports</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="11-users.html">
+                    <div class="icon">👤</div>
+                    <div class="screen-title">Users</div>
+                    <div class="screen-desc">User management</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="12-notifications.html">
+                    <div class="icon">🔔</div>
+                    <div class="screen-title">Notifications</div>
+                    <div class="screen-desc">System alerts</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="13-ai-scanner.html">
+                    <div class="icon">📷</div>
+                    <div class="screen-title">AI Scanner</div>
+                    <div class="screen-desc">Prescription OCR</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="14-ai-chatbot.html">
+                    <div class="icon">🤖</div>
+                    <div class="screen-title">AI Chatbot</div>
+                    <div class="screen-desc">Virtual assistant</div>
+                </a>
+            </div>
+
+            <div class="screen-card">
+                <a href="15-settings.html">
+                    <div class="icon">⚙️</div>
+                    <div class="screen-title">Settings</div>
+                    <div class="screen-desc">System configuration</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

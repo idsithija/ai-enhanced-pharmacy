@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <style>
+        .chatbot-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .chat-window {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            max-width: 70%;
+        }
+        .message.bot {
+            background: #f0f4ff;
+            margin-right: auto;
+        }
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+        }
+        .message-sender {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🏥 Pharmacy System</div>
+        <div class="nav-right">
+            <span class="user-name">User</span>
+            <div class="user-avatar">U</div>
+        </div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <a href="02-dashboard.html" class="sidebar-item"><span class="icon">📊</span><span>Dashboard</span></a>
+            <a href="14-ai-chatbot.html" class="sidebar-item active"><span class="icon">🤖</span><span>AI Chatbot</span></a>
+            <a href="index.html" class="sidebar-item"><span class="icon">🏠</span><span>Menu</span></a>
+        </div>
+        <div class="main-content">
+            <div class="page-header">
+                <h1>🤖 AI Pharmacy Assistant</h1>
+                <p>Get instant answers about medicines, dosages, and more</p>
+            </div>
+            
+            <div class="chatbot-container">
+                <div class="chat-window">
+                    <div class="message bot">
+                        <div class="message-sender">🤖 AI Assistant</div>
+                        <div>Hello! I'm your AI pharmacy assistant. How can I help you today?</div>
+                    </div>
+                    
+                    <div class="message user">
+                        <div class="message-sender">You</div>
+                        <div>What is Aspirin used for?</div>
+                    </div>
+                    
+                    <div class="message bot">
+                        <div class="message-sender">🤖 AI Assistant</div>
+                        <div>
+                            <strong>Aspirin (Acetylsalicylic Acid)</strong><br><br>
+                            <strong>Uses:</strong><br>
+                            • Pain relief (headaches, toothaches, muscle pain)<br>
+                            • Reduces fever<br>
+                            • Anti-inflammatory properties<br>
+                            • Heart attack and stroke prevention (low doses)<br><br>
+                            <strong>Common Dosage:</strong> 325-650mg every 4-6 hours<br>
+                            <strong>Available in stock:</strong> Yes (250 units)<br>
+                            <strong>Price:</strong> $8.99<br><br>
+                            Would you like to know about side effects or interactions?
+                        </div>
+                    </div>
+                    
+                    <div class="message user">
+                        <div class="message-sender">You</div>
+                        <div>Can I take it with Ibuprofen?</div>
+                    </div>
+                    
+                    <div class="message bot">
+                        <div class="message-sender">🤖 AI Assistant</div>
+                        <div>
+                            ⚠️ <strong>Drug Interaction Warning:</strong><br><br>
+                            Taking Aspirin and Ibuprofen together is generally NOT recommended as:<br>
+                            • Both are NSAIDs (Non-Steroidal Anti-Inflammatory Drugs)<br>
+                            • Increased risk of stomach bleeding<br>
+                            • Reduced effectiveness of both medications<br><br>
+                            <strong>Recommendation:</strong> Consult your pharmacist or doctor before combining these medications.<br><br>
+                            💡 Would you like to speak with our pharmacist?
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <input type="text" placeholder="Type your question here...">
+                    <button class="btn btn-primary" style="border-radius: 25px; padding: 15px 30px;">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

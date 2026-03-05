@@ -1,0 +1,56 @@
+sequenceDiagram
+    participant Ca as Cashier
+    participant POS as React POS Frontend
+    participant API as Express API
+    participant DB as PostgreSQL
+    participant IS as Inventory Service
+    participant CS as Customer Service
+    
+    Ca->>POS: Search medicine
+    POS->>API: GET /api/medicines/search?q=paracetamol
+    API->>DB: Query medicines
+    DB-->>API: Medicine list with stock
+    API-->>POS: Search results
+    POS-->>Ca: Display medicines
+    
+    Ca->>POS: Add to cart (qty: 2)
+    Note over POS: Cart stored in local state
+    
+    Ca->>POS: Enter customer phone
+    POS->>API: GET /api/customers?phone=0771234567
+    API->>DB: Find customer
+    DB-->>API: Customer data (loyalty: 150 pts)
+    API-->>POS: Customer details
+    POS-->>Ca: Show loyalty discount (5% off)
+    
+    Ca->>POS: Process payment (Cash)
+    POS->>API: POST /api/sales (Begin Transaction)
+    
+    API->>DB: BEGIN TRANSACTION
+    API->>IS: Check stock availability
+    IS->>DB: Query inventory (FIFO)
+    DB-->>IS: Available batches
+    IS-->>API: Stock confirmed
+    
+    API->>DB: Create Sale record
+    API->>DB: Create SaleItems
+    API->>IS: Update inventory (deduct stock)
+    IS->>DB: UPDATE inventory (FIFO)
+    
+    API->>CS: Update loyalty points (+20 pts)
+    CS->>DB: UPDATE customers SET loyalty_points = 170
+    
+    API->>DB: Check low stock threshold
+    alt Stock below minimum
+        API->>DB: Create notification (Low Stock Alert)
+    end
+    
+    API->>DB: COMMIT TRANSACTION
+    API-->>POS: Sale successful (Invoice ID: 12345)
+    
+    POS->>API: GET /api/sales/12345/invoice
+    API-->>POS: Invoice PDF
+    POS-->>Ca: Print invoice
+    Ca-->>Customer: Hand over medicine & invoice
+    
+    Note over Ca,Customer: Transaction time: < 1 minute

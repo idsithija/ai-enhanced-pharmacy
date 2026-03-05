@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Pharmacy Management</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <script src="auth.js"></script>
+    <style>
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-action-btn {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #e9ecef;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .quick-action-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .quick-action-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .quick-action-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .chart-card {
+            height: 100%;
+        }
+
+        .chart-placeholder {
+            height: 250px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .recent-activity .activity-item {
+            padding: 16px;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+        }
+
+        .recent-activity .activity-item:hover {
+            background: #f8f9fa;
+            padding-left: 20px;
+        }
+
+        .recent-activity .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            font-size: 1.8em;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            border-radius: 12px;
+        }
+
+        .activity-details {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        .top-medicines-list {
+            margin-top: 15px;
+        }
+
+        .medicine-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .medicine-item:last-child {
+            border-bottom: none;
+        }
+
+        .medicine-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .medicine-sales {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .alerts-section {
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-left">
+            <a href="index.html" class="logo" style="text-decoration: none;">🏥 Pharmacy System</a>
+        </div>
+        <div class="nav-right">
+            <a href="12-notifications.html" class="nav-icon has-notification" title="Notifications">🔔</a>
+            <a href="15-settings.html" class="nav-icon" title="Settings">⚙️</a>
+            <span class="user-name">Admin User</span>
+            <div class="user-avatar" title="Profile">A</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="sidebar">
+            <div class="sidebar-section">Main</div>
+            <a href="02-dashboard.html" class="sidebar-item active">
+                <span class="icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="sidebar-section">Operations</div>
+            <a href="05-pos.html" class="sidebar-item">
+                <span class="icon">🛒</span>
+                <span>Point of Sale</span>
+            </a>
+            <a href="06-prescriptions.html" class="sidebar-item">
+                <span class="icon">📋</span>
+                <span>Prescriptions</span>
+            </a>
+
+            <div class="sidebar-section">Inventory</div>
+            <a href="03-medicines.html" class="sidebar-item">
+                <span class="icon">💊</span>
+                <span>Medicines</span>
+            </a>
+            <a href="04-inventory.html" class="sidebar-item">
+                <span class="icon">📦</span>
+                <span>Inventory</span>
+            </a>
+            <a href="08-suppliers.html" class="sidebar-item">
+                <span class="icon">🏢</span>
+                <span>Suppliers</span>
+            </a>
+            <a href="09-purchase-orders.html" class="sidebar-item">
+                <span class="icon">📝</span>
+                <span>Purchase Orders</span>
+            </a>
+
+            <div class="sidebar-section">Management</div>
+            <a href="07-customers.html" class="sidebar-item">
+                <span class="icon">�</span>
+                <span>Customers</span>
+            </a>
+            <a href="11-users.html" class="sidebar-item">
+                <span class="icon">👤</span>
+                <span>Users</span>
+            </a>
+
+            <div class="sidebar-section">Analytics</div>
+            <a href="10-reports.html" class="sidebar-item">
+                <span class="icon">📈</span>
+                <span>Reports</span>
+            </a>
+            <a href="12-notifications.html" class="sidebar-item">
+                <span class="icon">�</span>
+                <span>Notifications</span>
+            </a>
+
+            <div class="sidebar-section">AI Features</div>
+            <a href="13-ai-scanner.html" class="sidebar-item">
+                <span class="icon">📷</span>
+                <span>AI Scanner</span>
+            </a>
+            <a href="14-ai-chatbot.html" class="sidebar-item">
+                <span class="icon">🤖</span>
+                <span>AI Chatbot</span>
+            </a>
+
+            <div class="sidebar-section">System</div>
+            <a href="15-settings.html" class="sidebar-item">
+                <span class="icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+            <a href="index.html" class="sidebar-item">
+                <span class="icon">🏠</span>
+                <span>Home Menu</span>
+            </a>
+            <a href="01-login.html" class="sidebar-item">
+                <span class="icon">🔓</span>
+                <span>Logout</span>
+            </a>
+        </div>
+
+        <div class="main-content">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a>
+                <span>›</span>
+                <span>Dashboard</span>
+            </div>
+
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back! Here's what's happening today.</p>
+                </div>
+                <button class="btn btn-primary">+ New Sale</button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="05-pos.html" class="quick-action-btn">
+                    <div class="quick-action-icon">🛒</div>
+                    <div class="quick-action-label">New Sale</div>
+                </a>
+                <a href="06-prescriptions.html" class="quick-action-btn">
+                    <div class="quick-action-icon">📋</div>
+                    <div class="quick-action-label">Verify Prescription</div>
+                </a>
+                <a href="03-medicines.html" class="quick-action-btn">
+                    <div class="quick-action-icon">💊</div>
+                    <div class="quick-action-label">Add Medicine</div>
+                </a>
+                <a href="09-purchase-orders.html" class="quick-action-btn">
+                    <div class="quick-action-icon">📝</div>
+                    <div class="quick-action-label">Purchase Order</div>
+                </a>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value">$12,450</div>
+                    <div class="stat-label">Today's Sales</div>
+                    <div class="stat-change positive">↑ 12.5% from yesterday</div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon">🛒</div>
+                    <div class="stat-value">127</div>
+                    <div class="stat-label">Transactions</div>
+                    <div class="stat-change positive">↑ 8 more than yesterday</div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">Low Stock Items</div>
+                    <div class="stat-change negative">↑ Needs attention</div>
+                </div>
+
+                <div class="stat-card danger">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Pending Prescriptions</div>
+                    <div class="stat-change negative">↑ 3 urgent</div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="alerts-section">
+                <div class="alert alert-warning">
+                    <span style="font-size: 1.5em;">⚠️</span>
+                    <div>
+                        <strong>Low Stock Alert:</strong> 15 medicines are running low. Please review inventory.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-section">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Sales Overview</h3>
+                        <select class="filter-select">
+                            <option>Last 7 Days</option>
+                            <option>Last 30 Days</option>
+                            <option>Last 3 Months</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-placeholder">📊 Sales Trend Chart</div>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Top Selling Medicines</h3>
+                        <button class="btn btn-secondary btn-sm">View All</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="top-medicines-list">
+                            <div class="medicine-item">
+                                <span class="medicine-name">1. Paracetamol 500mg</span>
+                                <span class="medicine-sales">245 units</span>
+                            </div>
+                            <div class="medicine-item">
+                                <span class="medicine-name">2. Amoxicillin 250mg</span>
+                                <span class="medicine-sales">198 units</span>
+                            </div>
+                            <div class="medicine-item">
+                                <span class="medicine-name">3. Aspirin 100mg</span>
+                                <span class="medicine-sales">167 units</span>
+                            </div>
+                            <div class="medicine-item">
+                                <span class="medicine-name">4. Vitamin C 1000mg</span>
+                                <span class="medicine-sales">142 units</span>
+                            </div>
+                            <div class="medicine-item">
+                                <span class="medicine-name">5. Ibuprofen 400mg</span>
+                                <span class="medicine-sales">128 units</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card recent-activity">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Activity</h3>
+                    <button class="btn btn-secondary btn-sm">View All</button>
+                </div>
+                <div class="card-body">
+                    <div class="activity-item">
+                        <div class="activity-icon">🛒</div>
+                        <div class="activity-details">
+                            <div class="activity-title">New sale completed - Invoice #1234</div>
+                            <div class="activity-time">2 minutes ago</div>
+                        </div>
+                        <span class="badge badge-success">Completed</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">📋</div>
+                        <div class="activity-details">
+                            <div class="activity-title">Prescription verified by Dr. Smith</div>
+                            <div class="activity-time">15 minutes ago</div>
+                        </div>
+                        <span class="badge badge-info">Verified</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">📦</div>
+                        <div class="activity-details">
+                            <div class="activity-title">Low stock alert: Aspirin (5 units left)</div>
+                            <div class="activity-time">1 hour ago</div>
+                        </div>
+                        <span class="badge badge-warning">Alert</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">📝</div>
+                        <div class="activity-details">
+                            <div class="activity-title">Purchase order #PO-001 received</div>
+                            <div class="activity-time">3 hours ago</div>
+                        </div>
+                        <span class="badge badge-success">Received</span>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">👤</div>
+                        <div class="activity-details">
+                            <div class="activity-title">New customer registered: John Doe</div>
+                            <div class="activity-time">5 hours ago</div>
+                        </div>
+                        <span class="badge badge-info">New</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

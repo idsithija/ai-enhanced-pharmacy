@@ -1,0 +1,116 @@
+erDiagram
+    USERS ||--o{ SALES : creates
+    USERS {
+        int id PK
+        string username
+        string email
+        string password_hash
+        enum role
+        timestamp created_at
+    }
+    
+    CUSTOMERS ||--o{ SALES : makes
+    CUSTOMERS {
+        int id PK
+        string name
+        string phone
+        string email
+        string address
+        decimal loyalty_points
+        timestamp created_at
+    }
+    
+    MEDICINES ||--o{ INVENTORY : stored_in
+    MEDICINES ||--o{ SALES_ITEMS : sold_as
+    MEDICINES {
+        int id PK
+        string name
+        string generic_name
+        string manufacturer
+        string category
+        decimal price
+        string dosage_form
+        string requires_prescription
+    }
+    
+    INVENTORY {
+        int id PK
+        int medicine_id FK
+        int supplier_id FK
+        string batch_number
+        int quantity
+        date expiry_date
+        decimal purchase_price
+        date received_date
+    }
+    
+    SUPPLIERS ||--o{ INVENTORY : supplies
+    SUPPLIERS {
+        int id PK
+        string name
+        string contact_person
+        string phone
+        string email
+        string address
+    }
+    
+    SALES ||--o{ SALES_ITEMS : contains
+    SALES {
+        int id PK
+        int customer_id FK
+        int user_id FK
+        int prescription_id FK
+        decimal total_amount
+        decimal discount
+        enum payment_method
+        timestamp created_at
+    }
+    
+    SALES_ITEMS {
+        int id PK
+        int sale_id FK
+        int medicine_id FK
+        int quantity
+        decimal unit_price
+        decimal subtotal
+    }
+    
+    PRESCRIPTIONS ||--o| SALES : dispensed_via
+    PRESCRIPTIONS {
+        int id PK
+        int customer_id FK
+        string image_url
+        text extracted_text
+        text verified_text
+        enum status
+        int verified_by FK
+        timestamp created_at
+    }
+    
+    CUSTOMERS ||--o{ PRESCRIPTIONS : uploads
+    USERS ||--o{ PRESCRIPTIONS : verifies
+    
+    NOTIFICATIONS {
+        int id PK
+        int user_id FK
+        string title
+        text message
+        enum type
+        boolean is_read
+        timestamp created_at
+    }
+    
+    USERS ||--o{ NOTIFICATIONS : receives
+    
+    PURCHASE_ORDERS {
+        int id PK
+        int supplier_id FK
+        enum status
+        decimal total_amount
+        date order_date
+        date expected_delivery
+        int created_by FK
+    }
+    
+    SUPPLIERS ||--o{ PURCHASE_ORDERS : receives
+    USERS ||--o{ PURCHASE_ORDERS : creates

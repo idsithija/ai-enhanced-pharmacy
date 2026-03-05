@@ -1,0 +1,53 @@
+graph TB
+    subgraph "User Devices"
+        Desktop[🖥️ Desktop Browsers<br/>Chrome, Firefox, Safari]
+        Mobile[📱 Mobile Browsers<br/>iOS Safari, Android Chrome]
+    end
+    
+    subgraph "Vercel CDN - Frontend Hosting"
+        CDN[Global CDN Network]
+        ReactBuild[React Static Build<br/>index.html, JS, CSS]
+        CDN --> ReactBuild
+    end
+    
+    subgraph "Render Cloud - Backend Hosting"
+        LB[Load Balancer]
+        API1[Express API Server 1<br/>Auto-scaling]
+        API2[Express API Server 2<br/>Auto-scaling]
+        Worker[Background Worker<br/>Scheduled Jobs]
+        DB[(PostgreSQL Database<br/>20GB, Daily Backups)]
+        
+        LB --> API1
+        LB --> API2
+        API1 --> DB
+        API2 --> DB
+        Worker --> DB
+    end
+    
+    subgraph "External Services"
+        OpenFDA[OpenFDA API<br/>Drug Information]
+        Tesseract[Tesseract OCR<br/>Image Processing]
+        Natural[Natural.js NLP<br/>Chatbot Engine]
+        Cloudinary[Cloudinary CDN<br/>Image Storage]
+    end
+    
+    Desktop -->|HTTPS| CDN
+    Mobile -->|HTTPS| CDN
+    ReactBuild -->|API Calls<br/>HTTPS| LB
+    
+    API1 --> OpenFDA
+    API1 --> Tesseract
+    API1 --> Natural
+    API1 --> Cloudinary
+    API2 --> OpenFDA
+    API2 --> Tesseract
+    API2 --> Natural
+    API2 --> Cloudinary
+    
+    style CDN fill:#9370DB
+    style LB fill:#4169E1
+    style DB fill:#228B22
+    style OpenFDA fill:#FF8C00
+    style Tesseract fill:#FF8C00
+    style Natural fill:#FF8C00
+    style Cloudinary fill:#FF8C00

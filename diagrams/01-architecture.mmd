@@ -1,0 +1,39 @@
+graph TB
+    subgraph "Presentation Layer"
+        UI[React 18 Frontend]
+        UI -->|HTTPS| API
+    end
+    
+    subgraph "Application Layer"
+        API[Express REST API]
+        Auth[JWT Authentication]
+        BL[Business Logic]
+        API --> Auth
+        API --> BL
+    end
+    
+    subgraph "Data Layer"
+        DB[(PostgreSQL Database)]
+        Cache[Redis Cache]
+        BL --> DB
+        BL --> Cache
+    end
+    
+    subgraph "External Services"
+        OCR[Tesseract OCR]
+        NLP[Natural.js NLP]
+        FDA[OpenFDA API]
+        ML[TensorFlow.js]
+        BL --> OCR
+        BL --> NLP
+        BL --> FDA
+        BL --> ML
+    end
+    
+    style UI fill:#9370DB
+    style API fill:#4169E1
+    style DB fill:#228B22
+    style OCR fill:#FF8C00
+    style NLP fill:#FF8C00
+    style FDA fill:#FF8C00
+    style ML fill:#FF8C00

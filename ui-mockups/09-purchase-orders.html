@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders</title>
+    <link rel="stylesheet" href="common-styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🏥 Pharmacy System</div>
+        <div class="nav-right">
+            <span class="user-name">Inventory Manager</span>
+            <div class="user-avatar">I</div>
+        </div>
+    </div>
+    <div class="layout">
+        <div class="sidebar">
+            <a href="02-dashboard.html" class="sidebar-item"><span class="icon">📊</span><span>Dashboard</span></a>
+            <a href="09-purchase-orders.html" class="sidebar-item active"><span class="icon">📝</span><span>Purchase Orders</span></a>
+            <a href="index.html" class="sidebar-item"><span class="icon">🏠</span><span>Menu</span></a>
+        </div>
+        <div class="main-content">
+            <div class="page-header">
+                <h1>📝 Purchase Orders</h1>
+                <p>Manage inventory purchase orders</p>
+            </div>
+            <div class="card">
+                <div class="search-box">
+                    <input type="text" placeholder="Search orders...">
+                    <button class="btn btn-primary">+ Create Order</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr><th>Order #</th><th>Supplier</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>PO-2025-001</strong></td>
+                            <td>MedSupply Inc.</td>
+                            <td>2025-10-15</td>
+                            <td>$5,000</td>
+                            <td><span class="badge badge-success">Approved</span></td>
+                            <td><button class="action-btn btn-success">✓ Receive</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>PO-2025-002</strong></td>
+                            <td>PharmaCorp</td>
+                            <td>2025-10-20</td>
+                            <td>$3,200</td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td><button class="action-btn btn-primary">✓ Approve</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

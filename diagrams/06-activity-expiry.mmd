@@ -1,0 +1,45 @@
+graph TD
+    Start([Scheduled Job: Daily 6 AM]) --> Query[Query Inventory Database]
+    Query --> CheckExpiry{Check Expiry Date}
+    
+    CheckExpiry -->|Within 3 months| Critical[Mark as CRITICAL]
+    CheckExpiry -->|Within 6 months| Warning[Mark as WARNING]
+    CheckExpiry -->|> 6 months| OK[No Action Needed]
+    
+    Critical --> CalcValue1[Calculate Medicine Value<br/>Qty × Price]
+    Warning --> CalcValue2[Calculate Medicine Value<br/>Qty × Price]
+    
+    CalcValue1 --> CreateNotif1[Create Notification<br/>Type: CRITICAL_EXPIRY<br/>Priority: HIGH]
+    CalcValue2 --> CreateNotif2[Create Notification<br/>Type: WARNING_EXPIRY<br/>Priority: MEDIUM]
+    
+    CreateNotif1 --> SaveDB1[Save to Notifications Table]
+    CreateNotif2 --> SaveDB2[Save to Notifications Table]
+    
+    SaveDB1 --> CheckOnline1{User Online?}
+    SaveDB2 --> CheckOnline2{User Online?}
+    
+    CheckOnline1 -->|Yes| SendRealtime1[Send Real-time Alert<br/>WebSocket]
+    CheckOnline1 -->|No| Skip1[Skip]
+    CheckOnline2 -->|Yes| SendRealtime2[Send Real-time Alert<br/>WebSocket]
+    CheckOnline2 -->|No| Skip2[Skip]
+    
+    OK --> Continue[Continue Loop]
+    SendRealtime1 --> Continue
+    SendRealtime2 --> Continue
+    Skip1 --> Continue
+    Skip2 --> Continue
+    
+    Continue --> MoreRecords{More Records?}
+    MoreRecords -->|Yes| CheckExpiry
+    MoreRecords -->|No| Summary[Generate Summary Report]
+    
+    Summary --> EmailCheck{Email Enabled?}
+    EmailCheck -->|Yes| SendEmail[Send Email to Admin/Pharmacist]
+    EmailCheck -->|No| End([Job Complete])
+    SendEmail --> End
+    
+    style Critical fill:#ff6b6b
+    style Warning fill:#ffa500
+    style OK fill:#51cf66
+    style Start fill:#9370DB
+    style End fill:#9370DB

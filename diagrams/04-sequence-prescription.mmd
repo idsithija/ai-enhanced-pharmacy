@@ -1,0 +1,49 @@
+sequenceDiagram
+    participant C as Customer
+    participant F as React Frontend
+    participant A as Express API
+    participant OCR as Tesseract OCR
+    participant DB as PostgreSQL
+    participant FDA as OpenFDA API
+    participant P as Pharmacist
+    
+    C->>F: Upload prescription image
+    F->>A: POST /api/prescriptions/upload
+    A->>DB: Save image URL & create record
+    DB-->>A: Prescription ID
+    
+    A->>OCR: Process image (async)
+    Note over OCR: OCR accuracy: 70-85%
+    OCR-->>A: Extracted text
+    A->>DB: Update extracted_text
+    A-->>F: Prescription created (status: Processing)
+    F-->>C: Upload successful
+    
+    P->>F: Review prescription
+    F->>A: GET /api/prescriptions/:id
+    A->>DB: Fetch prescription
+    DB-->>A: Prescription data
+    A-->>F: Prescription details
+    
+    P->>F: Edit & verify prescription
+    F->>A: PUT /api/prescriptions/:id/verify
+    A->>FDA: Check drug interactions
+    FDA-->>A: Interaction warnings (if any)
+    
+    alt No interactions
+        A->>DB: Update status to 'Verified'
+        A-->>F: Verification successful
+        F-->>P: Ready to dispense
+    else Interactions found
+        A-->>F: Warning: Drug interactions
+        F-->>P: Show warnings
+        P->>F: Confirm override OR reject
+    end
+    
+    P->>F: Process sale (POS)
+    F->>A: POST /api/sales
+    A->>DB: Create sale & update inventory
+    A->>DB: Update prescription status to 'Dispensed'
+    A-->>F: Sale completed
+    F-->>P: Invoice generated
+    F-->>C: Medicine dispensed

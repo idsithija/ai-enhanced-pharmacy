@@ -1,0 +1,73 @@
+graph TD
+    Start([Customer Visits Pharmacy]) --> CheckReg{Registered<br/>Customer?}
+    
+    CheckReg -->|No| Register[Register New Customer<br/>Name Phone Email]
+    CheckReg -->|Yes| Identify[Identify Customer<br/>by Phone]
+    
+    Register --> Identify
+    
+    Identify --> HasPrescription{Has<br/>Prescription?}
+    
+    HasPrescription -->|Yes| Upload[Upload Prescription Image]
+    HasPrescription -->|No| DirectPurchase[Direct Medicine Purchase]
+    
+    Upload --> OCR[Tesseract OCR Processing<br/>Extract Medicine Names]
+    OCR --> ReviewOCR{OCR<br/>Successful?}
+    
+    ReviewOCR -->|Yes| PharmacistReview[Pharmacist Reviews<br/>Extracted Text]
+    ReviewOCR -->|No| ManualEntry[Manual Entry Required]
+    
+    ManualEntry --> PharmacistReview
+    
+    PharmacistReview --> EditVerify[Edit & Verify Prescription]
+    EditVerify --> DrugCheck[Check Drug Interactions<br/>OpenFDA API]
+    
+    DrugCheck --> InteractionFound{Interactions<br/>Found?}
+    
+    InteractionFound -->|Yes| ShowWarning[Show Warning to Pharmacist]
+    InteractionFound -->|No| ApprovePrescription[Approve Prescription]
+    
+    ShowWarning --> Override{Pharmacist<br/>Override?}
+    Override -->|Yes| ApprovePrescription
+    Override -->|No| RejectPrescription[Reject Prescription]
+    
+    RejectPrescription --> End([Transaction Ended])
+    
+    ApprovePrescription --> AddToCart[Add Medicines to Cart]
+    DirectPurchase --> SearchMedicine[Search Medicine<br/>by Name/Category]
+    SearchMedicine --> AddToCart
+    
+    AddToCart --> CheckStock{Stock<br/>Available?}
+    
+    CheckStock -->|No| OutOfStock[Show Out of Stock<br/>Suggest Alternatives]
+    CheckStock -->|Yes| ApplyDiscount{Customer has<br/>Loyalty Points?}
+    
+    OutOfStock --> End
+    
+    ApplyDiscount -->|Yes| Calculate5Percent[Apply 5% Discount<br/>50+ Loyalty Points]
+    ApplyDiscount -->|No| NoDiscount[No Discount]
+    
+    Calculate5Percent --> ProcessPayment
+    NoDiscount --> ProcessPayment[Process Payment<br/>Cash/Card]
+    
+    ProcessPayment --> CreateSale[Create Sale Record<br/>Database Transaction]
+    CreateSale --> UpdateInventory[Update Inventory<br/>FIFO Method]
+    UpdateInventory --> UpdateLoyalty[Add Loyalty Points<br/>1 point per Rs. 100]
+    UpdateLoyalty --> CheckLowStock{Stock Below<br/>Minimum?}
+    
+    CheckLowStock -->|Yes| CreateAlert[Create Low Stock Alert<br/>Notification]
+    CheckLowStock -->|No| GenerateInvoice[Generate Invoice PDF]
+    
+    CreateAlert --> GenerateInvoice
+    GenerateInvoice --> PrintInvoice[Print Invoice]
+    PrintInvoice --> HandOver[Hand Over Medicine<br/>& Invoice]
+    HandOver --> Complete([Transaction Complete])
+    
+    style Start fill:#9370DB
+    style Complete fill:#9370DB
+    style End fill:#9370DB
+    style RejectPrescription fill:#ff6b6b
+    style OutOfStock fill:#ff6b6b
+    style ShowWarning fill:#ffa500
+    style ApprovePrescription fill:#51cf66
+    style Complete fill:#51cf66
