@@ -34,7 +34,7 @@ export const getMedicines = async (req: AuthRequest, res: Response, next: NextFu
       where,
       limit: Number(limit),
       offset,
-      include: [{ model: Inventory, as: 'inventoryItems' }],
+      include: [{ model: Inventory, as: 'inventory' }],
       order: [['name', 'ASC']],
     } as any);
 
@@ -60,7 +60,7 @@ export const getMedicines = async (req: AuthRequest, res: Response, next: NextFu
 export const getMedicine = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const medicine = await Medicine.findByPk(req.params.id, {
-      include: [{ model: Inventory, as: 'inventoryItems' }],
+      include: [{ model: Inventory, as: 'inventory' }],
     } as any);
 
     if (!medicine) {
