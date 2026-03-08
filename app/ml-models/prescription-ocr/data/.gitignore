@@ -1,16 +1,12 @@
-# Ignore large image files (regenerate with generate_data.py)
+# Ignore generated training data (regenerate with generate_data.py)
 *.png
 *.jpg
 *.jpeg
+labels/*.txt
+metadata.json
 
 # Ignore OCR results (regenerate with test_accuracy.py)
 ocr_results/
 
 # Keep the structure
 !.gitkeep
-
-# Keep metadata for reference
-!metadata.json
-
-# Keep labels (small text files)
-!labels/*.txt
