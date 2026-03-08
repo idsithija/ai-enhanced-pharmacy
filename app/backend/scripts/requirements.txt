@@ -1,3 +1,0 @@
-# Python dependencies for synthetic prescription generation and OCR testing
-Pillow>=10.0.0          # Image generation and manipulation
-pytesseract>=0.3.10     # Python wrapper for Tesseract OCR (optional, for advanced usage)
