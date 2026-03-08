@@ -1,0 +1,22 @@
+Asiri Medical Center
+
+Patient Name: Sandali Wickramasinghe
+Age: 64 years
+Date: 05/03/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Amoxicillin 500mg Cap
+   0-0-1 (Once daily at night)
+   Duration: 1 month
+
+2. Amlodipine 5mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 3 months
+
+3. Prednisolone 10mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 7 days
+
+Signature: Dr. R. Gunaratne

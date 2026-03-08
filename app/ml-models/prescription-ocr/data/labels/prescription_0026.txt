@@ -1,0 +1,18 @@
+Durdans Hospital
+
+Patient Name: Nimal Rodrigo
+Age: 68 years
+Date: 25/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Atorvastatin 10mg Tab
+   Three times daily
+   Duration: 1 month
+
+2. Azithromycin 250mg Tab
+   As needed
+   Duration: 5 days
+
+Signature: Dr. A. Fernando

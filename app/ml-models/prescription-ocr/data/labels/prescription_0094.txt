@@ -1,0 +1,26 @@
+City Hospital
+
+Patient Name: John Silva
+Age: 56 years
+Date: 09/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Cetirizine 10mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 3 months
+
+2. Prednisolone 5mg Tab
+   1-0-1 (Twice daily)
+   Duration: 1 month
+
+3. Prednisolone 5mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 7 days
+
+4. Metformin 500mg Tab
+   Three times daily
+   Duration: 14 days
+
+Signature: Dr. K. Perera

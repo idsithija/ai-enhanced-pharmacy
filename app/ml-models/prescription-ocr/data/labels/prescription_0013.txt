@@ -1,0 +1,26 @@
+Lanka Hospital
+
+Patient Name: Kasun Fernando
+Age: 62 years
+Date: 05/03/2026
+Doctor: Dr. N. Silva
+
+Rx
+
+1. Azithromycin 500mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 5 days
+
+2. Aspirin 100mg Tablet
+   As needed
+   Duration: 5 days
+
+3. Amoxicillin 500mg Cap
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+4. Prednisolone 10mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 3 months
+
+Signature: Dr. N. Silva

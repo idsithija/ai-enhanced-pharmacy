@@ -1,0 +1,22 @@
+Asiri Medical Center
+
+Patient Name: Kasun Fernando
+Age: 21 years
+Date: 25/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Omeprazole 20mg Cap
+   1-1-1 (Three times daily)
+   Duration: 5 days
+
+2. Azithromycin 500mg Tablet
+   Twice daily
+   Duration: 3 months
+
+3. Metformin 1000mg Tablet
+   As needed
+   Duration: 10 days
+
+Signature: Dr. K. Perera

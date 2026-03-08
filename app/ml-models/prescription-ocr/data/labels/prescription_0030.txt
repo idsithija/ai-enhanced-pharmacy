@@ -1,0 +1,18 @@
+Lanka Hospital
+
+Patient Name: Saman Jayawardena
+Age: 74 years
+Date: 04/03/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Metformin 1000mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+2. Cetirizine 10mg Tablet
+   Twice daily
+   Duration: 5 days
+
+Signature: Dr. M. Jayawardena

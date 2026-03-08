@@ -1,0 +1,30 @@
+Nawaloka Hospital
+
+Patient Name: Ruwan De Silva
+Age: 22 years
+Date: 02/03/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Omeprazole 20mg Cap
+   1-1-1 (Three times daily)
+   Duration: 7 days
+
+2. Amoxicillin 500mg Capsule
+   1-0-1 (Twice daily)
+   Duration: 7 days
+
+3. Azithromycin 500mg Tab
+   As needed
+   Duration: 5 days
+
+4. Prednisolone 5mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 1 month
+
+5. Amlodipine 10mg Tab
+   Twice daily
+   Duration: 14 days
+
+Signature: Dr. M. Jayawardena

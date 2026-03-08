@@ -1,0 +1,26 @@
+Durdans Hospital
+
+Patient Name: Kasun Fernando
+Age: 67 years
+Date: 27/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Prednisolone 10mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 5 days
+
+2. Amlodipine 10mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 5 days
+
+3. Metformin 500mg Tablet
+   Twice daily
+   Duration: 14 days
+
+4. Cetirizine 10mg Tab
+   1-1-1 (Three times daily)
+   Duration: 5 days
+
+Signature: Dr. K. Perera

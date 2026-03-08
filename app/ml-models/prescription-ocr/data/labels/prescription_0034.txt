@@ -1,0 +1,30 @@
+Lanka Hospital
+
+Patient Name: Anura Wijesinghe
+Age: 19 years
+Date: 25/02/2026
+Doctor: Dr. S. Wijesinghe
+
+Rx
+
+1. Aspirin 100mg Tablet
+   Twice daily
+   Duration: 3 months
+
+2. Paracetamol 500mg Tab
+   Three times daily
+   Duration: 14 days
+
+3. Prednisolone 5mg Tab
+   Twice daily
+   Duration: 1 month
+
+4. Metformin 500mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+5. Amoxicillin 500mg Cap
+   1-1-1 (Three times daily)
+   Duration: 3 months
+
+Signature: Dr. S. Wijesinghe

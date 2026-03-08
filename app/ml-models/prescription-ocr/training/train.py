@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-DATA_DIR = PROJECT_ROOT / "backend" / "scripts" / "synthetic_prescriptions"
+DATA_DIR = Path(__file__).parent.parent / "data"
 LABELS_DIR = DATA_DIR / "labels"
 OUTPUT_DIR = Path(__file__).parent.parent / "model"
 

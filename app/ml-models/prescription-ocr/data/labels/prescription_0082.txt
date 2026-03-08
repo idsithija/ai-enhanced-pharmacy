@@ -1,0 +1,22 @@
+Durdans Hospital
+
+Patient Name: Sandali Wickramasinghe
+Age: 52 years
+Date: 12/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Metformin 500mg Tab
+   Twice daily
+   Duration: 7 days
+
+2. Paracetamol 650mg Tab
+   1-1-1 (Three times daily)
+   Duration: 3 months
+
+3. Amoxicillin 500mg Cap
+   Twice daily
+   Duration: 5 days
+
+Signature: Dr. R. Gunaratne

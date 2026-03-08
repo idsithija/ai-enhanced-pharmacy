@@ -1,0 +1,26 @@
+Asiri Medical Center
+
+Patient Name: Dilini Rajapaksa
+Age: 18 years
+Date: 12/02/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Paracetamol 500mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+2. Atorvastatin 20mg Tab
+   As needed
+   Duration: 7 days
+
+3. Aspirin 100mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 7 days
+
+4. Cetirizine 10mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 10 days
+
+Signature: Dr. M. Jayawardena

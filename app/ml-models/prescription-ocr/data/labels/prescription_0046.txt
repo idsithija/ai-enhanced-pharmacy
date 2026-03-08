@@ -1,0 +1,26 @@
+Asiri Medical Center
+
+Patient Name: Chaminda Gunasekara
+Age: 34 years
+Date: 19/02/2026
+Doctor: Dr. N. Silva
+
+Rx
+
+1. Aspirin 100mg Tab
+   1-0-1 (Twice daily)
+   Duration: 10 days
+
+2. Omeprazole 20mg Capsule
+   1-0-0 (Once daily in morning)
+   Duration: 10 days
+
+3. Metformin 1000mg Tab
+   Three times daily
+   Duration: 5 days
+
+4. Cetirizine 10mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 3 months
+
+Signature: Dr. N. Silva

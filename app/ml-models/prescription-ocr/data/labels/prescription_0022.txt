@@ -1,0 +1,14 @@
+City Hospital
+
+Patient Name: Kasun Fernando
+Age: 36 years
+Date: 16/02/2026
+Doctor: Dr. S. Wijesinghe
+
+Rx
+
+1. Atorvastatin 20mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 5 days
+
+Signature: Dr. S. Wijesinghe

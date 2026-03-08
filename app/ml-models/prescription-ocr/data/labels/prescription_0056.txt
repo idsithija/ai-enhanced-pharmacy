@@ -1,0 +1,26 @@
+Asiri Medical Center
+
+Patient Name: Dilini Rajapaksa
+Age: 57 years
+Date: 14/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Amlodipine 10mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 3 months
+
+2. Cetirizine 10mg Tab
+   Twice daily
+   Duration: 1 month
+
+3. Omeprazole 20mg Cap
+   Twice daily
+   Duration: 3 months
+
+4. Cetirizine 10mg Tablet
+   Three times daily
+   Duration: 10 days
+
+Signature: Dr. A. Fernando

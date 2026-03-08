@@ -1,0 +1,30 @@
+City Hospital
+
+Patient Name: Kasun Fernando
+Age: 52 years
+Date: 08/03/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Metformin 500mg Tablet
+   Twice daily
+   Duration: 7 days
+
+2. Atorvastatin 10mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+3. Metformin 1000mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 3 months
+
+4. Omeprazole 20mg Capsule
+   0-0-1 (Once daily at night)
+   Duration: 10 days
+
+5. Aspirin 100mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 1 month
+
+Signature: Dr. A. Fernando

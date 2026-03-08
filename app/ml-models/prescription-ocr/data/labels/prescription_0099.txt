@@ -1,0 +1,14 @@
+National Hospital
+
+Patient Name: Nimal Rodrigo
+Age: 71 years
+Date: 07/03/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Amoxicillin 500mg Cap
+   Three times daily
+   Duration: 3 months
+
+Signature: Dr. K. Perera

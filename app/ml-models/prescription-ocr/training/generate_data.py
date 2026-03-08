@@ -4,11 +4,20 @@ Creates realistic prescription images for training the custom OCR model
 """
 
 import sys
+import os
 from pathlib import Path
 
 # Add backend scripts to path
 backend_scripts = Path(__file__).parent.parent.parent.parent / "backend" / "scripts"
 sys.path.insert(0, str(backend_scripts))
+
+# Set output directory to ml-models/prescription-ocr/data
+output_dir = Path(__file__).parent.parent / "data"
+
+print("🎨 Synthetic Prescription Data Generator")
+print("="*60)
+print(f"Output directory: {output_dir}")
+print()
 
 # Import the generator from backend scripts
 try:
@@ -17,8 +26,11 @@ try:
     print(f"  Will generate {NUM_PRESCRIPTIONS} prescriptions")
     print()
     
-    # Generate prescriptions
-    generator = PrescriptionGenerator()
+    # Create output directory if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate prescriptions with custom output directory
+    generator = PrescriptionGenerator(output_dir=str(output_dir))
     
     print("🎨 Generating synthetic prescription images...")
     print("   This may take a few minutes...")
@@ -30,6 +42,7 @@ try:
     print("\n✅ Generation complete!")
     print(f"   Images saved to: {generator.output_dir}")
     print(f"   Labels saved to: {generator.labels_dir}")
+    print(f"   Total files: {len(list(output_dir.glob('*.png')))} prescriptions")
     print()
     print("🎯 Next steps:")
     print("   1. python train.py              # Train the model")

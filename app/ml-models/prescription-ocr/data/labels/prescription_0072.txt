@@ -1,0 +1,14 @@
+National Hospital
+
+Patient Name: Chaminda Gunasekara
+Age: 51 years
+Date: 07/03/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Prednisolone 5mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 7 days
+
+Signature: Dr. K. Perera

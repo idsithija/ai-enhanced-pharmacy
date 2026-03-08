@@ -1,0 +1,14 @@
+Lanka Hospital
+
+Patient Name: Chaminda Gunasekara
+Age: 59 years
+Date: 09/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Metformin 1000mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 5 days
+
+Signature: Dr. K. Perera

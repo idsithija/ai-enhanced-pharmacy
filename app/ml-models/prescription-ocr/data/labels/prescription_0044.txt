@@ -1,0 +1,30 @@
+Nawaloka Hospital
+
+Patient Name: Sandali Wickramasinghe
+Age: 22 years
+Date: 15/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Omeprazole 40mg Cap
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+2. Metformin 1000mg Tablet
+   Twice daily
+   Duration: 5 days
+
+3. Aspirin 75mg Tab
+   As needed
+   Duration: 3 months
+
+4. Aspirin 100mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 7 days
+
+5. Metformin 1000mg Tab
+   1-1-1 (Three times daily)
+   Duration: 5 days
+
+Signature: Dr. A. Fernando

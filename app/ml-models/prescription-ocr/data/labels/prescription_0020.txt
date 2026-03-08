@@ -1,0 +1,18 @@
+Asiri Medical Center
+
+Patient Name: Dilini Rajapaksa
+Age: 41 years
+Date: 09/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Paracetamol 500mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+2. Aspirin 100mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 5 days
+
+Signature: Dr. R. Gunaratne

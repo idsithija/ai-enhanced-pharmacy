@@ -1,0 +1,26 @@
+Lanka Hospital
+
+Patient Name: Maria Perera
+Age: 18 years
+Date: 07/03/2026
+Doctor: Dr. N. Silva
+
+Rx
+
+1. Cetirizine 10mg Tab
+   As needed
+   Duration: 5 days
+
+2. Amoxicillin 250mg Capsule
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+3. Azithromycin 250mg Tablet
+   As needed
+   Duration: 5 days
+
+4. Aspirin 100mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 10 days
+
+Signature: Dr. N. Silva

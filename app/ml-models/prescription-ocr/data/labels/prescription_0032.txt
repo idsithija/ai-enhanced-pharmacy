@@ -1,0 +1,14 @@
+City Hospital
+
+Patient Name: Maria Perera
+Age: 58 years
+Date: 05/03/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Azithromycin 250mg Tab
+   Twice daily
+   Duration: 7 days
+
+Signature: Dr. R. Gunaratne

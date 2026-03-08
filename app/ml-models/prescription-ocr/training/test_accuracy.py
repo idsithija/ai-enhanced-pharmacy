@@ -15,7 +15,7 @@ import numpy as np
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 MODEL_DIR = Path(__file__).parent.parent / "model"
-DATA_DIR = PROJECT_ROOT / "backend" / "scripts" / "synthetic_prescriptions"
+DATA_DIR = Path(__file__).parent.parent / "data"
 LABELS_DIR = DATA_DIR / "labels"
 
 # Device

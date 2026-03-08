@@ -1,0 +1,26 @@
+Nawaloka Hospital
+
+Patient Name: Chaminda Gunasekara
+Age: 80 years
+Date: 12/02/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Prednisolone 10mg Tablet
+   As needed
+   Duration: 14 days
+
+2. Metformin 500mg Tab
+   1-0-1 (Twice daily)
+   Duration: 14 days
+
+3. Paracetamol 650mg Tablet
+   As needed
+   Duration: 1 month
+
+4. Amoxicillin 500mg Capsule
+   1-0-1 (Twice daily)
+   Duration: 10 days
+
+Signature: Dr. M. Jayawardena
