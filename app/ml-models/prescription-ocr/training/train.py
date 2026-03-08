@@ -113,14 +113,32 @@ class PrescriptionDataset(Dataset):
 # ==================== METRICS ====================
 
 def compute_cer(pred_str, label_str):
-    """Compute Character Error Rate"""
-    try:
-        import editdistance
-        distance = editdistance.eval(pred_str, label_str)
-        return distance / max(len(label_str), 1)
-    except ImportError:
-        # Fallback if editdistance not available
-        return 0.0
+    """Compute Character Error Rate using simple character-level comparison"""
+    # Simple Levenshtein distance implementation (no external dependency)
+    if len(pred_str) == 0:
+        return float(len(label_str))
+    if len(label_str) == 0:
+        return float(len(pred_str))
+    
+    # Create matrix
+    d = [[0] * (len(label_str) + 1) for _ in range(len(pred_str) + 1)]
+    
+    for i in range(len(pred_str) + 1):
+        d[i][0] = i
+    for j in range(len(label_str) + 1):
+        d[0][j] = j
+    
+    # Fill matrix
+    for i in range(1, len(pred_str) + 1):
+        for j in range(1, len(label_str) + 1):
+            cost = 0 if pred_str[i-1] == label_str[j-1] else 1
+            d[i][j] = min(
+                d[i-1][j] + 1,      # deletion
+                d[i][j-1] + 1,      # insertion
+                d[i-1][j-1] + cost  # substitution
+            )
+    
+    return d[len(pred_str)][len(label_str)] / max(len(label_str), 1)
 
 
 def compute_metrics(pred):
@@ -176,7 +194,7 @@ if __name__ == "__main__":
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
         predict_with_generate=True,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",  # Updated from evaluation_strategy
         save_strategy="epoch",
         num_train_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
