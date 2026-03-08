@@ -1,26 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  IconButton,
-  Paper,
-  Stack,
-  Chip,
-  Avatar,
-  CircularProgress,
-  Divider,
-  Grid,
-} from '@mui/material';
-import {
-  Send,
-  SmartToy,
-  Person,
-  HelpOutline,
-  Refresh,
-} from '@mui/icons-material';
 import { chatbotService, type ChatMessage } from '../services/chatbotService';
 
 export const Chatbot = () => {
@@ -103,217 +81,182 @@ export const Chatbot = () => {
   };
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SmartToy sx={{ fontSize: 40, color: '#667eea' }} />
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2 mb-2">
+          <span className="text-primary text-4xl">🤖</span>
           AI Pharmacy Assistant
-        </Typography>
-        <Typography color="text.secondary">
+        </h1>
+        <p className="text-gray-600">
           Ask questions about medicines, prescriptions, store information, and pharmacy services.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chat Area */}
-        <Grid item xs={12} lg={8}>
-          <Card sx={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col" style={{ height: '70vh' }}>
             {/* Chat Messages */}
-            <Box
-              sx={{
-                flex: 1,
-                overflowY: 'auto',
-                p: 2,
-                bgcolor: '#f5f5f5',
-              }}
-            >
-              <Stack spacing={2}>
-                {messages.map((message) => (
-                  <Box
-                    key={message.id}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                      alignItems: 'flex-start',
-                      gap: 1,
-                    }}
-                  >
-                    {message.sender === 'bot' && (
-                      <Avatar sx={{ bgcolor: '#667eea', width: 32, height: 32 }}>
-                        <SmartToy sx={{ fontSize: 20 }} />
-                      </Avatar>
-                    )}
-                    
-                    <Box sx={{ maxWidth: '70%' }}>
-                      <Paper
-                        elevation={1}
-                        sx={{
-                          p: 2,
-                          bgcolor: message.sender === 'user' ? '#667eea' : 'white',
-                          color: message.sender === 'user' ? 'white' : 'text.primary',
-                          borderRadius: 2,
-                        }}
-                      >
-                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                          {message.text}
-                        </Typography>
-                        
-                        {message.suggestions && message.suggestions.length > 0 && (
-                          <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}>
-                            {message.suggestions.map((suggestion, index) => (
-                              <Chip
-                                key={index}
-                                label={suggestion}
-                                onClick={() => handleSuggestionClick(suggestion)}
-                                size="small"
-                                sx={{
-                                  cursor: 'pointer',
-                                  '&:hover': { bgcolor: 'primary.light', color: 'white' },
-                                }}
-                              />
-                            ))}
-                          </Stack>
-                        )}
-                      </Paper>
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-start gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.sender === 'bot' && (
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-dark text-lg">🤖</span>
+                    </div>
+                  )}
+                  
+                  <div className="max-w-[70%]">
+                    <div
+                      className={`p-3 rounded-lg shadow-sm ${
+                        message.sender === 'user'
+                          ? 'bg-primary text-dark'
+                          : 'bg-white text-gray-900'
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                       
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1, mt: 0.5, display: 'block' }}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Typography>
-                    </Box>
+                      {message.suggestions && message.suggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {message.suggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSuggestionClick(suggestion)}
+                              className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-primary hover:text-dark transition-colors"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-1 ml-1">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
 
-                    {message.sender === 'user' && (
-                      <Avatar sx={{ bgcolor: '#764ba2', width: 32, height: 32 }}>
-                        <Person sx={{ fontSize: 20 }} />
-                      </Avatar>
-                    )}
-                  </Box>
-                ))}
-                
-                {loading && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar sx={{ bgcolor: '#667eea', width: 32, height: 32 }}>
-                      <SmartToy sx={{ fontSize: 20 }} />
-                    </Avatar>
-                    <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
-                      <CircularProgress size={20} />
-                      <Typography variant="body2" sx={{ ml: 2, display: 'inline' }}>
-                        Thinking...
-                      </Typography>
-                    </Paper>
-                  </Box>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </Stack>
-            </Box>
-
-            <Divider />
+                  {message.sender === 'user' && (
+                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-lg">👤</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {loading && (
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-dark text-lg">🤖</span>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      <span className="text-sm text-gray-700 ml-2">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
 
             {/* Input Area */}
-            <Box sx={{ p: 2, bgcolor: 'white' }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  fullWidth
+            <div className="p-4 bg-white border-t border-gray-200">
+              <div className="flex gap-2">
+                <textarea
                   placeholder="Ask me anything about pharmacy services..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={loading}
-                  multiline
-                  maxRows={3}
-                  variant="outlined"
+                  rows={1}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:bg-gray-100"
                 />
-                <IconButton
-                  color="primary"
+                <button
                   onClick={() => handleSendMessage()}
                   disabled={!inputMessage.trim() || loading}
-                  sx={{
-                    bgcolor: '#667eea',
-                    color: 'white',
-                    '&:hover': { bgcolor: '#5568d3' },
-                    '&:disabled': { bgcolor: 'grey.300' },
-                  }}
+                  className="px-6 py-2 bg-primary text-dark rounded-lg hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
-                  <Send />
-                </IconButton>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
+                  <span>✉️</span>
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Sidebar - Quick Actions */}
-        <Grid item xs={12} lg={4}>
-          <Stack spacing={2}>
-            {/* Quick Questions */}
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <HelpOutline /> Quick Questions
-                  </Typography>
-                  <IconButton size="small" onClick={handleClearChat} title="Clear chat">
-                    <Refresh />
-                  </IconButton>
-                </Box>
-                
-                <Stack spacing={1}>
-                  {chatbotService.getSuggestedQuestions().map((question, index) => (
-                    <Chip
-                      key={index}
-                      label={question}
-                      onClick={() => handleSuggestionClick(question)}
-                      variant="outlined"
-                      sx={{
-                        justifyContent: 'flex-start',
-                        '&:hover': { bgcolor: 'primary.light', color: 'white', borderColor: 'primary.light' },
-                        cursor: 'pointer',
-                      }}
-                    />
-                  ))}
-                </Stack>
-              </CardContent>
-            </Card>
+        <div className="space-y-4">
+          {/* Quick Questions */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span>❓</span>
+                Quick Questions
+              </h3>
+              <button
+                onClick={handleClearChat}
+                className="p-2 text-gray-600 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors"
+                title="Clear chat"
+              >
+                🔄
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {chatbotService.getSuggestedQuestions().map((question, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(question)}
+                  className="w-full text-left px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-primary hover:text-dark hover:border-primary transition-colors"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Features */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  What I Can Help With
-                </Typography>
-                <Stack spacing={1}>
-                  {[
-                    '💊 Medicine availability & pricing',
-                    '📋 Prescription uploads & verification',
-                    '🚚 Delivery & shipping information',
-                    '⏰ Store hours & locations',
-                    '⚠️ Drug interactions & side effects',
-                    '👶 Pediatric & pregnancy safety',
-                    '💳 Payment & insurance',
-                    '🔄 Refills & repeat orders',
-                  ].map((feature, index) => (
-                    <Typography key={index} variant="body2" sx={{ pl: 1 }}>
-                      {feature}
-                    </Typography>
-                  ))}
-                </Stack>
-              </CardContent>
-            </Card>
+          {/* Features */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              What I Can Help With
+            </h3>
+            <div className="space-y-2">
+              {[
+                '💊 Medicine availability & pricing',
+                '📋 Prescription uploads & verification',
+                '🚚 Delivery & shipping information',
+                '⏰ Store hours & locations',
+                '⚠️ Drug interactions & side effects',
+                '👶 Pediatric & pregnancy safety',
+                '💳 Payment & insurance',
+                '🔄 Refills & repeat orders',
+              ].map((feature, index) => (
+                <p key={index} className="text-sm text-gray-700 pl-1">
+                  {feature}
+                </p>
+              ))}
+            </div>
+          </div>
 
-            {/* Disclaimer */}
-            <Card sx={{ bgcolor: '#fff3cd', borderLeft: '4px solid #ffc107' }}>
-              <CardContent>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  ⚠️ Important Information
-                </Typography>
-                <Typography variant="body2">
-                  This AI assistant provides general pharmacy information. For medical advice, diagnosis, or treatment, always consult with a qualified healthcare professional.
-                </Typography>
-              </CardContent>
-            </Card>
-          </Stack>
-        </Grid>
-      </Grid>
-    </Box>
+          {/* Disclaimer */}
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
+            <h4 className="text-sm font-bold text-yellow-900 mb-2">
+              ⚠️ Important Information
+            </h4>
+            <p className="text-sm text-yellow-800">
+              This AI assistant provides general pharmacy information. For medical advice, diagnosis, or treatment, always consult with a qualified healthcare professional.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

@@ -21,7 +21,13 @@ export interface PurchaseHistory {
 }
 
 export const customerService = {
-  // Get all customers
+  // Get all customers without pagination
+  getAll: async (): Promise<Customer[]> => {
+    const response = await api.get<any>('/customers?limit=1000');
+    return response.data.data.customers;
+  },
+
+  // Get all customers with pagination
   getCustomers: async (page: number = 1, limit: number = 10) => {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -86,5 +92,46 @@ export const customerService = {
     } catch (error) {
       return null;
     }
+  },
+
+  // Convenience method: Create customer (transforms frontend format to backend format)
+  create: async (data: CustomerRequest): Promise<Customer> => {
+    // Split name into firstName and lastName
+    const nameParts = data.name.trim().split(' ');
+    const firstName = nameParts[0] || data.name;
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
+    const backendData = {
+      firstName,
+      lastName,
+      phoneNumber: data.phone,
+      email: data.email,
+      address: data.address,
+      dateOfBirth: data.dateOfBirth,
+      notes: data.notes,
+    };
+    
+    const response = await api.post<ApiResponse<Customer>>('/customers', backendData);
+    return response.data.data;
+  },
+
+  // Convenience method: Update customer (transforms frontend format to backend format)
+  update: async (id: string, data: Partial<CustomerRequest>): Promise<Customer> => {
+    const backendData: any = {};
+    
+    if (data.name) {
+      const nameParts = data.name.trim().split(' ');
+      backendData.firstName = nameParts[0] || data.name;
+      backendData.lastName = nameParts.slice(1).join(' ') || '';
+    }
+    
+    if (data.phone) backendData.phoneNumber = data.phone;
+    if (data.email !== undefined) backendData.email = data.email;
+    if (data.address !== undefined) backendData.address = data.address;
+    if (data.dateOfBirth !== undefined) backendData.dateOfBirth = data.dateOfBirth;
+    if (data.notes !== undefined) backendData.notes = data.notes;
+    
+    const response = await api.put<ApiResponse<Customer>>(`/customers/${id}`, backendData);
+    return response.data.data;
   },
 };

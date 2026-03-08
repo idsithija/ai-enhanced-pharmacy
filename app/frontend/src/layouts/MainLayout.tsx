@@ -1,82 +1,37 @@
-import { useState, type JSX } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Drawer,
-  AppBar,
-  Toolbar,
-  List,
-  Typography,
-  Divider,
-  IconButton,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Avatar,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MedicationIcon from '@mui/icons-material/Medication';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
-import DescriptionIcon from '@mui/icons-material/Description';
-import PeopleIcon from '@mui/icons-material/People';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { useState } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-
-const drawerWidth = 260;
 
 interface MenuItem {
   text: string;
-  icon: JSX.Element;
+  icon: string;
   path: string;
-  roles?: string[];
 }
 
 const menuItems: MenuItem[] = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Medicines', icon: <MedicationIcon />, path: '/medicines' },
-  { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
-  { text: 'Point of Sale', icon: <PointOfSaleIcon />, path: '/pos' },
-  { text: 'Prescriptions', icon: <DescriptionIcon />, path: '/prescriptions' },
-  { text: 'Drug Checker (AI)', icon: <MedicalServicesIcon />, path: '/drug-checker' },
-  { text: 'AI Assistant', icon: <ChatBubbleIcon />, path: '/chatbot' },
-  { text: 'Demand Prediction', icon: <TrendingUpIcon />, path: '/demand-prediction' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
-  { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  { text: 'Dashboard', icon: '📊', path: '/dashboard' },
+  { text: 'Medicines', icon: '💊', path: '/medicines' },
+  { text: 'Inventory', icon: '📦', path: '/inventory' },
+  { text: 'Point of Sale', icon: '🛒', path: '/pos' },
+  { text: 'Prescriptions', icon: '📋', path: '/prescriptions' },
+  { text: 'Drug Checker (AI)', icon: '🔬', path: '/drug-checker' },
+  { text: 'AI Assistant', icon: '💬', path: '/chatbot' },
+  { text: 'Demand Prediction', icon: '📈', path: '/demand-prediction' },
+  { text: 'Customers', icon: '👥', path: '/customers' },
+  { text: 'Reports', icon: '📊', path: '/reports' },
+  { text: 'Settings', icon: '⚙️', path: '/settings' },
 ];
 
 export const MainLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const handleMenuClick = (path: string) => {
     navigate(path);
     setMobileOpen(false);
-  };
-
-  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setAnchorEl(null);
   };
 
   const handleLogout = () => {
@@ -84,133 +39,126 @@ export const MainLayout = () => {
     navigate('/login');
   };
 
-  const drawer = (
-    <Box>
-      <Toolbar
-        sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-        }}
-      >
-        <Typography variant="h6" noWrap component="div">
-          🏥 Pharmacy
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton onClick={() => handleMenuClick(item.path)}>
-              <ListItemIcon sx={{ color: '#667eea' }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </Box>
-  );
+  const isActivePath = (path: string) => location.pathname === path;
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          background: 'white',
-          color: 'text.primary',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Pharmacy Management System
-          </Typography>
-          <IconButton onClick={handleUserMenuOpen}>
-            <Avatar sx={{ bgcolor: '#667eea' }}>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark transform transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-6 py-5 bg-dark-deeper">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <svg className="w-6 h-6 text-dark" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/>
+            </svg>
+          </div>
+          <span className="text-xl font-bold text-white">PharmaCare</span>
+        </div>
+
+        {/* Menu Items */}
+        <nav className="px-3 py-4 space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => handleMenuClick(item.path)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                isActivePath(item.path)
+                  ? 'bg-primary text-dark font-semibold'
+                  : 'text-gray-300 hover:bg-dark-deeper hover:text-white'
+              }`}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="text-sm">{item.text}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* User Profile */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-dark font-bold">
               {user?.fullName?.charAt(0) || 'U'}
-            </Avatar>
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleUserMenuClose}
-          >
-            <MenuItem disabled>
-              <Typography variant="body2">
-                {user?.fullName} ({user?.role})
-              </Typography>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={() => { handleUserMenuClose(); navigate('/profile'); }}>
-              <ListItemIcon>
-                <AccountCircleIcon fontSize="small" />
-              </ListItemIcon>
-              Profile
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" />
-              </ListItemIcon>
-              Logout
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
-          bgcolor: '#f5f5f5',
-          minHeight: '100vh',
-        }}
-      >
-        <Outlet />
-      </Box>
-    </Box>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">{user?.fullName || 'User'}</p>
+              <p className="text-xs text-gray-400 truncate">{user?.role || 'Role'}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:ml-64">
+        {/* Top Bar */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between px-6 py-4">
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            
+            <h1 className="text-xl font-semibold text-gray-800">Pharmacy Management System</h1>
+
+            {/* User Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-dark font-bold text-sm">
+                  {user?.fullName?.charAt(0) || 'U'}
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate('/profile');
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <span>👤</span>
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <span>🚪</span>
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };

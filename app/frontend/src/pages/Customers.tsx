@@ -1,54 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Grid,
-  InputAdornment,
-  Avatar,
-  Tabs,
-  Tab,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Alert,
-  Snackbar,
-  LinearProgress,
-  Stack,
-} from '@mui/material';
-import {
-  Add,
+  Plus,
   Edit,
-  Delete,
-  Visibility,
+  Trash2,
+  Eye,
   Search,
-  Person,
+  User,
   Phone,
-  Email,
-  LocationOn,
-  Stars,
+  Mail,
+  MapPin,
+  Star,
   ShoppingBag,
   TrendingUp,
-  CardGiftcard,
-  Cake,
-} from '@mui/icons-material';
+  Gift,
+  Calendar,
+} from 'lucide-react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Customer } from '../types';
@@ -277,9 +243,9 @@ export const Customers = () => {
   };
 
   const getTierBadge = (points: number) => {
-    if (points >= 1000) return { label: 'VIP', color: 'error' as const, icon: <Stars fontSize="small" /> };
-    if (points >= 100) return { label: 'Regular', color: 'primary' as const, icon: <Person fontSize="small" /> };
-    return { label: 'New', color: 'default' as const, icon: null };
+    if (points >= 1000) return { label: 'VIP', icon: <Star size={16} className="text-red-600" />, colorClass: 'bg-red-100 text-red-800' };
+    if (points >= 100) return { label: 'Regular', icon: <User size={16} className="text-indigo-600" />, colorClass: 'bg-indigo-100 text-indigo-800' };
+    return { label: 'New', icon: null, colorClass: 'bg-gray-100 text-gray-800' };
   };
 
   const getLoyaltyProgress = (points: number) => {
@@ -288,589 +254,632 @@ export const Customers = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-          👥 Customers
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
+    <div className="p-6">
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">👥 Customers</h1>
+        <button
           onClick={() => handleOpenDialog()}
-          sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition flex items-center gap-2 shadow-md hover:shadow-lg"
         >
+          <Plus size={20} />
           Add Customer
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Total Customers
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {customers.length}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                  <Person />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    VIP Customers
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {customers.filter((c) => c.loyaltyPoints >= 1000).length}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'error.main', width: 56, height: 56 }}>
-                  <Stars />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Total Revenue
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    ₹{customers.reduce((sum, c) => sum + c.totalSpent, 0).toLocaleString()}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
-                  <TrendingUp />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Total Purchases
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    {customers.reduce((sum, c) => sum + c.totalPurchases, 0)}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
-                  <ShoppingBag />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm mb-2">Total Customers</p>
+              <h3 className="text-3xl font-bold text-gray-900">{customers.length}</h3>
+            </div>
+            <div className="p-3 bg-indigo-100 rounded-xl">
+              <User className="text-indigo-600" size={24} />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm mb-2">VIP Customers</p>
+              <h3 className="text-3xl font-bold text-gray-900">
+                {customers.filter((c) => c.loyaltyPoints >= 1000).length}
+              </h3>
+            </div>
+            <div className="p-3 bg-red-100 rounded-xl">
+              <Star className="text-red-600" size={24} />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm mb-2">Total Revenue</p>
+              <h3 className="text-3xl font-bold text-gray-900">
+                ₹{customers.reduce((sum, c) => sum + Number(c.totalSpent || 0), 0).toLocaleString()}
+              </h3>
+            </div>
+            <div className="p-3 bg-green-100 rounded-xl">
+              <TrendingUp className="text-green-600" size={24} />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm mb-2">Total Purchases</p>
+              <h3 className="text-3xl font-bold text-gray-900">
+                {customers.reduce((sum, c) => sum + Number(c.totalPurchases || 0), 0)}
+              </h3>
+            </div>
+            <div className="p-3 bg-yellow-100 rounded-xl">
+              <ShoppingBag className="text-yellow-600" size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label={`All (${customers.length})`} />
-          <Tab label={`VIP (${customers.filter((c) => c.loyaltyPoints >= 1000).length})`} />
-          <Tab label={`Regular (${customers.filter((c) => c.loyaltyPoints >= 100 && c.loyaltyPoints < 1000).length})`} />
-          <Tab label={`New (${customers.filter((c) => c.loyaltyPoints < 100).length})`} />
-        </Tabs>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="border-b border-gray-200">
+          <div className="flex">
+            <button
+              onClick={() => handleTabChange({} as any, 0)}
+              className={`px-6 py-3 font-medium transition-colors ${
+                tabValue === 0
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              All ({customers.length})
+            </button>
+            <button
+              onClick={() => handleTabChange({} as any, 1)}
+              className={`px-6 py-3 font-medium transition-colors ${
+                tabValue === 1
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              VIP ({customers.filter((c) => c.loyaltyPoints >= 1000).length})
+            </button>
+            <button
+              onClick={() => handleTabChange({} as any, 2)}
+              className={`px-6 py-3 font-medium transition-colors ${
+                tabValue === 2
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Regular ({customers.filter((c) => c.loyaltyPoints >= 100 && c.loyaltyPoints < 1000).length})
+            </button>
+            <button
+              onClick={() => handleTabChange({} as any, 3)}
+              className={`px-6 py-3 font-medium transition-colors ${
+                tabValue === 3
+                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              New ({customers.filter((c) => c.loyaltyPoints < 100).length})
+            </button>
+          </div>
+        </div>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Customer</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Loyalty Points</TableCell>
-                <TableCell>Total Spent</TableCell>
-                <TableCell>Purchases</TableCell>
-                <TableCell>Joined</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loyalty Points</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchases</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredCustomers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
-                      No customers found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    No customers found
+                  </td>
+                </tr>
               ) : (
                 filteredCustomers.map((customer) => {
                   const tier = getTierBadge(customer.loyaltyPoints);
+                  const customerName = customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+                  const customerPhone = customer.phone || customer.phoneNumber || '';
                   return (
-                    <TableRow key={customer.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar sx={{ bgcolor: 'primary.main' }}>
-                            {customer.name.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {customer.name}
-                            </Typography>
-                            <Chip
-                              label={tier.label}
-                              size="small"
-                              color={tier.color}
-                              icon={tier.icon || undefined}
-                              sx={{ mt: 0.5 }}
-                            />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Phone fontSize="small" color="action" />
-                            <Typography variant="body2">{customer.phone}</Typography>
-                          </Box>
+                    <tr key={customer.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                            {customerName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{customerName}</p>
+                            <span className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${tier.colorClass}`}>
+                              {tier.icon}
+                              {tier.label}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-900">
+                            <Phone size={14} className="text-gray-400" />
+                            {customerPhone}
+                          </div>
                           {customer.email && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Email fontSize="small" color="action" />
-                              <Typography variant="body2">{customer.email}</Typography>
-                            </Box>
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <Mail size={14} className="text-gray-400" />
+                              {customer.email}
+                            </div>
                           )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold' }} color="primary">
-                            {customer.loyaltyPoints}
-                          </Typography>
-                          <LinearProgress
-                            variant="determinate"
-                            value={getLoyaltyProgress(customer.loyaltyPoints)}
-                            sx={{ mt: 1, height: 6, borderRadius: 3 }}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          ₹{customer.totalSpent.toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={customer.totalPurchases} size="small" color="primary" variant="outlined" />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(customer.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" onClick={() => handleViewCustomer(customer)}>
-                          <Visibility fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => handleOpenDialog(customer)}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDeleteCustomer(customer.id)}>
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="text-xl font-bold text-indigo-600">{customer.loyaltyPoints}</p>
+                          <div className="w-32 bg-gray-200 rounded-full h-2 mt-2">
+                            <div
+                              className="bg-indigo-600 h-2 rounded-full transition-all"
+                              style={{ width: `${Math.min(getLoyaltyProgress(customer.loyaltyPoints), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-bold text-gray-900">₹{Number(customer.totalSpent || 0).toLocaleString()}</p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                          {Number(customer.totalPurchases || 0)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(customer.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleViewCustomer(customer)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenDialog(customer)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCustomer(customer.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
                   );
                 })
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Add/Edit Customer Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{selectedCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
-        <form onSubmit={formik.handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="name"
-                  name="name"
-                  label="Full Name"
-                  value={formik.values.name}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.name && Boolean(formik.errors.name)}
-                  helperText={formik.touched.name && formik.errors.name}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Person />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="phone"
-                  name="phone"
-                  label="Phone Number"
-                  value={formik.values.phone}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.phone && Boolean(formik.errors.phone)}
-                  helperText={formik.touched.phone && formik.errors.phone}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Phone />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="email"
-                  name="email"
-                  label="Email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Email />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="address"
-                  name="address"
-                  label="Address"
-                  multiline
-                  rows={2}
-                  value={formik.values.address}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LocationOn />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  label="Date of Birth"
-                  type="date"
-                  value={formik.values.dateOfBirth}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Cake />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="notes"
-                  name="notes"
-                  label="Notes"
-                  multiline
-                  rows={2}
-                  value={formik.values.notes}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Medical conditions, allergies, preferences..."
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {selectedCustomer ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      {openDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {selectedCustomer ? 'Edit Customer' : 'Add New Customer'}
+              </h2>
+            </div>
+            <form onSubmit={formik.handleSubmit}>
+              <div className="p-6 space-y-4">
+                {/* Full Name */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User size={18} className="text-gray-400" />
+                    </div>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formik.values.name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`pl-10 block w-full rounded-lg border ${
+                        formik.touched.name && formik.errors.name
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                          : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                      } px-4 py-2`}
+                    />
+                  </div>
+                  {formik.touched.name && formik.errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
+                  )}
+                </div>
+
+                {/* Phone and Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone size={18} className="text-gray-400" />
+                      </div>
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="text"
+                        value={formik.values.phone}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`pl-10 block w-full rounded-lg border ${
+                          formik.touched.phone && formik.errors.phone
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        } px-4 py-2`}
+                      />
+                    </div>
+                    {formik.touched.phone && formik.errors.phone && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.phone}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail size={18} className="text-gray-400" />
+                      </div>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formik.values.email}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`pl-10 block w-full rounded-lg border ${
+                          formik.touched.email && formik.errors.email
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        } px-4 py-2`}
+                      />
+                    </div>
+                    {formik.touched.email && formik.errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.email}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                    Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute top-3 left-0 pl-3 pointer-events-none">
+                      <MapPin size={18} className="text-gray-400" />
+                    </div>
+                    <textarea
+                      id="address"
+                      name="address"
+                      rows={2}
+                      value={formik.values.address}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="pl-10 block w-full rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Date of Birth */}
+                <div>
+                  <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                    Date of Birth
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar size={18} className="text-gray-400" />
+                    </div>
+                    <input
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      type="date"
+                      value={formik.values.dateOfBirth}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="pl-10 block w-full rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    rows={2}
+                    value={formik.values.notes}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="Medical conditions, allergies, preferences..."
+                    className="block w-full rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseDialog}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700"
+                >
+                  {selectedCustomer ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* View Customer Dialog */}
-      <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)} maxWidth="md" fullWidth>
-        {selectedCustomer && (
-          <>
-            <DialogTitle>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', fontSize: 24 }}>
-                    {selectedCustomer.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6">{selectedCustomer.name}</Typography>
-                    <Chip
-                      label={getTierBadge(selectedCustomer.loyaltyPoints).label}
-                      size="small"
-                      color={getTierBadge(selectedCustomer.loyaltyPoints).color}
-                      icon={getTierBadge(selectedCustomer.loyaltyPoints).icon || undefined}
-                    />
-                  </Box>
-                </Box>
-              </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={3}>
-                {/* Customer Info */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Contact Information
-                    </Typography>
-                    <Stack spacing={1.5}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Phone fontSize="small" color="primary" />
-                        <Typography variant="body2">{selectedCustomer.phone}</Typography>
-                      </Box>
-                      {selectedCustomer.email && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Email fontSize="small" color="primary" />
-                          <Typography variant="body2">{selectedCustomer.email}</Typography>
-                        </Box>
-                      )}
-                      {selectedCustomer.address && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocationOn fontSize="small" color="primary" />
-                          <Typography variant="body2">{selectedCustomer.address}</Typography>
-                        </Box>
-                      )}
-                      {selectedCustomer.dateOfBirth && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Cake fontSize="small" color="primary" />
-                          <Typography variant="body2">
-                            {new Date(selectedCustomer.dateOfBirth).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Stack>
-                  </Paper>
-                </Grid>
+      {openViewDialog && selectedCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
+                  {(selectedCustomer.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h2>
+                  <span className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getTierBadge(selectedCustomer.loyaltyPoints).colorClass}`}>
+                    {getTierBadge(selectedCustomer.loyaltyPoints).icon}
+                    {getTierBadge(selectedCustomer.loyaltyPoints).label}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Contact Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-900">
+                      <Phone size={16} className="text-indigo-600" />
+                      {selectedCustomer.phone || selectedCustomer.phoneNumber || 'N/A'}
+                    </div>
+                    {selectedCustomer.email && (
+                      <div className="flex items-center gap-2 text-sm text-gray-900">
+                        <Mail size={16} className="text-indigo-600" />
+                        {selectedCustomer.email}
+                      </div>
+                    )}
+                    {selectedCustomer.address && (
+                      <div className="flex items-center gap-2 text-sm text-gray-900">
+                        <MapPin size={16} className="text-indigo-600" />
+                        {selectedCustomer.address}
+                      </div>
+                    )}
+                    {selectedCustomer.dateOfBirth && (
+                      <div className="flex items-center gap-2 text-sm text-gray-900">
+                        <Calendar size={16} className="text-indigo-600" />
+                        {new Date(selectedCustomer.dateOfBirth).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Loyalty Program */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Loyalty Program
-                    </Typography>
-                    <Box sx={{ textAlign: 'center', mb: 2 }}>
-                      <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', margin: '0 auto', mb: 1 }}>
-                        <CardGiftcard sx={{ fontSize: 40 }} />
-                      </Avatar>
-                      <Typography variant="h3" sx={{ fontWeight: 'bold' }} color="primary">
-                        {selectedCustomer.loyaltyPoints}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Loyalty Points
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={getLoyaltyProgress(selectedCustomer.loyaltyPoints)}
-                        sx={{ mt: 2, height: 8, borderRadius: 4 }}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Loyalty Program</h3>
+                  <div className="text-center">
+                    <div className="h-20 w-20 rounded-full bg-indigo-600 flex items-center justify-center text-white mx-auto mb-2">
+                      <ShoppingBag size={40} />
+                    </div>
+                    <p className="text-4xl font-bold text-indigo-600">{selectedCustomer.loyaltyPoints}</p>
+                    <p className="text-sm text-gray-600 mb-3">Loyalty Points</p>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-indigo-600 h-2 rounded-full transition-all"
+                        style={{ width: `${Math.min(getLoyaltyProgress(selectedCustomer.loyaltyPoints), 100)}%` }}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        {selectedCustomer.loyaltyPoints < 100
-                          ? `${100 - selectedCustomer.loyaltyPoints} points to Regular`
-                          : selectedCustomer.loyaltyPoints < 1000
-                          ? `${1000 - selectedCustomer.loyaltyPoints} points to VIP`
-                          : 'VIP Member'}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                </Grid>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {selectedCustomer.loyaltyPoints < 100
+                        ? `${100 - selectedCustomer.loyaltyPoints} points to Regular`
+                        : selectedCustomer.loyaltyPoints < 1000
+                        ? `${1000 - selectedCustomer.loyaltyPoints} points to VIP`
+                        : 'VIP Member'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                {/* Statistics */}
-                <Grid item xs={12}>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Purchase Statistics
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={4}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" sx={{ fontWeight: 'bold' }} color="success.main">
-                            ₹{selectedCustomer.totalSpent.toLocaleString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Total Spent
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" sx={{ fontWeight: 'bold' }} color="primary.main">
-                            {selectedCustomer.totalPurchases}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Total Purchases
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h5" sx={{ fontWeight: 'bold' }} color="warning.main">
-                            ₹{(selectedCustomer.totalSpent / selectedCustomer.totalPurchases || 0).toFixed(2)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Avg. Purchase
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                </Grid>
+              {/* Purchase Statistics */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-3">Purchase Statistics</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">₹{Number(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                    <p className="text-xs text-gray-600">Total Spent</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-indigo-600">{Number(selectedCustomer.totalPurchases || 0)}</p>
+                    <p className="text-xs text-gray-600">Total Purchases</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-amber-600">₹{(Number(selectedCustomer.totalSpent || 0) / Number(selectedCustomer.totalPurchases || 1)).toFixed(2)}</p>
+                    <p className="text-xs text-gray-600">Avg. Purchase</p>
+                  </div>
+                </div>
+              </div>
 
-                {/* Purchase History */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    Purchase History
-                  </Typography>
-                  {purchaseHistory.length === 0 ? (
-                    <Alert severity="info">No purchase history available</Alert>
-                  ) : (
-                    <TableContainer component={Paper} variant="outlined">
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Invoice</TableCell>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Items</TableCell>
-                            <TableCell>Amount</TableCell>
-                            <TableCell>Payment</TableCell>
-                            <TableCell>Points</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {purchaseHistory.map((purchase) => (
-                            <TableRow key={purchase.id} hover>
-                              <TableCell>
-                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                  {purchase.invoiceNumber}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2">
-                                  {new Date(purchase.date).toLocaleDateString()}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {new Date(purchase.date).toLocaleTimeString()}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip label={purchase.itemCount} size="small" />
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                  ₹{purchase.totalAmount.toFixed(2)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip label={purchase.paymentMethod.toUpperCase()} size="small" variant="outlined" />
-                              </TableCell>
-                              <TableCell>
-                                <Chip label={`+${purchase.pointsEarned}`} size="small" color="success" />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </Grid>
-
-                {selectedCustomer.notes && (
-                  <Grid item xs={12}>
-                    <Alert severity="warning">
-                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                        Notes:
-                      </Typography>
-                      <Typography variant="body2">{selectedCustomer.notes}</Typography>
-                    </Alert>
-                  </Grid>
+              {/* Purchase History */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-3">Purchase History</h3>
+                {purchaseHistory.length === 0 ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                    No purchase history available
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {purchaseHistory.map((purchase) => (
+                          <tr key={purchase.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <p className="text-sm font-bold text-gray-900">{purchase.invoiceNumber}</p>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <p className="text-sm text-gray-900">{new Date(purchase.date).toLocaleDateString()}</p>
+                              <p className="text-xs text-gray-500">{new Date(purchase.date).toLocaleTimeString()}</p>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                {purchase.itemCount}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <p className="text-sm font-bold text-gray-900">₹{Number(purchase.totalAmount || 0).toFixed(2)}</p>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border bg-white text-gray-800 border-gray-300">
+                                {purchase.paymentMethod.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                +{purchase.pointsEarned}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenViewDialog(false)}>Close</Button>
-              <Button variant="outlined" startIcon={<Edit />} onClick={() => {
-                setOpenViewDialog(false);
-                handleOpenDialog(selectedCustomer);
-              }}>
+              </div>
+
+              {/* Notes */}
+              {selectedCustomer.notes && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-sm font-bold text-amber-900 mb-1">Notes:</p>
+                  <p className="text-sm text-amber-800">{selectedCustomer.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setOpenViewDialog(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setOpenViewDialog(false);
+                  handleOpenDialog(selectedCustomer);
+                }}
+                className="px-4 py-2 text-sm font-medium text-indigo-700 bg-white border border-indigo-300 rounded-lg hover:bg-indigo-50 flex items-center gap-2"
+              >
+                <Edit size={16} />
                 Edit Customer
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`rounded-lg shadow-lg p-4 max-w-md ${
+            snackbar.severity === 'success' ? 'bg-green-50 border border-green-200' :
+            snackbar.severity === 'error' ? 'bg-red-50 border border-red-200' :
+            snackbar.severity === 'warning' ? 'bg-amber-50 border border-amber-200' :
+            'bg-blue-50 border border-blue-200'
+          }`}>
+            <div className="flex items-center justify-between gap-3">
+              <p className={`text-sm font-medium ${
+                snackbar.severity === 'success' ? 'text-green-800' :
+                snackbar.severity === 'error' ? 'text-red-800' :
+                snackbar.severity === 'warning' ? 'text-amber-800' :
+                'text-blue-800'
+              }`}>
+                {snackbar.message}
+              </p>
+              <button
+                onClick={() => setSnackbar({ ...snackbar, open: false })}
+                className={`${
+                  snackbar.severity === 'success' ? 'text-green-600 hover:text-green-800' :
+                  snackbar.severity === 'error' ? 'text-red-600 hover:text-red-800' :
+                  snackbar.severity === 'warning' ? 'text-amber-600 hover:text-amber-800' :
+                  'text-blue-600 hover:text-blue-800'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
+

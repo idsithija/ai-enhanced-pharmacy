@@ -1,31 +1,4 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Grid,
-  Chip,
-  Stack,
-  Alert,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Add,
-  Delete,
-  Search,
-  Warning,
-  CheckCircle,
-  MedicalServices,
-} from '@mui/icons-material';
 import { drugInteractionService, type DrugInteraction } from '../services/drugInteractionService';
 
 export const DrugInteractionChecker = () => {
@@ -85,16 +58,16 @@ export const DrugInteractionChecker = () => {
     setError('');
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColors = (severity: string) => {
     switch (severity) {
       case 'major':
-        return 'error';
+        return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', badge: 'bg-red-100 text-red-800' };
       case 'moderate':
-        return 'warning';
+        return { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', badge: 'bg-yellow-100 text-yellow-800' };
       case 'minor':
-        return 'info';
+        return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', badge: 'bg-blue-100 text-blue-800' };
       default:
-        return 'default';
+        return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', badge: 'bg-gray-100 text-gray-800' };
     }
   };
 
@@ -103,268 +76,227 @@ export const DrugInteractionChecker = () => {
   const minorCount = interactions.filter(i => i.severity === 'minor').length;
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <MedicalServices sx={{ fontSize: 40 }} />
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2 mb-2">
+          <span className="text-primary text-4xl">💊</span>
           AI Drug Interaction Checker
-        </Typography>
-        <Typography color="text.secondary">
+        </h1>
+        <p className="text-gray-600">
           Check for potential drug interactions between multiple medications using AI-powered analysis.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Side - Add Medications */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Add Medications
-              </Typography>
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Medications</h2>
 
-              <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-                <TextField
-                  fullWidth
-                  label="Medication Name"
-                  value={currentMedication}
-                  onChange={(e) => setCurrentMedication(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddMedication()}
-                  placeholder="e.g., Aspirin, Warfarin, Ibuprofen"
-                  error={!!error}
-                  helperText={error}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleAddMedication}
-                  startIcon={<Add />}
-                  sx={{ minWidth: '120px' }}
+          <div className="flex gap-2 mb-6">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="e.g., Aspirin, Warfarin, Ibuprofen"
+                value={currentMedication}
+                onChange={(e) => setCurrentMedication(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddMedication()}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                  error ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+            </div>
+            <button
+              onClick={handleAddMedication}
+              className="px-6 py-2 bg-primary text-dark font-semibold rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+            >
+              <span>+</span> Add
+            </button>
+          </div>
+
+          <hr className="my-4" />
+
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Medications List ({medications.length})
+          </h3>
+
+          {medications.length === 0 ? (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                No medications added yet. Add at least 2 medications to check for interactions.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {medications.map((medication, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
                 >
-                  Add
-                </Button>
-              </Box>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{medication}</p>
+                    <p className="text-xs text-gray-600">Medication {index + 1}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveMedication(index)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-              <Divider sx={{ my: 2 }} />
-
-              <Typography variant="subtitle2" gutterBottom>
-                Medications List ({medications.length})
-              </Typography>
-
-              {medications.length === 0 ? (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  No medications added yet. Add at least 2 medications to check for interactions.
-                </Alert>
-              ) : (
-                <List>
-                  {medications.map((medication, index) => (
-                    <ListItem
-                      key={index}
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <ListItemText
-                        primary={medication}
-                        secondary={`Medication ${index + 1}`}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          color="error"
-                          onClick={() => handleRemoveMedication(index)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-
-              <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handleCheckInteractions}
-                  disabled={medications.length < 2 || loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <Search />}
-                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  }}
-                >
-                  {loading ? 'Checking...' : 'Check Interactions'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={handleClear}
-                  disabled={medications.length === 0}
-                >
-                  Clear All
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Right Side - Results */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Interaction Results
-              </Typography>
-
-              {medications.length < 2 ? (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  Add at least 2 medications and click "Check Interactions" to see results.
-                </Alert>
-              ) : loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
-                  <CircularProgress />
-                </Box>
-              ) : interactions.length === 0 && medications.length >= 2 ? (
-                <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                    No Known Interactions Detected
-                  </Typography>
-                  <Typography variant="body2">
-                    The medications in your list do not have any known interactions in our database.
-                    However, always consult with a healthcare professional before combining medications.
-                  </Typography>
-                </Alert>
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={handleCheckInteractions}
+              disabled={medications.length < 2 || loading}
+              className="flex-1 px-6 py-2 bg-gradient-to-r from-primary to-purple-600 text-dark font-semibold rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-dark border-t-transparent rounded-full animate-spin" />
+                  Checking...
+                </>
               ) : (
                 <>
-                  {/* Summary */}
-                  <Box sx={{ mb: 3 }}>
-                    <Grid container spacing={2}>
-                      {majorCount > 0 && (
-                        <Grid item xs={4}>
-                          <Card sx={{ bgcolor: 'error.light', color: 'white' }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                {majorCount}
-                              </Typography>
-                              <Typography variant="caption">Major</Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      )}
-                      {moderateCount > 0 && (
-                        <Grid item xs={4}>
-                          <Card sx={{ bgcolor: 'warning.light', color: 'white' }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                {moderateCount}
-                              </Typography>
-                              <Typography variant="caption">Moderate</Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      )}
-                      {minorCount > 0 && (
-                        <Grid item xs={4}>
-                          <Card sx={{ bgcolor: 'info.light', color: 'white' }}>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                                {minorCount}
-                              </Typography>
-                              <Typography variant="caption">Minor</Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      )}
-                    </Grid>
-                  </Box>
-
-                  {/* Detailed Interactions */}
-                  <Stack spacing={2}>
-                    {interactions.map((interaction, index) => (
-                      <Alert
-                        key={index}
-                        severity={getSeverityColor(interaction.severity) as any}
-                        icon={<Warning />}
-                      >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                          {interaction.drugs.join(' + ')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          {interaction.description}
-                        </Typography>
-                        <Chip
-                          label={`${interaction.severity.toUpperCase()} SEVERITY`}
-                          color={getSeverityColor(interaction.severity) as any}
-                          size="small"
-                        />
-                      </Alert>
-                    ))}
-                  </Stack>
-
-                  <Alert severity="warning" sx={{ mt: 3 }}>
-                    <Typography variant="body2">
-                      <strong>Important:</strong> This tool provides information based on known drug interactions.
-                      Always consult with a qualified healthcare professional before making any medication decisions.
-                    </Typography>
-                  </Alert>
+                  <span>🔍</span>
+                  Check Interactions
                 </>
               )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </button>
+            <button
+              onClick={handleClear}
+              disabled={medications.length === 0}
+              className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side - Results */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Interaction Results</h2>
+
+          {medications.length < 2 ? (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Add at least 2 medications and click "Check Interactions" to see results.
+              </p>
+            </div>
+          ) : loading ? (
+            <div className="flex justify-center items-center py-16">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : interactions.length === 0 && medications.length >= 2 ? (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 text-2xl">✅</span>
+                <div>
+                  <p className="text-sm font-bold text-green-900 mb-1">No Known Interactions Detected</p>
+                  <p className="text-sm text-green-800">
+                    The medications in your list do not have any known interactions in our database.
+                    However, always consult with a healthcare professional before combining medications.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {majorCount > 0 && (
+                  <div className="bg-red-600 text-white rounded-lg p-3 text-center">
+                    <p className="text-3xl font-bold">{majorCount}</p>
+                    <p className="text-xs">Major</p>
+                  </div>
+                )}
+                {moderateCount > 0 && (
+                  <div className="bg-yellow-600 text-white rounded-lg p-3 text-center">
+                    <p className="text-3xl font-bold">{moderateCount}</p>
+                    <p className="text-xs">Moderate</p>
+                  </div>
+                )}
+                {minorCount > 0 && (
+                  <div className="bg-blue-600 text-white rounded-lg p-3 text-center">
+                    <p className="text-3xl font-bold">{minorCount}</p>
+                    <p className="text-xs">Minor</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Detailed Interactions */}
+              <div className="space-y-3">
+                {interactions.map((interaction, index) => {
+                  const colors = getSeverityColors(interaction.severity);
+                  return (
+                    <div key={index} className={`p-4 border rounded-lg ${colors.bg} ${colors.border}`}>
+                      <div className="flex items-start gap-2">
+                        <span className={colors.text}>⚠️</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-bold mb-2 ${colors.text}`}>
+                            {interaction.drugs.join(' + ')}
+                          </p>
+                          <p className={`text-sm mb-2 ${colors.text}`}>
+                            {interaction.description}
+                          </p>
+                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${colors.badge}`}>
+                            {interaction.severity.toUpperCase()} SEVERITY
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Important:</strong> This tool provides information based on known drug interactions.
+                  Always consult with a qualified healthcare professional before making any medication decisions.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* How It Works */}
-      <Card sx={{ mt: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-            How It Works
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, mb: 2, display: 'inline-block' }}>
-                  <Add sx={{ fontSize: 40, color: 'primary.main' }} />
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                  1. Add Medications
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Enter the names of medications you want to check
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, mb: 2, display: 'inline-block' }}>
-                  <Search sx={{ fontSize: 40, color: 'primary.main' }} />
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                  2. AI Analysis
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Our AI checks for known interactions using comprehensive databases
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, mb: 2, display: 'inline-block' }}>
-                  <Warning sx={{ fontSize: 40, color: 'primary.main' }} />
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                  3. Get Results
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Receive detailed information about potential interactions
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    </Box>
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-6">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
+              <span className="text-primary text-5xl">+</span>
+            </div>
+            <h3 className="text-sm font-bold text-gray-900 mb-2">1. Add Medications</h3>
+            <p className="text-sm text-gray-600">
+              Enter the names of medications you want to check
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
+              <span className="text-primary text-5xl">🔍</span>
+            </div>
+            <h3 className="text-sm font-bold text-gray-900 mb-2">2. AI Analysis</h3>
+            <p className="text-sm text-gray-600">
+              Our AI checks for known interactions using comprehensive databases
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
+              <span className="text-primary text-5xl">⚠️</span>
+            </div>
+            <h3 className="text-sm font-bold text-gray-900 mb-2">3. Get Results</h3>
+            <p className="text-sm text-gray-600">
+              Receive detailed information about potential interactions
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

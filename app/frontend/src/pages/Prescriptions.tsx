@@ -1,59 +1,40 @@
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Tabs,
-  Tab,
-  Grid,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Alert,
-  Snackbar,
-  Avatar,
-  Stack,
-} from '@mui/material';
-import {
-  Add,
-  Edit,
-  Delete,
-  Visibility,
-  Search,
-  CheckCircle,
-  LocalPharmacy,
-  Upload,
-  Person,
-  LocalHospital,
-  Close,
-  Image as ImageIcon,
-} from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import type { Prescription, Medicine } from '../types';
+import type { Medicine } from '../types';
 import { PrescriptionUploadDialog } from '../components/PrescriptionUploadDialog';
 import type { OCRResult } from '../services/ocrService';
 
-// Mock data
-const mockPrescriptions: Prescription[] = [
+// Extended Prescription interface for this page with additional fields
+interface ExtendedPrescription {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  doctorName: string;
+  doctorLicense: string;
+  medicines: {
+    medicineId: string;
+    medicineName: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+    quantity: number;
+  }[];
+  status: 'pending' | 'verified' | 'dispensed';
+  notes?: string;
+  imageUrl?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  verificationNotes?: string;
+  dispensedBy?: string;
+  dispensedAt?: string;
+  dispensedNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const mockPrescriptions: ExtendedPrescription[] = [
   {
     id: '1',
     customerId: '1',
@@ -137,13 +118,13 @@ interface MedicineItem {
 }
 
 export const Prescriptions = () => {
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(mockPrescriptions);
-  const [filteredPrescriptions, setFilteredPrescriptions] = useState<Prescription[]>(mockPrescriptions);
+  const [prescriptions, setPrescriptions] = useState<ExtendedPrescription[]>(mockPrescriptions);
+  const [filteredPrescriptions, setFilteredPrescriptions] = useState<ExtendedPrescription[]>(mockPrescriptions);
   const [searchQuery, setSearchQuery] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [selectedPrescription, setSelectedPrescription] = useState<ExtendedPrescription | null>(null);
   const [prescriptionMedicines, setPrescriptionMedicines] = useState<MedicineItem[]>([]);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -164,7 +145,7 @@ export const Prescriptions = () => {
         return;
       }
 
-      const newPrescription: Prescription = {
+      const newPrescription: ExtendedPrescription = {
         id: Date.now().toString(),
         customerId: Date.now().toString(),
         customerName: values.customerName,
@@ -186,7 +167,7 @@ export const Prescriptions = () => {
     },
   });
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (newValue: number) => {
     setTabValue(newValue);
     filterPrescriptions(newValue, searchQuery);
   };
@@ -199,12 +180,10 @@ export const Prescriptions = () => {
   const filterPrescriptions = (status: number, query: string) => {
     let filtered = prescriptions;
 
-    // Filter by status
     if (status === 1) filtered = prescriptions.filter((p) => p.status === 'pending');
     if (status === 2) filtered = prescriptions.filter((p) => p.status === 'verified');
     if (status === 3) filtered = prescriptions.filter((p) => p.status === 'dispensed');
 
-    // Filter by search query
     if (query) {
       filtered = filtered.filter(
         (p) =>
@@ -217,7 +196,7 @@ export const Prescriptions = () => {
     setFilteredPrescriptions(filtered);
   };
 
-  const handleOpenDialog = (prescription?: Prescription) => {
+  const handleOpenDialog = (prescription?: ExtendedPrescription) => {
     if (prescription) {
       formik.setValues({
         customerName: prescription.customerName,
@@ -241,7 +220,7 @@ export const Prescriptions = () => {
     setImagePreview('');
   };
 
-  const handleViewPrescription = (prescription: Prescription) => {
+  const handleViewPrescription = (prescription: ExtendedPrescription) => {
     setSelectedPrescription(prescription);
     setOpenViewDialog(true);
   };
@@ -269,7 +248,6 @@ export const Prescriptions = () => {
     const updated = [...prescriptionMedicines];
     updated[index] = { ...updated[index], [field]: value };
     
-    // Auto-fill medicine name when medicine is selected
     if (field === 'medicineId') {
       const medicine = mockMedicines.find((m) => m.id === value);
       if (medicine) {
@@ -285,66 +263,38 @@ export const Prescriptions = () => {
   };
 
   const handleVerifyPrescription = (id: string) => {
-    setPrescriptions(
-      prescriptions.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: 'verified',
-              verifiedBy: 'current_user',
-              verifiedAt: new Date().toISOString(),
-              verificationNotes: 'Verified and approved',
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
-    setFilteredPrescriptions(
-      filteredPrescriptions.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: 'verified',
-              verifiedBy: 'current_user',
-              verifiedAt: new Date().toISOString(),
-              verificationNotes: 'Verified and approved',
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
+    const updatePrescription = (p: Prescription) =>
+      p.id === id
+        ? {
+            ...p,
+            status: 'verified' as const,
+            verifiedBy: 'current_user',
+            verifiedAt: new Date().toISOString(),
+            verificationNotes: 'Verified and approved',
+            updatedAt: new Date().toISOString(),
+          }
+        : p;
+
+    setPrescriptions(prescriptions.map(updatePrescription));
+    setFilteredPrescriptions(filteredPrescriptions.map(updatePrescription));
     setSnackbar({ open: true, message: 'Prescription verified successfully', severity: 'success' });
   };
 
   const handleDispensePrescription = (id: string) => {
-    setPrescriptions(
-      prescriptions.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: 'dispensed',
-              dispensedBy: 'current_user',
-              dispensedAt: new Date().toISOString(),
-              dispensedNotes: 'Dispensed and patient counseled',
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
-    setFilteredPrescriptions(
-      filteredPrescriptions.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: 'dispensed',
-              dispensedBy: 'current_user',
-              dispensedAt: new Date().toISOString(),
-              dispensedNotes: 'Dispensed and patient counseled',
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
+    const updatePrescription = (p: Prescription) =>
+      p.id === id
+        ? {
+            ...p,
+            status: 'dispensed' as const,
+            dispensedBy: 'current_user',
+            dispensedAt: new Date().toISOString(),
+            dispensedNotes: 'Dispensed and patient counseled',
+            updatedAt: new Date().toISOString(),
+          }
+        : p;
+
+    setPrescriptions(prescriptions.map(updatePrescription));
+    setFilteredPrescriptions(filteredPrescriptions.map(updatePrescription));
     setSnackbar({ open: true, message: 'Prescription dispensed successfully', severity: 'success' });
     setOpenViewDialog(false);
   };
@@ -357,30 +307,22 @@ export const Prescriptions = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'verified':
-        return 'info';
-      case 'dispensed':
-        return 'success';
-      default:
-        return 'default';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'verified': return 'bg-blue-100 text-blue-800';
+      case 'dispensed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'verified':
-        return <CheckCircle fontSize="small" />;
-      case 'dispensed':
-        return <LocalPharmacy fontSize="small" />;
-      default:
-        return null;
+      case 'verified': return '✓';
+      case 'dispensed': return '💊';
+      default: return '⏱️';
     }
   };
 
   const handleOCRUploadComplete = (result: OCRResult) => {
-    // Populate form with OCR extracted data
     formik.setValues({
       customerName: result.extractedData.patientName || '',
       customerPhone: '',
@@ -389,14 +331,13 @@ export const Prescriptions = () => {
       notes: `OCR Extracted - Confidence: ${result.confidence.toFixed(1)}%\n${result.extractedData.hospitalName ? `Hospital: ${result.extractedData.hospitalName}\n` : ''}${result.extractedData.date ? `Date: ${result.extractedData.date}` : ''}`,
     });
 
-    // Convert OCR medications to prescription medicines
     const medicines: MedicineItem[] = result.extractedData.medications.map((med, index) => ({
       medicineId: `temp_${index}`,
       medicineName: med.name,
       dosage: med.dosage || '',
       frequency: med.frequency || '',
       duration: med.duration || '',
-      quantity: 0, // To be filled manually
+      quantity: 0,
     }));
 
     setPrescriptionMedicines(medicines);
@@ -409,496 +350,512 @@ export const Prescriptions = () => {
     });
   };
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-          📋 Prescriptions
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Upload />}
-            onClick={() => setOpenOCRDialog(true)}
-            sx={{ borderColor: '#667eea', color: '#667eea', '&:hover': { borderColor: '#764ba2', bgcolor: '#f8f9ff' } }}
-          >
-            Upload with AI OCR
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-          >
-            New Prescription
-          </Button>
-        </Box>
-      </Box>
+  const tabs = [
+    { label: 'All', count: prescriptions.length },
+    { label: 'Pending', count: prescriptions.filter((p) => p.status === 'pending').length },
+    { label: 'Verified', count: prescriptions.filter((p) => p.status === 'verified').length },
+    { label: 'Dispensed', count: prescriptions.filter((p) => p.status === 'dispensed').length },
+  ];
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">📋 Prescriptions</h1>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setOpenOCRDialog(true)}
+            className="px-4 py-2 border-2 border-primary text-primary rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2"
+          >
+            <span>📤</span> Upload with AI OCR
+          </button>
+          <button
+            onClick={() => handleOpenDialog()}
+            className="px-6 py-2 bg-primary text-dark font-semibold rounded-lg hover:bg-primary-dark transition-all flex items-center gap-2"
+          >
+            <span>+</span> New Prescription
+          </button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <div className="relative">
+          <input
+            type="text"
             placeholder="Search by customer name, phone, or doctor..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
-        </CardContent>
-      </Card>
+          <span className="absolute left-3 top-3 text-gray-400">🔍</span>
+        </div>
+      </div>
 
-      <Card>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label={`All (${prescriptions.length})`} />
-          <Tab label={`Pending (${prescriptions.filter((p) => p.status === 'pending').length})`} />
-          <Tab label={`Verified (${prescriptions.filter((p) => p.status === 'verified').length})`} />
-          <Tab label={`Dispensed (${prescriptions.filter((p) => p.status === 'dispensed').length})`} />
-        </Tabs>
+      {/* Tabs and Table */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <div className="flex">
+            {tabs.map((tab, index) => (
+              <button
+                key={index}
+                onClick={() => handleTabChange(index)}
+                className={`px-6 py-3 text-sm font-medium transition-colors ${
+                  tabValue === index
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Prescription ID</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Doctor</TableCell>
-                <TableCell>Medicines</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Prescription ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Doctor</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Medicines</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Created</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
               {filteredPrescriptions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
-                      No prescriptions found
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                    No prescriptions found
+                  </td>
+                </tr>
               ) : (
                 filteredPrescriptions.map((prescription) => (
-                  <TableRow key={prescription.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {prescription.id}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                          <Person fontSize="small" />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2">{prescription.customerName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {prescription.customerPhone}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <LocalHospital fontSize="small" color="primary" />
-                        <Box>
-                          <Typography variant="body2">{prescription.doctorName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {prescription.doctorLicense}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={`${prescription.medicines.length} medicine(s)`} size="small" />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={prescription.status.toUpperCase()}
-                        size="small"
-                        color={getStatusColor(prescription.status)}
-                        icon={getStatusIcon(prescription.status) || undefined}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {new Date(prescription.createdAt).toLocaleDateString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(prescription.createdAt).toLocaleTimeString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleViewPrescription(prescription)}>
-                        <Visibility fontSize="small" />
-                      </IconButton>
+                  <tr key={prescription.id} className="hover:bg-blue-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-bold text-gray-900">{prescription.id}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-dark font-bold text-sm">
+                          {prescription.customerName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{prescription.customerName}</p>
+                          <p className="text-xs text-gray-600">{prescription.customerPhone}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary">🏥</span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{prescription.doctorName}</p>
+                          <p className="text-xs text-gray-600">{prescription.doctorLicense}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                        {prescription.medicines.length} medicine(s)
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(prescription.status)}`}>
+                        <span>{getStatusIcon(prescription.status)}</span>
+                        {prescription.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-gray-900">{new Date(prescription.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-600">{new Date(prescription.createdAt).toLocaleTimeString()}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleViewPrescription(prescription)}
+                        className="p-2 text-primary hover:bg-blue-50 rounded-lg transition-colors mr-1"
+                        title="View"
+                      >
+                        👁️
+                      </button>
                       {prescription.status === 'pending' && (
                         <>
-                          <IconButton size="small" onClick={() => handleOpenDialog(prescription)}>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDeletePrescription(prescription.id)}>
-                            <Delete fontSize="small" />
-                          </IconButton>
+                          <button
+                            onClick={() => handleOpenDialog(prescription)}
+                            className="p-2 text-primary hover:bg-blue-50 rounded-lg transition-colors mr-1"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeletePrescription(prescription.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
                         </>
                       )}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* Add/Edit Prescription Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedPrescription ? 'Edit Prescription' : 'New Prescription'}
-        </DialogTitle>
-        <form onSubmit={formik.handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="customerName"
-                  name="customerName"
-                  label="Customer Name"
-                  value={formik.values.customerName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.customerName && Boolean(formik.errors.customerName)}
-                  helperText={formik.touched.customerName && formik.errors.customerName}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="customerPhone"
-                  name="customerPhone"
-                  label="Customer Phone"
-                  value={formik.values.customerPhone}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.customerPhone && Boolean(formik.errors.customerPhone)}
-                  helperText={formik.touched.customerPhone && formik.errors.customerPhone}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="doctorName"
-                  name="doctorName"
-                  label="Doctor Name"
-                  value={formik.values.doctorName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.doctorName && Boolean(formik.errors.doctorName)}
-                  helperText={formik.touched.doctorName && formik.errors.doctorName}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="doctorLicense"
-                  name="doctorLicense"
-                  label="License Number"
-                  value={formik.values.doctorLicense}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.doctorLicense && Boolean(formik.errors.doctorLicense)}
-                  helperText={formik.touched.doctorLicense && formik.errors.doctorLicense}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="notes"
-                  name="notes"
-                  label="Notes"
-                  multiline
-                  rows={2}
-                  value={formik.values.notes}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    Medicines
-                  </Typography>
-                  <Button startIcon={<Add />} onClick={handleAddMedicine} size="small">
-                    Add Medicine
-                  </Button>
-                </Box>
-                {prescriptionMedicines.map((medicine, index) => (
-                  <Card key={index} variant="outlined" sx={{ mb: 2, p: 2 }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          select
-                          size="small"
-                          label="Medicine"
-                          value={medicine.medicineId}
-                          onChange={(e) => handleUpdateMedicine(index, 'medicineId', e.target.value)}
-                          SelectProps={{ native: true }}
-                        >
-                          <option value="">Select Medicine</option>
-                          {mockMedicines.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name}
-                            </option>
-                          ))}
-                        </TextField>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Dosage"
-                          value={medicine.dosage}
-                          onChange={(e) => handleUpdateMedicine(index, 'dosage', e.target.value)}
-                          placeholder="e.g., 500mg"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Frequency"
-                          value={medicine.frequency}
-                          onChange={(e) => handleUpdateMedicine(index, 'frequency', e.target.value)}
-                          placeholder="e.g., 2 times daily"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Duration"
-                          value={medicine.duration}
-                          onChange={(e) => handleUpdateMedicine(index, 'duration', e.target.value)}
-                          placeholder="e.g., 7 days"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          type="number"
-                          label="Quantity"
-                          value={medicine.quantity}
-                          onChange={(e) => handleUpdateMedicine(index, 'quantity', Number(e.target.value))}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={1}>
-                        <IconButton color="error" onClick={() => handleRemoveMedicine(index)}>
-                          <Delete />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </Card>
-                ))}
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    Prescription Image
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    startIcon={<Upload />}
-                    fullWidth
-                  >
-                    Upload Prescription Scan
-                    <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-                  </Button>
-                  {imagePreview && (
-                    <Box sx={{ mt: 2, position: 'relative' }}>
-                      <img
-                        src={imagePreview}
-                        alt="Prescription preview"
-                        style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px' }}
+      {/* Add/Edit Dialog */}
+      {openDialog && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={handleCloseDialog} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {selectedPrescription ? 'Edit Prescription' : 'New Prescription'}
+                </h2>
+              </div>
+
+              <form onSubmit={formik.handleSubmit}>
+                <div className="px-6 py-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                      <input
+                        type="text"
+                        name="customerName"
+                        value={formik.values.customerName}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                          formik.touched.customerName && formik.errors.customerName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
-                      <IconButton
-                        size="small"
-                        sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper' }}
-                        onClick={() => setImagePreview('')}
+                      {formik.touched.customerName && formik.errors.customerName && (
+                        <p className="mt-1 text-xs text-red-600">{formik.errors.customerName}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Customer Phone *</label>
+                      <input
+                        type="text"
+                        name="customerPhone"
+                        value={formik.values.customerPhone}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                          formik.touched.customerPhone && formik.errors.customerPhone ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {formik.touched.customerPhone && formik.errors.customerPhone && (
+                        <p className="mt-1 text-xs text-red-600">{formik.errors.customerPhone}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name *</label>
+                      <input
+                        type="text"
+                        name="doctorName"
+                        value={formik.values.doctorName}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                          formik.touched.doctorName && formik.errors.doctorName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {formik.touched.doctorName && formik.errors.doctorName && (
+                        <p className="mt-1 text-xs text-red-600">{formik.errors.doctorName}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">License Number *</label>
+                      <input
+                        type="text"
+                        name="doctorLicense"
+                        value={formik.values.doctorLicense}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                          formik.touched.doctorLicense && formik.errors.doctorLicense ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {formik.touched.doctorLicense && formik.errors.doctorLicense && (
+                        <p className="mt-1 text-xs text-red-600">{formik.errors.doctorLicense}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea
+                      name="notes"
+                      rows={2}
+                      value={formik.values.notes}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-bold text-gray-900">Medicines</h3>
+                      <button
+                        type="button"
+                        onClick={handleAddMedicine}
+                        className="px-3 py-1 text-sm bg-primary text-dark rounded-lg hover:bg-primary-dark flex items-center gap-1"
                       >
-                        <Close />
-                      </IconButton>
-                    </Box>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {selectedPrescription ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+                        <span>+</span> Add Medicine
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {prescriptionMedicines.map((medicine, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Medicine</label>
+                              <select
+                                value={medicine.medicineId}
+                                onChange={(e) => handleUpdateMedicine(index, 'medicineId', e.target.value)}
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                              >
+                                <option value="">Select Medicine</option>
+                                {mockMedicines.map((m) => (
+                                  <option key={m.id} value={m.id}>{m.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Dosage</label>
+                              <input
+                                type="text"
+                                value={medicine.dosage}
+                                onChange={(e) => handleUpdateMedicine(index, 'dosage', e.target.value)}
+                                placeholder="e.g., 500mg"
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Frequency</label>
+                              <input
+                                type="text"
+                                value={medicine.frequency}
+                                onChange={(e) => handleUpdateMedicine(index, 'frequency', e.target.value)}
+                                placeholder="e.g., 2 times daily"
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                              <input
+                                type="text"
+                                value={medicine.duration}
+                                onChange={(e) => handleUpdateMedicine(index, 'duration', e.target.value)}
+                                placeholder="e.g., 7 days"
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                              <input
+                                type="number"
+                                value={medicine.quantity}
+                                onChange={(e) => handleUpdateMedicine(index, 'quantity', Number(e.target.value))}
+                                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMedicine(index)}
+                                className="w-full px-3 py-1.5 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-50"
+                              >
+                                🗑️ Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-sm font-bold text-gray-900 mb-3">Prescription Image</h3>
+                    <label className="block w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-primary hover:bg-blue-50 transition">
+                      <span className="text-sm text-gray-600">📤 Upload Prescription Scan</span>
+                      <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+                    </label>
+                    {imagePreview && (
+                      <div className="mt-3 relative">
+                        <img
+                          src={imagePreview}
+                          alt="Prescription preview"
+                          className="w-full max-h-48 object-contain rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setImagePreview('')}
+                          className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-lg hover:bg-gray-100"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseDialog}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-primary text-dark font-semibold rounded-lg hover:bg-primary-dark"
+                  >
+                    {selectedPrescription ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* View Prescription Dialog */}
-      <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)} maxWidth="md" fullWidth>
-        {selectedPrescription && (
-          <>
-            <DialogTitle>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">Prescription Details</Typography>
-                <Chip
-                  label={selectedPrescription.status.toUpperCase()}
-                  color={getStatusColor(selectedPrescription.status)}
-                  icon={getStatusIcon(selectedPrescription.status) || undefined}
-                />
-              </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Patient Information
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {selectedPrescription.customerName}
-                    </Typography>
-                    <Typography variant="body2">{selectedPrescription.customerPhone}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'background.default' }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Prescriber Information
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {selectedPrescription.doctorName}
-                    </Typography>
-                    <Typography variant="body2">License: {selectedPrescription.doctorLicense}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    Prescribed Medicines
-                  </Typography>
-                  <List>
-                    {selectedPrescription.medicines.map((medicine, index) => (
-                      <ListItem key={index} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1 }}>
-                        <ListItemText
-                          primary={medicine.medicineName}
-                          secondary={
-                            <Stack spacing={0.5} sx={{ mt: 1 }}>
-                              <Typography variant="caption">
-                                <strong>Dosage:</strong> {medicine.dosage}
-                              </Typography>
-                              <Typography variant="caption">
-                                <strong>Frequency:</strong> {medicine.frequency}
-                              </Typography>
-                              <Typography variant="caption">
-                                <strong>Duration:</strong> {medicine.duration}
-                              </Typography>
-                              <Typography variant="caption">
-                                <strong>Quantity:</strong> {medicine.quantity}
-                              </Typography>
-                            </Stack>
-                          }
-                        />
-                      </ListItem>
+      {openViewDialog && selectedPrescription && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setOpenViewDialog(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-900">Prescription Details</h2>
+                <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedPrescription.status)}`}>
+                  {getStatusIcon(selectedPrescription.status)} {selectedPrescription.status.toUpperCase()}
+                </span>
+              </div>
+
+              <div className="px-6 py-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-2">Patient Information</h3>
+                    <p className="text-lg font-bold text-gray-900">{selectedPrescription.customerName}</p>
+                    <p className="text-sm text-gray-700">{selectedPrescription.customerPhone}</p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-2">Prescriber Information</h3>
+                    <p className="text-lg font-bold text-gray-900">{selectedPrescription.doctorName}</p>
+                    <p className="text-sm text-gray-700">License: {selectedPrescription.doctorLicense}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-3">Prescribed Medicines</h3>
+                  <div className="space-y-2">
+                    {selectedPrescription.medicines.map((medicine: { medicineId: string; medicineName: string; dosage: string; frequency: string; duration: string; quantity: number }, index: number) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-3">
+                        <p className="font-semibold text-gray-900">{medicine.medicineName}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
+                          <p><strong>Dosage:</strong> {medicine.dosage}</p>
+                          <p><strong>Frequency:</strong> {medicine.frequency}</p>
+                          <p><strong>Duration:</strong> {medicine.duration}</p>
+                          <p><strong>Quantity:</strong> {medicine.quantity}</p>
+                        </div>
+                      </div>
                     ))}
-                  </List>
-                </Grid>
+                  </div>
+                </div>
+
                 {selectedPrescription.notes && (
-                  <Grid item xs={12}>
-                    <Alert severity="info">
-                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                        Notes:
-                      </Typography>
-                      <Typography variant="body2">{selectedPrescription.notes}</Typography>
-                    </Alert>
-                  </Grid>
+                  <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-bold text-blue-900">Notes:</p>
+                    <p className="text-sm text-blue-800 mt-1">{selectedPrescription.notes}</p>
+                  </div>
                 )}
+
                 {selectedPrescription.imageUrl && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                      Prescription Image
-                    </Typography>
-                    <Box
-                      component="img"
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Prescription Image</h3>
+                    <img
                       src={selectedPrescription.imageUrl}
                       alt="Prescription"
-                      sx={{ width: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
+                      className="w-full max-h-96 object-contain rounded-lg border border-gray-200"
                     />
-                  </Grid>
+                  </div>
                 )}
+
                 {selectedPrescription.verifiedAt && (
-                  <Grid item xs={12}>
-                    <Alert severity="success">
-                      <Typography variant="body2">
-                        <strong>Verified by:</strong> {selectedPrescription.verifiedBy} on{' '}
-                        {new Date(selectedPrescription.verifiedAt).toLocaleString()}
-                      </Typography>
-                      {selectedPrescription.verificationNotes && (
-                        <Typography variant="body2">{selectedPrescription.verificationNotes}</Typography>
-                      )}
-                    </Alert>
-                  </Grid>
+                  <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <strong>Verified by:</strong> {selectedPrescription.verifiedBy} on{' '}
+                      {new Date(selectedPrescription.verifiedAt).toLocaleString()}
+                    </p>
+                    {selectedPrescription.verificationNotes && (
+                      <p className="text-sm text-green-800 mt-1">{selectedPrescription.verificationNotes}</p>
+                    )}
+                  </div>
                 )}
+
                 {selectedPrescription.dispensedAt && (
-                  <Grid item xs={12}>
-                    <Alert severity="success">
-                      <Typography variant="body2">
-                        <strong>Dispensed by:</strong> {selectedPrescription.dispensedBy} on{' '}
-                        {new Date(selectedPrescription.dispensedAt).toLocaleString()}
-                      </Typography>
-                      {selectedPrescription.dispensedNotes && (
-                        <Typography variant="body2">{selectedPrescription.dispensedNotes}</Typography>
-                      )}
-                    </Alert>
-                  </Grid>
+                  <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <strong>Dispensed by:</strong> {selectedPrescription.dispensedBy} on{' '}
+                      {new Date(selectedPrescription.dispensedAt).toLocaleString()}
+                    </p>
+                    {selectedPrescription.dispensedNotes && (
+                      <p className="text-sm text-green-800 mt-1">{selectedPrescription.dispensedNotes}</p>
+                    )}
+                  </div>
                 )}
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenViewDialog(false)}>Close</Button>
-              {selectedPrescription.status === 'pending' && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<CheckCircle />}
-                  onClick={() => handleVerifyPrescription(selectedPrescription.id)}
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  onClick={() => setOpenViewDialog(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
-                  Verify
-                </Button>
-              )}
-              {selectedPrescription.status === 'verified' && (
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<LocalPharmacy />}
-                  onClick={() => handleDispensePrescription(selectedPrescription.id)}
-                >
-                  Dispense
-                </Button>
-              )}
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+                  Close
+                </button>
+                {selectedPrescription.status === 'pending' && (
+                  <button
+                    onClick={() => handleVerifyPrescription(selectedPrescription.id)}
+                    className="px-6 py-2 bg-primary text-dark font-semibold rounded-lg hover:bg-primary-dark flex items-center gap-2"
+                  >
+                    <span>✓</span> Verify
+                  </button>
+                )}
+                {selectedPrescription.status === 'verified' && (
+                  <button
+                    onClick={() => handleDispensePrescription(selectedPrescription.id)}
+                    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  >
+                    <span>💊</span> Dispense
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* AI OCR Upload Dialog */}
       <PrescriptionUploadDialog
@@ -908,16 +865,21 @@ export const Prescriptions = () => {
       />
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+            snackbar.severity === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+          }`}>
+            <span>{snackbar.message}</span>
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className="text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

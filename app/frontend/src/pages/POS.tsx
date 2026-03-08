@@ -1,45 +1,21 @@
 import { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Grid,
-  IconButton,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Snackbar,
-  MenuItem,
-  Chip,
-  Stack,
-  CircularProgress,
-  Collapse,
-} from '@mui/material';
-import {
-  Add,
-  Remove,
-  Delete,
+  Plus,
+  Minus,
+  Trash2,
   Search,
   ShoppingCart,
-  Payment,
-  Person,
+  CreditCard,
+  User,
   Receipt,
-  Clear,
-  Warning as WarningIcon,
-  ExpandMore,
-  ExpandLess,
-} from '@mui/icons-material';
+  X,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  XCircle,
+  Loader,
+} from 'lucide-react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine, Customer, InventoryItem } from '../types';
@@ -113,9 +89,12 @@ export const POS = () => {
       setLoading(true);
       const response = await inventoryService.getInventory(1, 1000); // Get all inventory
       
+      // Response structure: { success: true, data: { inventory: [...], pagination: {...} } }
+      const inventoryData = response.data?.inventory || [];
+      
       // Transform inventory items to medicine format for POS
-      const medicinesWithStock: MedicineWithStock[] = response.data.map((item: any) => ({
-        id: item.medicine?.id || item.medicineId,
+      const medicinesWithStock: MedicineWithStock[] = inventoryData.map((item: any) => ({
+        id: item.id, // Use inventory item ID as unique identifier (not medicine ID)
         name: item.medicine?.name || item.medicineName || 'Unknown Medicine',
         genericName: item.medicine?.genericName || '',
         category: item.medicine?.category || '',
@@ -349,446 +328,554 @@ export const POS = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+    <div>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">
         🛒 Point of Sale
-      </Typography>
+      </h1>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Side - Product Search */}
-        <Grid item xs={12} md={7}>
-          <Card>
-            <CardContent>
-              <TextField
-                fullWidth
+        <div className="lg:col-span-7">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="relative mb-4">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
                 placeholder="Search medicines..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
+            </div>
 
-              {loading && medicines.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                  <CircularProgress />
-                </Box>
-              ) : filteredMedicines.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {searchQuery ? 'No medicines found matching your search' : 'No medicines available'}
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ maxHeight: '600px', overflowY: 'auto' }}>
-                  <Grid container spacing={2}>
-                    {filteredMedicines.map((medicine) => (
-                    <Grid item xs={12} sm={6} key={medicine.id}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            boxShadow: 3,
-                            transform: 'translateY(-2px)',
-                          },
-                        }}
-                        onClick={() => addToCart(medicine)}
-                      >
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                            {medicine.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {medicine.genericName}
-                          </Typography>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                            <Typography variant="h6" color="primary">
-                              ₹{medicine.unitPrice}
-                            </Typography>
-                            <Chip
-                              label={`Stock: ${medicine.stock}`}
-                              size="small"
-                              color={medicine.stock < 50 ? 'warning' : 'success'}
-                            />
-                          </Box>
-                          {medicine.requiresPrescription && (
-                            <Chip label="Rx Required" size="small" color="error" sx={{ mt: 1 }} />
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Grid>
+            {loading && medicines.length === 0 ? (
+              <div className="flex justify-center items-center min-h-[200px]">
+                <Loader className="h-8 w-8 text-indigo-600 animate-spin" />
+              </div>
+            ) : filteredMedicines.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-500">
+                  {searchQuery ? 'No medicines found matching your search' : 'No medicines available'}
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredMedicines.map((medicine) => (
+                    <div
+                      key={medicine.id}
+                      className="border border-gray-200 rounded-lg p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
+                      onClick={() => addToCart(medicine)}
+                    >
+                      <h3 className="font-semibold text-gray-900 mb-1">
+                        {medicine.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {medicine.genericName}
+                      </p>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xl font-bold text-indigo-600">
+                          ₹{medicine.unitPrice}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${medicine.stock < 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                          Stock: {medicine.stock}
+                        </span>
+                      </div>
+                      {medicine.requiresPrescription && (
+                        <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-red-100 text-red-800">
+                          Rx Required
+                        </span>
+                      )}
+                    </div>
                   ))}
-                </Grid>
-              </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Right Side - Cart & Checkout */}
-        <Grid item xs={12} md={5}>
-          <Stack spacing={2}>
-            {/* Customer Section */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Person /> Customer
-                </Typography>
-                {customer ? (
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {customer.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {customer.phone}
-                    </Typography>
-                    <Chip
-                      label={`${customer.loyaltyPoints} Loyalty Points`}
-                      size="small"
-                      color="primary"
-                      sx={{ mt: 1 }}
-                    />
-                    <Button size="small" onClick={() => setCustomer(null)} sx={{ ml: 1 }}>
-                      Change
-                    </Button>
-                  </Box>
-                ) : (
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      size="small"
-                      placeholder="Phone Number"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleCustomerSearch()}
-                    />
-                    <Button variant="outlined" onClick={handleCustomerSearch}>
-                      Search
-                    </Button>
-                    <Button variant="outlined" onClick={() => setOpenCustomerDialog(true)}>
-                      New
-                    </Button>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Cart */}
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ShoppingCart /> Cart ({cart.length})
-                  </Typography>
-                  {cart.length > 0 && (
-                    <Button size="small" startIcon={<Clear />} onClick={clearCart}>
-                      Clear
-                    </Button>
-                  )}
-                </Box>
-
-                <List sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {cart.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-                      Cart is empty
-                    </Typography>
-                  ) : (
-                    cart.map((item) => (
-                      <ListItem
-                        key={item.medicineId}
-                        sx={{
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <ListItemText
-                          primary={item.medicineName}
-                          secondary={`₹${item.unitPrice} × ${item.quantity} = ₹${(item.unitPrice * item.quantity).toFixed(2)}`}
-                        />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <IconButton size="small" onClick={() => updateQuantity(item.medicineId, -1)}>
-                            <Remove fontSize="small" />
-                          </IconButton>
-                          <Typography>{item.quantity}</Typography>
-                          <IconButton size="small" onClick={() => updateQuantity(item.medicineId, 1)}>
-                            <Add fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => removeFromCart(item.medicineId)}>
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </ListItem>
-                    ))
-                  )}
-                </List>
-              </CardContent>
-            </Card>
-
-            {/* Drug Interaction Warnings */}
-            {cart.length >= 2 && (
-              <Card sx={{ 
-                borderLeft: interactions.length > 0 ? '4px solid' : 'none',
-                borderColor: interactions.some(i => i.severity === 'major') ? 'error.main' : 
-                             interactions.some(i => i.severity === 'moderate') ? 'warning.main' : 'info.main'
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WarningIcon color={interactions.length > 0 ? 'warning' : 'action'} />
-                      Drug Interactions
-                      {checkingInteractions && <CircularProgress size={16} />}
-                    </Typography>
-                    <IconButton size="small" onClick={() => setShowInteractions(!showInteractions)}>
-                      {showInteractions ? <ExpandLess /> : <ExpandMore />}
-                    </IconButton>
-                  </Box>
-                  
-                  <Collapse in={showInteractions}>
-                    {interactions.length === 0 ? (
-                      <Alert severity="success" sx={{ mt: 1 }}>
-                        ✓ No known drug interactions detected
-                      </Alert>
-                    ) : (
-                      <Stack spacing={1} sx={{ mt: 1 }}>
-                        {interactions.map((interaction, index) => (
-                          <Alert 
-                            key={index} 
-                            severity={
-                              interaction.severity === 'major' ? 'error' : 
-                              interaction.severity === 'moderate' ? 'warning' : 'info'
-                            }
-                            sx={{ fontSize: '0.85rem' }}
-                          >
-                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                              {interaction.drugs.join(' + ')}
-                            </Typography>
-                            <Typography variant="caption" display="block">
-                              {interaction.description}
-                            </Typography>
-                            <Chip 
-                              label={interaction.severity.toUpperCase()} 
-                              size="small" 
-                              color={
-                                interaction.severity === 'major' ? 'error' : 
-                                interaction.severity === 'moderate' ? 'warning' : 'info'
-                              }
-                              sx={{ mt: 0.5 }}
-                            />
-                          </Alert>
-                        ))}
-                      </Stack>
-                    )}
-                  </Collapse>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Billing */}
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Billing Summary
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Discount (%)"
-                  type="number"
-                  value={discount}
-                  onChange={(e) => setDiscount(Math.max(0, Math.min(100, Number(e.target.value))))}
-                  sx={{ mb: 2 }}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Customer Section */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <User className="h-5 w-5" /> Customer
+            </h2>
+            {customer ? (
+              <div>
+                <p className="font-bold text-gray-900">
+                  {customer.name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {customer.phone}
+                </p>
+                <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">
+                  {customer.loyaltyPoints} Loyalty Points
+                </span>
+                <button
+                  onClick={() => setCustomer(null)}
+                  className="ml-2 text-sm text-indigo-600 hover:text-indigo-800"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCustomerSearch()}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-
-                <TextField
-                  fullWidth
-                  size="small"
-                  select
-                  label="Payment Method"
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  sx={{ mb: 2 }}
+                <button
+                  onClick={handleCustomerSearch}
+                  className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50"
                 >
-                  <MenuItem value="cash">Cash</MenuItem>
-                  <MenuItem value="card">Card</MenuItem>
-                  <MenuItem value="mobile">Mobile Payment</MenuItem>
-                </TextField>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Subtotal:</Typography>
-                  <Typography>₹{subtotal.toFixed(2)}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Discount ({discount}%):</Typography>
-                  <Typography color="error">-₹{discountAmount.toFixed(2)}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Tax (5%):</Typography>
-                  <Typography>₹{tax.toFixed(2)}</Typography>
-                </Box>
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    Total:
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }} color="primary">
-                    ₹{total.toFixed(2)}
-                  </Typography>
-                </Box>
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Payment />}
-                  onClick={handleCheckout}
-                  disabled={cart.length === 0 || loading}
-                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  }}
+                  Search
+                </button>
+                <button
+                  onClick={() => setOpenCustomerDialog(true)}
+                  className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50"
                 >
-                  {loading ? 'Processing...' : 'Complete Sale'}
-                </Button>
-              </CardContent>
-            </Card>
-          </Stack>
-        </Grid>
-      </Grid>
+                  New
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Cart */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" /> Cart ({cart.length})
+              </h2>
+              {cart.length > 0 && (
+                <button
+                  onClick={clearCart}
+                  className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                >
+                  <X className="h-4 w-4" /> Clear
+                </button>
+              )}
+            </div>
+
+            <div className="max-h-[300px] overflow-y-auto">
+              {cart.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Cart is empty
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {cart.map((item) => (
+                    <div
+                      key={item.medicineId}
+                      className="border border-gray-200 rounded-lg p-3"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.medicineName}</p>
+                          <p className="text-sm text-gray-500">
+                            ₹{item.unitPrice} × {item.quantity} = ₹{(item.unitPrice * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => updateQuantity(item.medicineId, -1)}
+                          className="p-1 rounded hover:bg-gray-100"
+                        >
+                          <Minus className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <span className="px-2 text-sm font-medium">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.medicineId, 1)}
+                          className="p-1 rounded hover:bg-gray-100"
+                        >
+                          <Plus className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.medicineId)}
+                          className="p-1 rounded hover:bg-red-50 ml-2"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Drug Interaction Warnings */}
+          {cart.length >= 2 && (
+            <div className={`bg-white rounded-xl shadow-md p-6 ${
+              interactions.length > 0 
+                ? interactions.some(i => i.severity === 'major') 
+                  ? 'border-l-4 border-red-500' 
+                  : interactions.some(i => i.severity === 'moderate') 
+                    ? 'border-l-4 border-yellow-500' 
+                    : 'border-l-4 border-blue-500'
+                : ''
+            }`}>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <AlertTriangle className={`h-5 w-5 ${interactions.length > 0 ? 'text-yellow-500' : 'text-gray-400'}`} />
+                  Drug Interactions
+                  {checkingInteractions && <Loader className="h-4 w-4 text-indigo-600 animate-spin" />}
+                </h2>
+                <button
+                  onClick={() => setShowInteractions(!showInteractions)}
+                  className="p-1 rounded hover:bg-gray-100"
+                >
+                  {showInteractions ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </button>
+              </div>
+              
+              {showInteractions && (
+                <div className="mt-3">
+                  {interactions.length === 0 ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <p className="text-sm text-green-800">✓ No known drug interactions detected</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {interactions.map((interaction, index) => (
+                        <div 
+                          key={index} 
+                          className={`border rounded-lg p-3 ${
+                            interaction.severity === 'major' 
+                              ? 'bg-red-50 border-red-200' 
+                              : interaction.severity === 'moderate' 
+                                ? 'bg-yellow-50 border-yellow-200' 
+                                : 'bg-blue-50 border-blue-200'
+                          }`}
+                        >
+                          <p className="font-semibold text-sm mb-1">
+                            {interaction.drugs.join(' + ')}
+                          </p>
+                          <p className="text-xs text-gray-600 mb-2">
+                            {interaction.description}
+                          </p>
+                          <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                            interaction.severity === 'major' 
+                              ? 'bg-red-100 text-red-800' 
+                              : interaction.severity === 'moderate' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {interaction.severity.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Billing */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Billing Summary
+            </h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Discount (%)
+              </label>
+              <input
+                type="number"
+                value={discount}
+                onChange={(e) => setDiscount(Math.max(0, Math.min(100, Number(e.target.value))))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Method
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="mobile">Mobile Payment</option>
+              </select>
+            </div>
+
+            <hr className="my-4 border-gray-200" />
+
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="text-gray-900">₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Discount ({discount}%):</span>
+                <span className="text-red-600">-₹{discountAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tax (5%):</span>
+                <span className="text-gray-900">₹{tax.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <hr className="my-3 border-gray-200" />
+
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-bold text-gray-900">Total:</span>
+              <span className="text-lg font-bold text-indigo-600">₹{total.toFixed(2)}</span>
+            </div>
+
+            <button
+              onClick={handleCheckout}
+              disabled={cart.length === 0 || loading}
+              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader className="h-5 w-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-5 w-5" />
+                  Complete Sale
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Add Customer Dialog */}
-      <Dialog open={openCustomerDialog} onClose={() => setOpenCustomerDialog(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Add New Customer</DialogTitle>
-        <form onSubmit={customerFormik.handleSubmit}>
-          <DialogContent>
-            <TextField
-              fullWidth
-              id="name"
-              name="name"
-              label="Customer Name"
-              value={customerFormik.values.name}
-              onChange={customerFormik.handleChange}
-              onBlur={customerFormik.handleBlur}
-              error={customerFormik.touched.name && Boolean(customerFormik.errors.name)}
-              helperText={customerFormik.touched.name && customerFormik.errors.name}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              id="phone"
-              name="phone"
-              label="Phone Number"
-              value={customerFormik.values.phone}
-              onChange={customerFormik.handleChange}
-              onBlur={customerFormik.handleBlur}
-              error={customerFormik.touched.phone && Boolean(customerFormik.errors.phone)}
-              helperText={customerFormik.touched.phone && customerFormik.errors.phone}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCustomerDialog(false)}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              Add Customer
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      {openCustomerDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Customer</h2>
+              <button
+                onClick={() => setOpenCustomerDialog(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <form onSubmit={customerFormik.handleSubmit}>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Customer Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={customerFormik.values.name}
+                    onChange={customerFormik.handleChange}
+                    onBlur={customerFormik.handleBlur}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                      customerFormik.touched.name && customerFormik.errors.name
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                  />
+                  {customerFormik.touched.name && customerFormik.errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.name}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    value={customerFormik.values.phone}
+                    onChange={customerFormik.handleChange}
+                    onBlur={customerFormik.handleBlur}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                      customerFormik.touched.phone && customerFormik.errors.phone
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                  />
+                  {customerFormik.touched.phone && customerFormik.errors.phone && (
+                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.phone}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setOpenCustomerDialog(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700"
+                >
+                  Add Customer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Invoice Dialog */}
-      <Dialog open={openInvoiceDialog} onClose={() => setOpenInvoiceDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Receipt /> Invoice
-        </DialogTitle>
-        <DialogContent>
-          {invoiceData && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {invoiceData.invoiceNumber}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {invoiceData.date}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle2" gutterBottom>
-                Customer: {invoiceData.customer.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Phone: {invoiceData.customer.phone}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              {invoiceData.items.map((item: CartItem) => (
-                <Box key={item.medicineId} sx={{ mb: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">{item.medicineName}</Typography>
-                    <Typography variant="body2">₹{(item.unitPrice * item.quantity).toFixed(2)}</Typography>
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {item.quantity} × ₹{item.unitPrice}
-                  </Typography>
-                </Box>
-              ))}
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography>Subtotal:</Typography>
-                <Typography>₹{invoiceData.subtotal.toFixed(2)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography>Discount:</Typography>
-                <Typography>-₹{invoiceData.discount.toFixed(2)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography>Tax:</Typography>
-                <Typography>₹{invoiceData.tax.toFixed(2)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">Total:</Typography>
-                <Typography variant="h6" color="primary">
-                  ₹{invoiceData.total.toFixed(2)}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Payment: {invoiceData.paymentMethod.toUpperCase()}
-              </Typography>
-              {customer && (
-                <Alert severity="success" sx={{ mt: 2 }}>
-                  Loyalty Points Earned: {invoiceData.loyaltyPointsEarned}
-                </Alert>
+      {openInvoiceDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-6 w-6 text-indigo-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Invoice</h2>
+              </div>
+              <button
+                onClick={() => setOpenInvoiceDialog(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6">
+              {invoiceData && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    {invoiceData.invoiceNumber}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    {invoiceData.date}
+                  </p>
+                  <hr className="my-4 border-gray-200" />
+                  <p className="font-medium text-gray-900 mb-1">
+                    Customer: {invoiceData.customer.name}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Phone: {invoiceData.customer.phone}
+                  </p>
+                  <hr className="my-4 border-gray-200" />
+                  <div className="space-y-3 mb-4">
+                    {invoiceData.items.map((item: CartItem) => (
+                      <div key={item.medicineId}>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-900">{item.medicineName}</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            ₹{(item.unitPrice * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {item.quantity} × ₹{item.unitPrice}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <hr className="my-4 border-gray-200" />
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-900">₹{invoiceData.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Discount:</span>
+                      <span className="text-gray-900">-₹{invoiceData.discount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tax:</span>
+                      <span className="text-gray-900">₹{invoiceData.tax.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center mb-4 pt-2 border-t border-gray-200">
+                    <span className="text-lg font-bold text-gray-900">Total:</span>
+                    <span className="text-lg font-bold text-indigo-600">
+                      ₹{invoiceData.total.toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Payment: {invoiceData.paymentMethod.toUpperCase()}
+                  </p>
+                  {customer && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <p className="text-sm text-green-800">
+                          Loyalty Points Earned: {invoiceData.loyaltyPointsEarned}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setOpenInvoiceDialog(false); clearCart(); }}>Close</Button>
-          <Button variant="contained" startIcon={<Receipt />} onClick={handlePrintInvoice}>
-            Print Invoice
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </div>
+            <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
+              <button
+                onClick={() => { setOpenInvoiceDialog(false); clearCart(); }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <button
+                onClick={handlePrintInvoice}
+                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 flex items-center gap-2"
+              >
+                <Receipt className="h-4 w-4" />
+                Print Invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={2000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {/* Snackbar/Toast Notification */}
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-slide-in">
+          <div className={`rounded-lg shadow-lg p-4 flex items-start gap-3 ${
+            snackbar.severity === 'success' ? 'bg-green-50 border border-green-200' :
+            snackbar.severity === 'error' ? 'bg-red-50 border border-red-200' :
+            snackbar.severity === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+            'bg-blue-50 border border-blue-200'
+          }`}>
+            {snackbar.severity === 'success' && <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />}
+            {snackbar.severity === 'error' && <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />}
+            {snackbar.severity === 'warning' && <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />}
+            <p className={`text-sm flex-1 ${
+              snackbar.severity === 'success' ? 'text-green-800' :
+              snackbar.severity === 'error' ? 'text-red-800' :
+              snackbar.severity === 'warning' ? 'text-yellow-800' :
+              'text-blue-800'
+            }`}>
+              {snackbar.message}
+            </p>
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className="flex-shrink-0"
+            >
+              <X className={`h-4 w-4 ${
+                snackbar.severity === 'success' ? 'text-green-600' :
+                snackbar.severity === 'error' ? 'text-red-600' :
+                snackbar.severity === 'warning' ? 'text-yellow-600' :
+                'text-blue-600'
+              }`} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

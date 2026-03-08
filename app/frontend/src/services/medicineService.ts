@@ -2,6 +2,12 @@ import api from './api';
 import type { ApiResponse, PaginatedResponse, Medicine } from '../types';
 
 export const medicineService = {
+  // Get all medicines without pagination
+  getAll: async (): Promise<Medicine[]> => {
+    const response = await api.get<any>('/medicines?limit=1000');
+    return response.data.data.medicines;
+  },
+
   // Get all medicines with pagination and search
   getMedicines: async (page: number = 1, limit: number = 10, search?: string) => {
     const params = new URLSearchParams({
@@ -21,13 +27,17 @@ export const medicineService = {
 
   // Create new medicine
   createMedicine: async (data: Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>): Promise<Medicine> => {
-    const response = await api.post<ApiResponse<Medicine>>('/medicines', data);
+    // Remove unitPrice as it's not supported by backend Medicine model
+    const { unitPrice, ...backendData } = data;
+    const response = await api.post<ApiResponse<Medicine>>('/medicines', backendData);
     return response.data.data;
   },
 
   // Update medicine
   updateMedicine: async (id: string, data: Partial<Medicine>): Promise<Medicine> => {
-    const response = await api.put<ApiResponse<Medicine>>(`/medicines/${id}`, data);
+    // Remove unitPrice as it's not supported by backend Medicine model
+    const { unitPrice, ...backendData } = data;
+    const response = await api.put<ApiResponse<Medicine>>(`/medicines/${id}`, backendData);
     return response.data.data;
   },
 

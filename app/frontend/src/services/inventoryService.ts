@@ -2,6 +2,12 @@ import api from './api';
 import type { ApiResponse, PaginatedResponse, InventoryItem } from '../types';
 
 export const inventoryService = {
+  // Get all inventory items without pagination
+  getAll: async (): Promise<InventoryItem[]> => {
+    const response = await api.get<any>('/inventory?limit=1000');
+    return response.data.data.inventory;
+  },
+
   // Get all inventory items with pagination
   getInventory: async (page: number = 1, limit: number = 10, search?: string) => {
     const params = new URLSearchParams({

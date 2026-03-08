@@ -28,7 +28,7 @@ export interface Medicine {
   category: string;
   manufacturer: string;
   description?: string;
-  unitPrice: number;
+  unitPrice?: number;
   requiresPrescription: boolean;
   createdAt: string;
   updatedAt: string;
@@ -42,9 +42,9 @@ export interface InventoryItem {
   batchNumber: string;
   quantity: number;
   expiryDate: string;
-  purchasePrice: number;
+  unitPrice: number;
   sellingPrice: number;
-  supplierId: string;
+  supplierId?: string;
   supplier?: Supplier;
   createdAt: string;
   updatedAt: string;
@@ -53,11 +53,27 @@ export interface InventoryItem {
 // Customer Types
 export interface Customer {
   id: string;
-  name: string;
-  phone: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string; // Computed field for compatibility
+  phoneNumber?: string;
+  phone?: string; // Computed field for compatibility
   email?: string;
   address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other';
+  allergies?: string[];
+  medicalConditions?: string[];
+  emergencyContact?: string;
+  emergencyPhone?: string;
   loyaltyPoints: number;
+  totalPurchases?: number;
+  lastVisit?: string;
+  notes?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,38 +1,17 @@
 import { useState } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Grid,
-  Paper,
-  Tabs,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Avatar,
-  Chip,
-  Divider,
-  Stack,
-} from '@mui/material';
-import {
   TrendingUp,
   TrendingDown,
-  Inventory,
-  People,
-  AttachMoney,
+  Package,
+  Users,
+  DollarSign,
   Download,
-  Assessment,
-  LocalPharmacy,
+  BarChart3,
+  Pill,
   ShoppingCart,
-  MonetizationOn,
-} from '@mui/icons-material';
+  CreditCard,
+  Calendar,
+} from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -115,708 +94,692 @@ export const Reports = () => {
 
   // Sales Report Tab
   const SalesReportTab = () => (
-    <Box>
-      <Grid container spacing={3}>
-        {/* Key Metrics */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Total Sales
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                    ₹69,500
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <TrendingUp fontSize="small" color="success" />
-                    <Typography variant="caption" color="success.main">
-                      +18.2%
-                    </Typography>
-                  </Box>
-                </Box>
-                <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
-                  <MonetizationOn />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Transactions
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                    380
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <TrendingUp fontSize="small" color="success" />
-                    <Typography variant="caption" color="success.main">
-                      +12.5%
-                    </Typography>
-                  </Box>
-                </Box>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                  <ShoppingCart />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Avg. Order Value
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                    ₹183
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <TrendingUp fontSize="small" color="success" />
-                    <Typography variant="caption" color="success.main">
-                      +5.1%
-                    </Typography>
-                  </Box>
-                </Box>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
-                  <AttachMoney />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Profit Margin
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                    28.5%
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <TrendingDown fontSize="small" color="error" />
-                    <Typography variant="caption" color="error.main">
-                      -2.3%
-                    </Typography>
-                  </Box>
-                </Box>
-                <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
-                  <Assessment />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {/* Total Sales */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Total Sales</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">₹69,500</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp size={16} className="text-green-600" />
+                <span className="text-sm text-green-600 font-medium">+18.2%</span>
+              </div>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-green-600 flex items-center justify-center">
+              <DollarSign size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
 
+        {/* Transactions */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Transactions</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">380</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp size={16} className="text-green-600" />
+                <span className="text-sm text-green-600 font-medium">+12.5%</span>
+              </div>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-indigo-600 flex items-center justify-center">
+              <ShoppingCart size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+
+        {/* Avg. Order Value */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Avg. Order Value</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">₹183</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp size={16} className="text-green-600" />
+                <span className="text-sm text-green-600 font-medium">+5.1%</span>
+              </div>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-amber-600 flex items-center justify-center">
+              <CreditCard size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+
+        {/* Profit Margin */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Profit Margin</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">28.5%</p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingDown size={16} className="text-red-600" />
+                <span className="text-sm text-red-600 font-medium">-2.3%</span>
+              </div>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-blue-600 flex items-center justify-center">
+              <BarChart3 size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Sales Trend Chart */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Sales Trend (Last 7 Days)
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={salesTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="sales" stroke="#667eea" strokeWidth={3} name="Sales (₹)" />
-                  <Line yAxisId="right" type="monotone" dataKey="transactions" stroke="#764ba2" strokeWidth={3} name="Transactions" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="md:col-span-2 bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Sales Trend (Last 7 Days)
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={salesTrendData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="sales" stroke="#667eea" strokeWidth={3} name="Sales (₹)" />
+              <Line yAxisId="right" type="monotone" dataKey="transactions" stroke="#764ba2" strokeWidth={3} name="Transactions" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Category Sales Pie Chart */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Sales by Category
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categorySalesData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.percentage}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="sales"
-                  >
-                    {categorySalesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <Stack spacing={1} sx={{ mt: 2 }}>
-                {categorySalesData.map((cat, index) => (
-                  <Box key={cat.category} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 12, height: 12, bgcolor: COLORS[index], borderRadius: 1 }} />
-                      <Typography variant="body2">{cat.category}</Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      ₹{cat.sales.toLocaleString()}
-                    </Typography>
-                  </Box>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Sales by Category
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={categorySalesData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={(entry) => `${entry.percentage}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="sales"
+              >
+                {categorySalesData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-2 mt-4">
+            {categorySalesData.map((cat, index) => (
+              <div key={cat.category} className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS[index] }} />
+                  <p className="text-sm text-gray-700">{cat.category}</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">
+                  ₹{cat.sales.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-        {/* Top Selling Medicines */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Top Selling Medicines
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Rank</TableCell>
-                      <TableCell>Medicine</TableCell>
-                      <TableCell>Units Sold</TableCell>
-                      <TableCell>Revenue</TableCell>
-                      <TableCell>Growth</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {topMedicines.map((medicine, index) => (
-                      <TableRow key={medicine.name} hover>
-                        <TableCell>
-                          <Chip label={`#${index + 1}`} size="small" color="primary" />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                            {medicine.name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{medicine.sold.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                            ₹{medicine.revenue.toLocaleString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            {medicine.growth >= 0 ? (
-                              <>
-                                <TrendingUp fontSize="small" color="success" />
-                                <Typography variant="body2" color="success.main">
-                                  +{medicine.growth}%
-                                </Typography>
-                              </>
-                            ) : (
-                              <>
-                                <TrendingDown fontSize="small" color="error" />
-                                <Typography variant="body2" color="error.main">
-                                  {medicine.growth}%
-                                </Typography>
-                              </>
-                            )}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+      {/* Top Selling Medicines */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <h6 className="text-lg font-bold text-gray-900 mb-4">
+          Top Selling Medicines
+        </h6>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units Sold</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Growth</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {topMedicines.map((medicine, index) => (
+                <tr key={medicine.name} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      #{index + 1}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <p className="text-sm font-bold text-gray-900">
+                      {medicine.name}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{medicine.sold.toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <p className="text-sm font-bold text-gray-900">
+                      ₹{medicine.revenue.toLocaleString()}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {medicine.growth >= 0 ? (
+                        <>
+                          <TrendingUp size={16} className="text-green-600" />
+                          <span className="text-sm text-green-600 font-medium">
+                            +{medicine.growth}%
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <TrendingDown size={16} className="text-red-600" />
+                          <span className="text-sm text-red-600 font-medium">
+                            {medicine.growth}%
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 
   // Inventory Report Tab
   const InventoryReportTab = () => (
-    <Box>
-      <Grid container spacing={3}>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {/* Inventory Status Cards */}
         {inventoryStatusData.map((status) => (
-          <Grid item xs={12} sm={6} md={3} key={status.status}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
-                    <Typography color="text.secondary" variant="body2" gutterBottom>
-                      {status.status}
-                    </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                      {status.count}
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: status.color, width: 56, height: 56 }}>
-                    <LocalPharmacy />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div key={status.status} className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-gray-600">
+                  {status.status}
+                </p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {status.count}
+                </p>
+              </div>
+              <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ backgroundColor: status.color }}>
+                <Pill size={28} className="text-white" />
+              </div>
+            </div>
+          </div>
         ))}
+      </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Inventory Value */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Inventory Value by Category
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categorySalesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="sales" fill="#667eea" name="Value (₹)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Inventory Value by Category
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={categorySalesData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="category" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="sales" fill="#667eea" name="Value (₹)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Stock Status Distribution */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Stock Status Distribution
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={inventoryStatusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => entry.status}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {inventoryStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Stock Status Distribution
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={inventoryStatusData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={(entry) => entry.status}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="count"
+              >
+                {inventoryStatusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-        {/* Low Stock Alert */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Low Stock Items Requiring Action
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Medicine</TableCell>
-                      <TableCell>Current Stock</TableCell>
-                      <TableCell>Min. Required</TableCell>
-                      <TableCell>Reorder Qty</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow hover>
-                      <TableCell>Amoxicillin 250mg</TableCell>
-                      <TableCell>45</TableCell>
-                      <TableCell>100</TableCell>
-                      <TableCell>200</TableCell>
-                      <TableCell>
-                        <Chip label="Low Stock" color="warning" size="small" />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell>Aspirin 75mg</TableCell>
-                      <TableCell>0</TableCell>
-                      <TableCell>50</TableCell>
-                      <TableCell>150</TableCell>
-                      <TableCell>
-                        <Chip label="Out of Stock" color="error" size="small" />
-                      </TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell>Metformin 500mg</TableCell>
-                      <TableCell>35</TableCell>
-                      <TableCell>80</TableCell>
-                      <TableCell>180</TableCell>
-                      <TableCell>
-                        <Chip label="Low Stock" color="warning" size="small" />
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+      {/* Low Stock Alert */}
+      <div className="bg-white rounded-xl shadow-md p-6 mt-6">
+        <h6 className="text-lg font-bold text-gray-900 mb-4">
+          Low Stock Items Requiring Action
+        </h6>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min. Required</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reorder Qty</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Amoxicillin 250mg</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">45</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">100</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">200</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    Low Stock
+                  </span>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Aspirin 75mg</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">0</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">50</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">150</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    Out of Stock
+                  </span>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Metformin 500mg</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">35</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">80</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">180</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    Low Stock
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 
   // Customer Report Tab
   const CustomerReportTab = () => (
-    <Box>
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Total Customers
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    1,248
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-                  <People />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    New Customers
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    86
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <TrendingUp fontSize="small" color="success" />
-                    <Typography variant="caption" color="success.main">
-                      +24.5%
-                    </Typography>
-                  </Box>
-                </Box>
-                <Avatar sx={{ bgcolor: 'success.main', width: 56, height: 56 }}>
-                  <People />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Avg. Lifetime Value
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    ₹8,450
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 56, height: 56 }}>
-                  <MonetizationOn />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography color="text.secondary" variant="body2" gutterBottom>
-                    Loyalty Points Issued
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                    12,450
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'error.main', width: 56, height: 56 }}>
-                  <Assessment />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">
+                Total Customers
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                1,248
+              </p>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-indigo-600 flex items-center justify-center">
+              <Users size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">
+                New Customers
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                86
+              </p>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp size={16} className="text-green-600" />
+                <span className="text-sm text-green-600 font-medium">
+                  +24.5%
+                </span>
+              </div>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-green-600 flex items-center justify-center">
+              <Users size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">
+                Avg. Lifetime Value
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                ₹8,450
+              </p>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-amber-600 flex items-center justify-center">
+              <DollarSign size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">
+                Loyalty Points Issued
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                12,450
+              </p>
+            </div>
+            <div className="h-14 w-14 rounded-full bg-red-600 flex items-center justify-center">
+              <BarChart3 size={28} className="text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Top Customers by Revenue
-              </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Rank</TableCell>
-                      <TableCell>Customer</TableCell>
-                      <TableCell>Total Purchases</TableCell>
-                      <TableCell>Total Spent</TableCell>
-                      <TableCell>Loyalty Points</TableCell>
-                      <TableCell>Tier</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow hover>
-                      <TableCell><Chip label="#1" size="small" color="primary" /></TableCell>
-                      <TableCell>Jane Smith</TableCell>
-                      <TableCell>78</TableCell>
-                      <TableCell><strong>₹28,500.75</strong></TableCell>
-                      <TableCell>1,250</TableCell>
-                      <TableCell><Chip label="VIP" size="small" color="error" /></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="#2" size="small" color="primary" /></TableCell>
-                      <TableCell>Emily Davis</TableCell>
-                      <TableCell>56</TableCell>
-                      <TableCell><strong>₹19,250.00</strong></TableCell>
-                      <TableCell>820</TableCell>
-                      <TableCell><Chip label="Regular" size="small" color="primary" /></TableCell>
-                    </TableRow>
-                    <TableRow hover>
-                      <TableCell><Chip label="#3" size="small" color="primary" /></TableCell>
-                      <TableCell>John Doe</TableCell>
-                      <TableCell>42</TableCell>
-                      <TableCell><strong>₹15,680.50</strong></TableCell>
-                      <TableCell>450</TableCell>
-                      <TableCell><Chip label="Regular" size="small" color="primary" /></TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+      <div className="bg-white rounded-xl shadow-md p-6 mt-6">
+        <h6 className="text-lg font-bold text-gray-900 mb-4">
+          Top Customers by Revenue
+        </h6>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Purchases</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loyalty Points</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    #1
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Jane Smith</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">78</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹28,500.75</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">1,250</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    VIP
+                  </span>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    #2
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Emily Davis</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">56</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹19,250.00</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">820</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    Regular
+                  </span>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    #3
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">42</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹15,680.50</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">450</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    Regular
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 
   // Financial Report Tab
   const FinancialReportTab = () => (
-    <Box>
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" variant="body2" gutterBottom>
-                Total Revenue
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="success.main">
-                ₹161,500
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" variant="body2" gutterBottom>
-                Total Expenses
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="error.main">
-                ₹98,200
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" variant="body2" gutterBottom>
-                Net Profit
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="primary.main">
-                ₹63,300
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" variant="body2" gutterBottom>
-                Profit Margin
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="warning.main">
-                39.2%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <p className="text-sm text-gray-600 mb-1">
+            Total Revenue
+          </p>
+          <p className="text-3xl font-bold text-green-600">
+            ₹161,500
+          </p>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <p className="text-sm text-gray-600 mb-1">
+            Total Expenses
+          </p>
+          <p className="text-3xl font-bold text-red-600">
+            ₹98,200
+          </p>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <p className="text-sm text-gray-600 mb-1">
+            Net Profit
+          </p>
+          <p className="text-3xl font-bold text-indigo-600">
+            ₹63,300
+          </p>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <p className="text-sm text-gray-600 mb-1">
+            Profit Margin
+          </p>
+          <p className="text-3xl font-bold text-amber-600">
+            39.2%
+          </p>
+        </div>
+      </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Payment Method Breakdown */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Payment Method Distribution
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={paymentMethodData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.method} ${entry.percentage}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="amount"
-                  >
-                    {paymentMethodData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <Stack spacing={1} sx={{ mt: 2 }}>
-                {paymentMethodData.map((method, index) => (
-                  <Box key={method.method} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 12, height: 12, bgcolor: PAYMENT_COLORS[index], borderRadius: 1 }} />
-                      <Typography variant="body2">{method.method}</Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      ₹{method.amount.toLocaleString()}
-                    </Typography>
-                  </Box>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Payment Method Distribution
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={paymentMethodData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={(entry) => `${entry.method} ${entry.percentage}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="amount"
+              >
+                {paymentMethodData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[index]} />
                 ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-2 mt-4">
+            {paymentMethodData.map((method, index) => (
+              <div key={method.method} className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: PAYMENT_COLORS[index] }} />
+                  <p className="text-sm text-gray-700">{method.method}</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">
+                  ₹{method.amount.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Revenue vs Expenses */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Revenue vs Expenses
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={[
-                    { name: 'Week 1', revenue: 38500, expenses: 23000 },
-                    { name: 'Week 2', revenue: 42000, expenses: 25500 },
-                    { name: 'Week 3', revenue: 39500, expenses: 24200 },
-                    { name: 'Week 4', revenue: 41500, expenses: 25500 },
-                  ]}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="revenue" fill="#4caf50" name="Revenue" />
-                  <Bar dataKey="expenses" fill="#f44336" name="Expenses" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h6 className="text-lg font-bold text-gray-900 mb-4">
+            Revenue vs Expenses
+          </h6>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={[
+                { name: 'Week 1', revenue: 38500, expenses: 23000 },
+                { name: 'Week 2', revenue: 42000, expenses: 25500 },
+                { name: 'Week 3', revenue: 39500, expenses: 24200 },
+                { name: 'Week 4', revenue: 41500, expenses: 25500 },
+              ]}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="revenue" fill="#4caf50" name="Revenue" />
+              <Bar dataKey="expenses" fill="#f44336" name="Expenses" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
   );
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-          📊 Reports & Analytics
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Download />}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">📊 Reports & Analytics</h1>
+        <button
           onClick={() => handleExport(['Sales', 'Inventory', 'Customer', 'Financial'][tabValue])}
-          sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 flex items-center gap-2"
         >
+          <Download size={18} />
           Export Report
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Date Range Filter */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Start Date"
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Calendar size={18} className="text-gray-400" />
+              </div>
+              <input
+                id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
+                className="pl-10 block w-full rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2"
               />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="End Date"
+            </div>
+          </div>
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+              End Date
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Calendar size={18} className="text-gray-400" />
+              </div>
+              <input
+                id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
+                className="pl-10 block w-full rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2"
               />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Button variant="outlined" fullWidth sx={{ height: 56 }}>
-                Apply Filter
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+            </div>
+          </div>
+          <div className="flex items-end">
+            <button className="w-full px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 font-medium">
+              Apply Filter
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Report Tabs */}
-      <Paper>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Sales Report" icon={<ShoppingCart />} iconPosition="start" />
-          <Tab label="Inventory Report" icon={<Inventory />} iconPosition="start" />
-          <Tab label="Customer Report" icon={<People />} iconPosition="start" />
-          <Tab label="Financial Report" icon={<AttachMoney />} iconPosition="start" />
-        </Tabs>
-        <Box sx={{ p: 3 }}>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="border-b border-gray-200">
+          <div className="flex flex-wrap">
+            <button
+              onClick={() => setTabValue(0)}
+              className={`flex items-center gap-2 px-6 py-4 font-medium ${
+                tabValue === 0
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <ShoppingCart size={18} />
+              Sales Report
+            </button>
+            <button
+              onClick={() => setTabValue(1)}
+              className={`flex items-center gap-2 px-6 py-4 font-medium ${
+                tabValue === 1
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Package size={18} />
+              Inventory Report
+            </button>
+            <button
+              onClick={() => setTabValue(2)}
+              className={`flex items-center gap-2 px-6 py-4 font-medium ${
+                tabValue === 2
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Users size={18} />
+              Customer Report
+            </button>
+            <button
+              onClick={() => setTabValue(3)}
+              className={`flex items-center gap-2 px-6 py-4 font-medium ${
+                tabValue === 3
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <DollarSign size={18} />
+              Financial Report
+            </button>
+          </div>
+        </div>
+        <div className="p-6">
           {tabValue === 0 && <SalesReportTab />}
           {tabValue === 1 && <InventoryReportTab />}
           {tabValue === 2 && <CustomerReportTab />}
           {tabValue === 3 && <FinancialReportTab />}
-        </Box>
-      </Paper>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };

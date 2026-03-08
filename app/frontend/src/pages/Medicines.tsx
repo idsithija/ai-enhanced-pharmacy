@@ -1,37 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Grid,
-  Chip,
-  InputAdornment,
-  Alert,
-  Snackbar,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Add,
-  Edit,
-  Delete,
-  Search,
-  Medication,
-} from '@mui/icons-material';
+import { Plus, Edit, Trash2, Search, Pill } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine } from '../types';
@@ -174,258 +142,361 @@ export const Medicines = () => {
   };
 
   return (
-    <Box>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-            💊 Medicines
-          </Typography>
-          <Typography color="text.secondary">
-            Manage your medicine database
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">💊 Medicines</h1>
+          <p className="text-gray-600">Manage your medicine database</p>
+        </div>
+        <button
           onClick={() => handleOpenDialog()}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          }}
+          className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition flex items-center gap-2 shadow-md hover:shadow-lg"
         >
+          <Plus size={20} />
           Add Medicine
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Search Bar */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
             placeholder="Search medicines by name, generic name, or category..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Table */}
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Medicine Name</TableCell>
-                <TableCell>Generic Name</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Manufacturer</TableCell>
-                <TableCell align="right">Price</TableCell>
-                <TableCell align="center">Prescription</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Medicine Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Generic Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Manufacturer
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Prescription
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredMedicines
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((medicine) => (
-                  <TableRow key={medicine.id} hover>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Medication color="primary" />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {medicine.name}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{medicine.genericName}</TableCell>
-                    <TableCell>
-                      <Chip label={medicine.category} size="small" color="primary" variant="outlined" />
-                    </TableCell>
-                    <TableCell>{medicine.manufacturer}</TableCell>
-                    <TableCell align="right">₹{medicine.unitPrice.toFixed(2)}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={medicine.requiresPrescription ? 'Required' : 'Not Required'}
-                        size="small"
-                        color={medicine.requiresPrescription ? 'warning' : 'success'}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        color="primary"
+                  <tr key={medicine.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Pill className="text-indigo-600" size={20} />
+                        <span className="text-sm font-medium text-gray-900">{medicine.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {medicine.genericName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        {medicine.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {medicine.manufacturer}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      ₹{Number(medicine.unitPrice || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          medicine.requiresPrescription
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {medicine.requiresPrescription ? 'Required' : 'Not Required'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <button
                         onClick={() => handleOpenDialog(medicine)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
                       >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
+                        <Edit size={18} />
+                      </button>
+                      <button
                         onClick={() => handleDelete(medicine.id)}
+                        className="text-red-600 hover:text-red-900"
                       >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={filteredMedicines.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
-        />
-      </Card>
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination */}
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage(Math.min(Math.ceil(filteredMedicines.length / rowsPerPage) - 1, page + 1))}
+              disabled={page >= Math.ceil(filteredMedicines.length / rowsPerPage) - 1}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{page * rowsPerPage + 1}</span> to{' '}
+                <span className="font-medium">{Math.min((page + 1) * rowsPerPage, filteredMedicines.length)}</span> of{' '}
+                <span className="font-medium">{filteredMedicines.length}</span> results
+              </p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setPage(0);
+                }}
+                className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+              </select>
+              <button
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(Math.min(Math.ceil(filteredMedicines.length / rowsPerPage) - 1, page + 1))}
+                disabled={page >=Math.ceil(filteredMedicines.length / rowsPerPage) - 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingMedicine ? 'Edit Medicine' : 'Add New Medicine'}
-        </DialogTitle>
-        <form onSubmit={formik.handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="name"
-                  name="name"
-                  label="Medicine Name"
-                  value={formik.values.name}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.name && Boolean(formik.errors.name)}
-                  helperText={formik.touched.name && formik.errors.name}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="genericName"
-                  name="genericName"
-                  label="Generic Name"
-                  value={formik.values.genericName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.genericName && Boolean(formik.errors.genericName)}
-                  helperText={formik.touched.genericName && formik.errors.genericName}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="category"
-                  name="category"
-                  label="Category"
-                  value={formik.values.category}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.category && Boolean(formik.errors.category)}
-                  helperText={formik.touched.category && formik.errors.category}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="manufacturer"
-                  name="manufacturer"
-                  label="Manufacturer"
-                  value={formik.values.manufacturer}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.manufacturer && Boolean(formik.errors.manufacturer)}
-                  helperText={formik.touched.manufacturer && formik.errors.manufacturer}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="unitPrice"
-                  name="unitPrice"
-                  label="Unit Price (₹)"
-                  type="number"
-                  value={formik.values.unitPrice}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.unitPrice && Boolean(formik.errors.unitPrice)}
-                  helperText={formik.touched.unitPrice && formik.errors.unitPrice}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  id="requiresPrescription"
-                  name="requiresPrescription"
-                  label="Requires Prescription"
-                  value={formik.values.requiresPrescription}
-                  onChange={formik.handleChange}
-                  SelectProps={{
-                    native: true,
-                  }}
+      {openDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {editingMedicine ? 'Edit Medicine' : 'Add New Medicine'}
+              </h2>
+            </div>
+            <form onSubmit={formik.handleSubmit}>
+              <div className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Medicine Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formik.values.name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        formik.touched.name && formik.errors.name ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.name && formik.errors.name && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="genericName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Generic Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="genericName"
+                      name="genericName"
+                      value={formik.values.genericName}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        formik.touched.genericName && formik.errors.genericName ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.genericName && formik.errors.genericName && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.genericName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <input
+                      type="text"
+                      id="category"
+                      name="category"
+                      value={formik.values.category}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        formik.touched.category && formik.errors.category ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.category && formik.errors.category && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.category}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="manufacturer" className="block text-sm font-medium text-gray-700 mb-1">
+                      Manufacturer *
+                    </label>
+                    <input
+                      type="text"
+                      id="manufacturer"
+                      name="manufacturer"
+                      value={formik.values.manufacturer}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        formik.touched.manufacturer && formik.errors.manufacturer ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.manufacturer && formik.errors.manufacturer && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.manufacturer}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit Price (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      id="unitPrice"
+                      name="unitPrice"
+                      value={formik.values.unitPrice}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        formik.touched.unitPrice && formik.errors.unitPrice ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.unitPrice && formik.errors.unitPrice && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.unitPrice}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="requiresPrescription" className="block text-sm font-medium text-gray-700 mb-1">
+                      Requires Prescription
+                    </label>
+                    <select
+                      id="requiresPrescription"
+                      name="requiresPrescription"
+                      value={String(formik.values.requiresPrescription)}
+                      onChange={formik.handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows={3}
+                      value={formik.values.description}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseDialog}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition"
                 >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </TextField>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="description"
-                  name="description"
-                  label="Description"
-                  multiline
-                  rows={3}
-                  value={formik.values.description}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              }}
-            >
-              {loading ? <CircularProgress size={24} /> : editingMedicine ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    editingMedicine ? 'Update' : 'Add'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {/* Snackbar */}
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+          <div
+            className={`px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 ${
+              snackbar.severity === 'success'
+                ? 'bg-green-600 text-white'
+                : 'bg-red-600 text-white'
+            }`}
+          >
+            <span>{snackbar.message}</span>
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className="text-white hover:text-gray-200"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

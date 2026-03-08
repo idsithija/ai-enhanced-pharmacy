@@ -1,34 +1,4 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  CircularProgress,
-  Alert,
-  Tab,
-  Tabs,
-  LinearProgress,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
-import WarningIcon from '@mui/icons-material/Warning';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import InfoIcon from '@mui/icons-material/Info';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import { demandPredictionService } from '../services/demandPredictionService';
 import type { DemandSummary, PredictionResult } from '../services/demandPredictionService';
 
@@ -39,10 +9,10 @@ interface TabPanelProps {
 }
 
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index } = props;
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    <div role="tabpanel" hidden={value !== index}>
+      {value === index && <div className="pt-6">{children}</div>}
     </div>
   );
 }
@@ -70,123 +40,121 @@ export const DemandPrediction = () => {
     fetchPredictions();
   }, []);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const getTrendIcon = (trend: 'increasing' | 'stable' | 'decreasing') => {
     switch (trend) {
       case 'increasing':
-        return <TrendingUpIcon sx={{ color: '#4caf50' }} />;
+        return <span className="text-green-600" title="Increasing">📈</span>;
       case 'decreasing':
-        return <TrendingDownIcon sx={{ color: '#f44336' }} />;
+        return <span className="text-red-600" title="Decreasing">📉</span>;
       default:
-        return <TrendingFlatIcon sx={{ color: '#2196f3' }} />;
+        return <span className="text-blue-600" title="Stable">➡️</span>;
     }
   };
 
   const getPriorityChip = (daysUntilStockout: number) => {
     if (daysUntilStockout < 7) {
-      return <Chip label="Critical" color="error" size="small" />;
+      return <span className="inline-block px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Critical</span>;
     } else if (daysUntilStockout < 14) {
-      return <Chip label="High" color="warning" size="small" />;
+      return <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">High</span>;
     } else if (daysUntilStockout < 30) {
-      return <Chip label="Medium" color="info" size="small" />;
+      return <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Medium</span>;
     } else {
-      return <Chip label="Low" color="success" size="small" />;
+      return <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Low</span>;
     }
   };
 
   const renderPredictionTable = (predictions: PredictionResult[]) => {
     if (predictions.length === 0) {
       return (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          No items in this category
-        </Alert>
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mt-4">
+          <p className="text-sm text-blue-800">No items in this category</p>
+        </div>
       );
     }
 
     return (
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-              <TableCell><strong>Medicine Name</strong></TableCell>
-              <TableCell align="center"><strong>Current Stock</strong></TableCell>
-              <TableCell align="center"><strong>Avg Daily Sales</strong></TableCell>
-              <TableCell align="center"><strong>7-Day Demand</strong></TableCell>
-              <TableCell align="center"><strong>30-Day Demand</strong></TableCell>
-              <TableCell align="center"><strong>Days Until Stockout</strong></TableCell>
-              <TableCell align="center"><strong>Trend</strong></TableCell>
-              <TableCell align="center"><strong>Priority</strong></TableCell>
-              <TableCell align="center"><strong>Reorder Qty</strong></TableCell>
-              <TableCell align="center"><strong>Confidence</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {predictions.map((prediction) => (
-              <TableRow key={prediction.medicineId} hover>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="500">
-                    {prediction.medicineName}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">{prediction.currentStock}</TableCell>
-                <TableCell align="center">{prediction.averageDailySales}</TableCell>
-                <TableCell align="center">
-                  <Chip label={prediction.predictedDemand} color="primary" size="small" variant="outlined" />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip label={prediction.predictedDemand30Days} color="secondary" size="small" variant="outlined" />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={prediction.daysUntilStockout > 999 ? '∞' : `${prediction.daysUntilStockout} days`}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Tooltip title={prediction.trend}>
+      <div className="mt-4 bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Medicine Name</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Current Stock</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Avg Daily Sales</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">7-Day Demand</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">30-Day Demand</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Days Until Stockout</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Trend</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Priority</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Reorder Qty</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600">Confidence</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {predictions.map((prediction) => (
+                <tr key={prediction.medicineId} className="hover:bg-blue-50">
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium text-gray-900">{prediction.medicineName}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm text-gray-900">{prediction.currentStock}</td>
+                  <td className="px-4 py-3 text-center text-sm text-gray-900">{prediction.averageDailySales}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-primary text-dark rounded-full">
+                      {prediction.predictedDemand}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                      {prediction.predictedDemand30Days}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                      {prediction.daysUntilStockout > 999 ? '∞' : `${prediction.daysUntilStockout} days`}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center text-2xl">
                     {getTrendIcon(prediction.trend)}
-                  </Tooltip>
-                </TableCell>
-                <TableCell align="center">{getPriorityChip(prediction.daysUntilStockout)}</TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" fontWeight="500" color="primary">
-                    {prediction.recommendedReorderQuantity}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={prediction.confidence}
-                      sx={{ width: 60, height: 6, borderRadius: 3 }}
-                    />
-                    <Typography variant="caption">{prediction.confidence}%</Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </td>
+                  <td className="px-4 py-3 text-center">{getPriorityChip(prediction.daysUntilStockout)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <p className="text-sm font-bold text-primary">{prediction.recommendedReorderQuantity}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className="bg-primary h-1.5 rounded-full"
+                          style={{ width: `${prediction.confidence}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-600">{prediction.confidence}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     );
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-96">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
+      <div className="p-6">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      </div>
     );
   }
 
@@ -194,152 +162,161 @@ export const DemandPrediction = () => {
     return null;
   }
 
+  const tabs = [
+    { label: 'Critical Stock', icon: '⚠️' },
+    { label: 'High Demand', icon: '📈' },
+    { label: 'Slow Moving', icon: '📉' },
+    { label: 'All Predictions', icon: '📦' },
+  ];
+
   return (
-    <Box p={3}>
+    <div className="p-6">
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" fontWeight="600" gutterBottom>
-            📊 Demand Prediction Dashboard
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Demand Prediction Dashboard</h1>
+          <p className="text-sm text-gray-600">
             AI-powered inventory forecasting based on 6 months of sales data
-          </Typography>
-        </Box>
-        <Tooltip title="Refresh Predictions">
-          <IconButton onClick={fetchPredictions} color="primary">
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
+          </p>
+        </div>
+        <button
+          onClick={fetchPredictions}
+          className="p-3 text-primary hover:bg-blue-50 rounded-lg transition-colors"
+          title="Refresh Predictions"
+        >
+          🔄
+        </button>
+      </div>
 
       {/* Summary Cards */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #f44336 0%, #e91e63 100%)', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <WarningIcon sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {summary.criticalStockItems.length}
-                  </Typography>
-                  <Typography variant="body2">Critical Stock Items</Typography>
-                  <Typography variant="caption">{'<7 days until stockout'}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-red-600 to-pink-600 text-white rounded-lg p-6">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl">⚠️</span>
+            <div>
+              <p className="text-4xl font-bold">{summary.criticalStockItems.length}</p>
+              <p className="text-sm">Critical Stock Items</p>
+              <p className="text-xs opacity-90">&lt;7 days until stockout</p>
+            </div>
+          </div>
+        </div>
 
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <TrendingUpIcon sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {summary.highDemandItems.length}
-                  </Typography>
-                  <Typography variant="body2">High Demand Items</Typography>
-                  <Typography variant="caption">Increasing trend</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="bg-gradient-to-br from-green-600 to-lime-600 text-white rounded-lg p-6">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl">📈</span>
+            <div>
+              <p className="text-4xl font-bold">{summary.highDemandItems.length}</p>
+              <p className="text-sm">High Demand Items</p>
+              <p className="text-xs opacity-90">Increasing trend</p>
+            </div>
+          </div>
+        </div>
 
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #ff9800 0%, #ffc107 100%)', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <TrendingDownIcon sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {summary.slowMovingItems.length}
-                  </Typography>
-                  <Typography variant="body2">Slow Moving Items</Typography>
-                  <Typography variant="caption">Low sales velocity</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="bg-gradient-to-br from-yellow-600 to-amber-600 text-white rounded-lg p-6">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl">📉</span>
+            <div>
+              <p className="text-4xl font-bold">{summary.slowMovingItems.length}</p>
+              <p className="text-sm">Slow Moving Items</p>
+              <p className="text-xs opacity-90">Low sales velocity</p>
+            </div>
+          </div>
+        </div>
 
-        <Grid item xs={12} md={3}>
-          <Card sx={{ background: 'linear-gradient(135deg, #2196f3 0%, #03a9f4 100%)', color: 'white' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <InventoryIcon sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {summary.predictions.length}
-                  </Typography>
-                  <Typography variant="body2">Total Medicines</Typography>
-                  <Typography variant="caption">AI predictions available</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <div className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-lg p-6">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl">📦</span>
+            <div>
+              <p className="text-4xl font-bold">{summary.predictions.length}</p>
+              <p className="text-sm">Total Medicines</p>
+              <p className="text-xs opacity-90">AI predictions available</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Tabs for Different Views */}
-      <Paper>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab icon={<WarningIcon />} label="Critical Stock" iconPosition="start" />
-          <Tab icon={<TrendingUpIcon />} label="High Demand" iconPosition="start" />
-          <Tab icon={<TrendingDownIcon />} label="Slow Moving" iconPosition="start" />
-          <Tab icon={<InventoryIcon />} label="All Predictions" iconPosition="start" />
-        </Tabs>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <div className="flex">
+            {tabs.map((tab, index) => (
+              <button
+                key={index}
+                onClick={() => setTabValue(index)}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
+                  tabValue === index
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <Box p={3}>
+        <div className="p-6">
           <TabPanel value={tabValue} index={0}>
             {summary.criticalStockItems.length > 0 ? (
               <>
-                <Alert severity="error" icon={<WarningIcon />} sx={{ mb: 2 }}>
-                  <strong>Urgent Action Required!</strong> These items will run out of stock within 7 days.
-                  Place orders immediately to avoid stockouts.
-                </Alert>
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4 flex items-start gap-3">
+                  <span className="text-red-600 text-2xl">⚠️</span>
+                  <div>
+                    <p className="text-sm font-bold text-red-900">Urgent Action Required!</p>
+                    <p className="text-sm text-red-800">
+                      These items will run out of stock within 7 days. Place orders immediately to avoid stockouts.
+                    </p>
+                  </div>
+                </div>
                 {renderPredictionTable(summary.criticalStockItems)}
               </>
             ) : (
-              <Alert severity="success" icon={<CheckCircleIcon />}>
-                Great! No critical stock items at this time. All medicines have adequate inventory levels.
-              </Alert>
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                <span className="text-green-600 text-2xl">✅</span>
+                <p className="text-sm text-green-800">
+                  Great! No critical stock items at this time. All medicines have adequate inventory levels.
+                </p>
+              </div>
             )}
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
-              These medicines show increasing demand trends. Consider increasing stock levels to meet growing demand.
-            </Alert>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4 flex items-start gap-3">
+              <span className="text-blue-600 text-2xl">ℹ️</span>
+              <p className="text-sm text-blue-800">
+                These medicines show increasing demand trends. Consider increasing stock levels to meet growing demand.
+              </p>
+            </div>
             {renderPredictionTable(summary.highDemandItems)}
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            <Alert severity="warning" icon={<InfoIcon />} sx={{ mb: 2 }}>
-              These items have low sales velocity and high inventory. Consider promotions or reducing future orders.
-            </Alert>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 flex items-start gap-3">
+              <span className="text-yellow-600 text-2xl">ℹ️</span>
+              <p className="text-sm text-yellow-800">
+                These items have low sales velocity and high inventory. Consider promotions or reducing future orders.
+              </p>
+            </div>
             {renderPredictionTable(summary.slowMovingItems)}
           </TabPanel>
 
           <TabPanel value={tabValue} index={3}>
             {renderPredictionTable(summary.predictions)}
           </TabPanel>
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Model Info Footer */}
-      <Box mt={4}>
-        <Alert severity="info" icon={<InfoIcon />}>
-          <Typography variant="body2">
-            <strong>Prediction Model:</strong> Statistical forecasting using moving averages (7-day, 30-day, 90-day weighted),
-            trend detection, and seasonality analysis. Based on 6 months of synthetic sales data.{' '}
-            <em>Can be upgraded to TensorFlow.js model for improved accuracy.</em>
-          </Typography>
-        </Alert>
-      </Box>
-    </Box>
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+        <span className="text-blue-600 text-2xl">ℹ️</span>
+        <p className="text-sm text-blue-800">
+          <strong>Prediction Model:</strong> Statistical forecasting using moving averages (7-day, 30-day, 90-day weighted),
+          trend detection, and seasonality analysis. Based on 6 months of synthetic sales data.{' '}
+          <em>Can be upgraded to TensorFlow.js model for improved accuracy.</em>
+        </p>
+      </div>
+    </div>
   );
 };

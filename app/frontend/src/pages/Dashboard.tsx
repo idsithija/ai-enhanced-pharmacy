@@ -1,29 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Alert,
-  CircularProgress,
-  Button,
-} from "@mui/material";
-import {
-  TrendingUp,
-  ShoppingCart,
-  Warning,
-  Inventory,
-  Add,
-  PointOfSale,
-} from "@mui/icons-material";
+import { TrendingUp, ShoppingCart, AlertTriangle, Package, Plus, CreditCard } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -58,45 +34,23 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, icon, color, subtitle }: StatCardProps) => (
-  <Card sx={{ height: "100%", position: "relative", overflow: "visible" }}>
-    <CardContent>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
+  <div className="bg-white rounded-xl shadow-md p-6 h-full relative overflow-visible hover:shadow-lg transition-shadow">
+    <div className="flex justify-between items-start">
+      <div>
+        <p className="text-gray-600 text-sm mb-2">{title}</p>
+        <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
+        {subtitle && (
+          <p className="text-sm text-gray-500">{subtitle}</p>
+        )}
+      </div>
+      <div
+        className="p-3 rounded-xl"
+        style={{ backgroundColor: `${color}15`, color }}
       >
-        <Box>
-          <Typography color="text.secondary" variant="body2" gutterBottom>
-            {title}
-          </Typography>
-          <Typography
-            variant="h4"
-            component="div"
-            sx={{ fontWeight: "bold", mb: 0.5 }}
-          >
-            {value}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" color="text.secondary">
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: `${color}15`,
-            color: color,
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
+        {icon}
+      </div>
+    </div>
+  </div>
 );
 
 export const Dashboard = () => {
@@ -157,281 +111,231 @@ export const Dashboard = () => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "400px",
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={fetchDashboardData}>
-              Retry
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      </Box>
+      <div className="p-6">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded flex justify-between items-center">
+          <p className="text-red-800">{error}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="text-red-600 hover:text-red-800 font-medium px-3 py-1 rounded hover:bg-red-100 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
-          Dashboard
-        </Typography>
-        <Typography color="text.secondary">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600">
           Welcome back, {user?.fullName}! Here's what's happening today.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Today's Revenue"
-            value={`₹${stats?.todayRevenue?.toLocaleString() || 0}`}
-            subtitle={`${stats?.todaySales || 0} transactions`}
-            icon={<TrendingUp />}
-            color="#667eea"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Pending Prescriptions"
-            value={stats?.pendingPrescriptions || 0}
-            subtitle={`${stats?.todaySales || 0} sales today`}
-            icon={<ShoppingCart />}
-            color="#10b981"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Low Stock Items"
-            value={stats?.lowStockCount || 0}
-            subtitle="Requires attention"
-            icon={<Warning />}
-            color="#f59e0b"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            title="Expiring Soon"
-            value={stats?.expiringSoonCount || 0}
-            subtitle="Within 30 days"
-            icon={<Inventory />}
-            color="#ef4444"
-          />
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Today's Revenue"
+          value={`₹${stats?.todayRevenue?.toLocaleString() || 0}`}
+          subtitle={`${stats?.todaySales || 0} transactions`}
+          icon={<TrendingUp size={24} />}
+          color="#667eea"
+        />
+        <StatCard
+          title="Pending Prescriptions"
+          value={stats?.pendingPrescriptions || 0}
+          subtitle={`${stats?.todaySales || 0} sales today`}
+          icon={<ShoppingCart size={24} />}
+          color="#10b981"
+        />
+        <StatCard
+          title="Low Stock Items"
+          value={stats?.lowStockCount || 0}
+          subtitle="Requires attention"
+          icon={<AlertTriangle size={24} />}
+          color="#f59e0b"
+        />
+        <StatCard
+          title="Expiring Soon"
+          value={stats?.expiringSoonCount || 0}
+          subtitle="Within 30 days"
+          icon={<Package size={24} />}
+          color="#ef4444"
+        />
+      </div>
 
       {/* Quick Actions */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-          Quick Actions
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid>
-            <Button
-              variant="contained"
-              startIcon={<PointOfSale />}
-              onClick={() => navigate("/pos")}
-              sx={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              }}
-            >
-              New Sale
-            </Button>
-          </Grid>
-          <Grid>
-            <Button
-              variant="outlined"
-              startIcon={<Add />}
-              onClick={() => navigate("/medicines")}
-            >
-              Add Medicine
-            </Button>
-          </Grid>
-          <Grid>
-            <Button
-              variant="outlined"
-              startIcon={<Add />}
-              onClick={() => navigate("/inventory")}
-            >
-              Add Stock
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => navigate("/pos")}
+            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition flex items-center gap-2 shadow-md hover:shadow-lg"
+          >
+            <CreditCard size={20} />
+            New Sale
+          </button>
+          <button
+            onClick={() => navigate("/medicines")}
+            className="px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Medicine
+          </button>
+          <button
+            onClick={() => navigate("/inventory")}
+            className="px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-lg font-medium hover:bg-indigo-50 transition flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Stock
+          </button>
+        </div>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                Sales Overview (Last 7 Days)
-              </Typography>
-              <Box sx={{ width: "100%", height: 300, mt: 2 }}>
-                <ResponsiveContainer>
-                  <LineChart data={mockSalesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="sales"
-                      stroke="#667eea"
-                      strokeWidth={2}
-                      dot={{ fill: "#667eea" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              Sales Overview (Last 7 Days)
+            </h3>
+            <div className="w-full h-80 mt-4">
+              <ResponsiveContainer>
+                <LineChart data={mockSalesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#667eea"
+                    strokeWidth={2}
+                    dot={{ fill: "#667eea" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
 
         {/* Recent Sales */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                Recent Sales
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                {recentSales.length === 0 ? (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    align="center"
-                    sx={{ py: 3 }}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-xl shadow-md p-6 h-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Sales</h3>
+            <div className="mt-4 space-y-4">
+              {recentSales.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No recent sales</p>
+              ) : (
+                recentSales.map((sale) => (
+                  <div
+                    key={sale.id}
+                    className="pb-4 border-b border-gray-200 last:border-b-0"
                   >
-                    No recent sales
-                  </Typography>
-                ) : (
-                  recentSales.map((sale) => (
-                    <Box
-                      key={sale.id}
-                      sx={{
-                        py: 1.5,
-                        borderBottom: "1px solid",
-                        borderColor: "divider",
-                        "&:last-child": { borderBottom: "none" },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {sale.customer?.name ||
-                            `Sale #${sale.id.slice(0, 8)}`}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                          ₹{sale.total.toFixed(2)}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          {sale.items?.length || 0} items
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(sale.createdAt).toLocaleTimeString()}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {sale.customer?.name || `Sale #${sale.id.slice(0, 8)}`}
+                      </p>
+                      <p className="text-sm font-bold text-gray-900">
+                        ₹{Number(sale.total || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500">
+                        {sale.items?.length || 0} items
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(sale.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Low Stock Alerts */}
-        <Grid size={{ xs: 12 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                Low Stock Alerts
-              </Typography>
-              {lowStock.length === 0 ? (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  No low stock items at the moment
-                </Alert>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Medicine Name</TableCell>
-                        <TableCell align="right">Current Stock</TableCell>
-                        <TableCell align="right">Batch Number</TableCell>
-                        <TableCell align="center">Status</TableCell>
-                        <TableCell align="right">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {lowStock.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            {item.medicineName || item.name}
-                          </TableCell>
-                          <TableCell align="right">{item.quantity}</TableCell>
-                          <TableCell align="right">
-                            {item.batchNumber}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={
-                                item.quantity < 20 ? "Critical" : "Warning"
-                              }
-                              color={item.quantity < 20 ? "error" : "warning"}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => navigate("/inventory")}
-                            >
-                              Reorder
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Low Stock Alerts</h3>
+            {lowStock.length === 0 ? (
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mt-4">
+                No low stock items at the moment
+              </div>
+            ) : (
+              <div className="overflow-x-auto mt-4">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Medicine Name
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Current Stock
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Batch Number
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {lowStock.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.medicineName || item.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.quantity}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.batchNumber}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              item.quantity < 20
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {item.quantity < 20 ? "Critical" : "Warning"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <button
+                            onClick={() => navigate("/inventory")}
+                            className="text-indigo-600 hover:text-indigo-900 font-medium border border-indigo-600 px-3 py-1 rounded hover:bg-indigo-50 transition"
+                          >
+                            Reorder
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

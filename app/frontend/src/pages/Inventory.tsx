@@ -1,42 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Grid,
-  Chip,
-  InputAdornment,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Tabs,
-  Tab,
-  MenuItem,
-} from '@mui/material';
-import {
-  Add,
-  Edit,
-  Delete,
-  Search,
-  Warning,
-  CheckCircle,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
+import { Plus, Edit, Trash2, Search, AlertTriangle, CheckCircle, XCircle, Package } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { InventoryItem, Medicine, Supplier } from '../types';
@@ -58,16 +21,16 @@ const getExpiryStatus = (expiryDate: string) => {
   const expiry = new Date(expiryDate);
   const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays < 0) return { status: 'expired', label: 'Expired', color: 'error' as const };
-  if (diffDays <= 30) return { status: 'critical', label: `${diffDays} days`, color: 'error' as const };
-  if (diffDays <= 90) return { status: 'warning', label: `${diffDays} days`, color: 'warning' as const };
-  return { status: 'good', label: `${diffDays} days`, color: 'success' as const };
+  if (diffDays < 0) return { status: 'expired', label: 'Expired', colorClass: 'bg-red-100 text-red-800' };
+  if (diffDays <= 30) return { status: 'critical', label: `${diffDays} days`, colorClass: 'bg-red-100 text-red-800' };
+  if (diffDays <= 90) return { status: 'warning', label: `${diffDays} days`, colorClass: 'bg-yellow-100 text-yellow-800' };
+  return { status: 'good', label: `${diffDays} days`, colorClass: 'bg-green-100 text-green-800' };
 };
 
 const getStockStatus = (quantity: number) => {
-  if (quantity === 0) return { label: 'Out of Stock', color: 'error' as const };
-  if (quantity < 50) return { label: 'Low Stock', color: 'warning' as const };
-  return { label: 'In Stock', color: 'success' as const };
+  if (quantity === 0) return { label: 'Out of Stock', colorClass: 'bg-red-100 text-red-800' };
+  if (quantity < 50) return { label: 'Low Stock', colorClass: 'bg-yellow-100 text-yellow-800' };
+  return { label: 'In Stock', colorClass: 'bg-green-100 text-green-800' };
 };
 
 export const Inventory = () => {
@@ -220,287 +183,442 @@ export const Inventory = () => {
   };
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-            📦 Inventory Management
-          </Typography>
-          <Typography color="text.secondary">
-            Track stock levels, batches, and expiry dates
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Package className="text-indigo-600" size={32} />
+            Inventory Management
+          </h1>
+          <p className="text-gray-600 mt-1">Track stock levels, batches, and expiry dates</p>
+        </div>
+        <button
           onClick={() => handleOpenDialog()}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          }}
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2"
         >
+          <Plus size={20} />
           Add Stock
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Search & Tabs */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
+      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
             placeholder="Search by medicine name or batch number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 2 }}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
-            <Tab label="All Stock" />
-            <Tab label="Low Stock" icon={<Warning fontSize="small" />} iconPosition="end" />
-            <Tab label="Expiring Soon" icon={<ErrorIcon fontSize="small" />} iconPosition="end" />
-          </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <div className="flex gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setTabValue(0)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              tabValue === 0
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            All Stock
+          </button>
+          <button
+            onClick={() => setTabValue(1)}
+            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
+              tabValue === 1
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Low Stock
+            <AlertTriangle size={16} />
+          </button>
+          <button
+            onClick={() => setTabValue(2)}
+            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
+              tabValue === 2
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Expiring Soon
+            <XCircle size={16} />
+          </button>
+        </div>
+      </div>
 
       {/* Table */}
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Medicine</TableCell>
-                <TableCell>Batch Number</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell>Expiry Date</TableCell>
-                <TableCell align="right">Purchase Price</TableCell>
-                <TableCell align="right">Selling Price</TableCell>
-                <TableCell>Supplier</TableCell>
-                <TableCell align="center">Stock Status</TableCell>
-                <TableCell align="center">Expiry Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch Number</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Price</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Selling Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Status</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Status</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredInventory
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((item) => {
                   const expiryStatus = getExpiryStatus(item.expiryDate);
                   const stockStatus = getStockStatus(item.quantity);
                   return (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {item.medicine?.name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={item.batchNumber} size="small" variant="outlined" />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                          {item.quantity}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{new Date(item.expiryDate).toLocaleDateString()}</TableCell>
-                      <TableCell align="right">₹{item.purchasePrice.toFixed(2)}</TableCell>
-                      <TableCell align="right">₹{item.sellingPrice.toFixed(2)}</TableCell>
-                      <TableCell>{item.supplier?.name}</TableCell>
-                      <TableCell align="center">
-                        <Chip label={stockStatus.label} size="small" color={stockStatus.color} />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip label={expiryStatus.label} size="small" color={expiryStatus.color} />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          color="primary"
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900">{item.medicine?.name}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full border border-gray-300">
+                          {item.batchNumber}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className="text-sm font-bold text-gray-900">{item.quantity}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(item.expiryDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        ₹{Number(item.purchasePrice || 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        ₹{Number(item.sellingPrice || 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {item.supplier?.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.colorClass}`}>
+                          {stockStatus.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${expiryStatus.colorClass}`}>
+                          {expiryStatus.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
                           onClick={() => handleOpenDialog(item)}
+                          className="text-indigo-600 hover:text-indigo-900 p-1 mr-2"
                         >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
+                          <Edit size={18} />
+                        </button>
+                        <button
                           onClick={() => handleDelete(item.id)}
+                          className="text-red-600 hover:text-red-900 p-1"
                         >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
                   );
                 })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={filteredInventory.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
-        />
-      </Card>
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Pagination */}
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => handleChangePage(null, Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => handleChangePage(null, page + 1)}
+              disabled={page >= Math.ceil(filteredInventory.length / rowsPerPage) - 1}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{page * rowsPerPage + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min((page + 1) * rowsPerPage, filteredInventory.length)}
+                </span>{' '}
+                of <span className="font-medium">{filteredInventory.length}</span> results
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <select
+                value={rowsPerPage}
+                onChange={handleChangeRowsPerPage}
+                className="border border-gray-300 rounded-md text-sm px-2 py-1"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+              </select>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  onClick={() => handleChangePage(null, Math.max(0, page - 1))}
+                  disabled={page === 0}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => handleChangePage(null, page + 1)}
+                  disabled={page >= Math.ceil(filteredInventory.length / rowsPerPage) - 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingItem ? 'Edit Stock' : 'Add New Stock'}
-        </DialogTitle>
-        <form onSubmit={formik.handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  id="medicineId"
-                  name="medicineId"
-                  label="Medicine"
-                  value={formik.values.medicineId}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.medicineId && Boolean(formik.errors.medicineId)}
-                  helperText={formik.touched.medicineId && formik.errors.medicineId}
+      {openDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingItem ? 'Edit Stock' : 'Add New Stock'}
+              </h2>
+            </div>
+            
+            <form onSubmit={formik.handleSubmit}>
+              <div className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="medicineId" className="block text-sm font-medium text-gray-700 mb-1">
+                      Medicine
+                    </label>
+                    <select
+                      id="medicineId"
+                      name="medicineId"
+                      value={formik.values.medicineId}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.medicineId && formik.errors.medicineId
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select Medicine</option>
+                      {medicines.map((medicine) => (
+                        <option key={medicine.id} value={medicine.id}>
+                          {medicine.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formik.touched.medicineId && formik.errors.medicineId && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.medicineId}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="batchNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      Batch Number
+                    </label>
+                    <input
+                      type="text"
+                      id="batchNumber"
+                      name="batchNumber"
+                      value={formik.values.batchNumber}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.batchNumber && formik.errors.batchNumber
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.batchNumber && formik.errors.batchNumber && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.batchNumber}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      id="quantity"
+                      name="quantity"
+                      value={formik.values.quantity}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.quantity && formik.errors.quantity
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.quantity && formik.errors.quantity && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.quantity}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      id="expiryDate"
+                      name="expiryDate"
+                      value={formik.values.expiryDate}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.expiryDate && formik.errors.expiryDate
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.expiryDate && formik.errors.expiryDate && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.expiryDate}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="purchasePrice" className="block text-sm font-medium text-gray-700 mb-1">
+                      Purchase Price (₹)
+                    </label>
+                    <input
+                      type="number"
+                      id="purchasePrice"
+                      name="purchasePrice"
+                      value={formik.values.purchasePrice}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      step="0.01"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.purchasePrice && formik.errors.purchasePrice
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.purchasePrice && formik.errors.purchasePrice && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.purchasePrice}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="sellingPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                      Selling Price (₹)
+                    </label>
+                    <input
+                      type="number"
+                      id="sellingPrice"
+                      name="sellingPrice"
+                      value={formik.values.sellingPrice}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      step="0.01"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.sellingPrice && formik.errors.sellingPrice
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {formik.touched.sellingPrice && formik.errors.sellingPrice && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.sellingPrice}</p>
+                    )}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label htmlFor="supplierId" className="block text-sm font-medium text-gray-700 mb-1">
+                      Supplier
+                    </label>
+                    <select
+                      id="supplierId"
+                      name="supplierId"
+                      value={formik.values.supplierId}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        formik.touched.supplierId && formik.errors.supplierId
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select Supplier</option>
+                      {suppliers.map((supplier) => (
+                        <option key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formik.touched.supplierId && formik.errors.supplierId && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.supplierId}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseDialog}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium"
                 >
-                  {medicines.map((medicine) => (
-                    <MenuItem key={medicine.id} value={medicine.id}>
-                      {medicine.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="batchNumber"
-                  name="batchNumber"
-                  label="Batch Number"
-                  value={formik.values.batchNumber}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.batchNumber && Boolean(formik.errors.batchNumber)}
-                  helperText={formik.touched.batchNumber && formik.errors.batchNumber}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="quantity"
-                  name="quantity"
-                  label="Quantity"
-                  type="number"
-                  value={formik.values.quantity}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.quantity && Boolean(formik.errors.quantity)}
-                  helperText={formik.touched.quantity && formik.errors.quantity}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="expiryDate"
-                  name="expiryDate"
-                  label="Expiry Date"
-                  type="date"
-                  value={formik.values.expiryDate}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.expiryDate && Boolean(formik.errors.expiryDate)}
-                  helperText={formik.touched.expiryDate && formik.errors.expiryDate}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="purchasePrice"
-                  name="purchasePrice"
-                  label="Purchase Price (₹)"
-                  type="number"
-                  value={formik.values.purchasePrice}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.purchasePrice && Boolean(formik.errors.purchasePrice)}
-                  helperText={formik.touched.purchasePrice && formik.errors.purchasePrice}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  id="sellingPrice"
-                  name="sellingPrice"
-                  label="Selling Price (₹)"
-                  type="number"
-                  value={formik.values.sellingPrice}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.sellingPrice && Boolean(formik.errors.sellingPrice)}
-                  helperText={formik.touched.sellingPrice && formik.errors.sellingPrice}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  select
-                  id="supplierId"
-                  name="supplierId"
-                  label="Supplier"
-                  value={formik.values.supplierId}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.supplierId && Boolean(formik.errors.supplierId)}
-                  helperText={formik.touched.supplierId && formik.errors.supplierId}
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
                 >
-                  {suppliers.map((supplier) => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              }}
-            >
-              {loading ? <CircularProgress size={24} /> : editingItem ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+                  {loading ? 'Saving...' : editingItem ? 'Update' : 'Add'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-in">
+          <div
+            className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${
+              snackbar.severity === 'success'
+                ? 'bg-green-50 text-green-800 border border-green-200'
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}
+          >
+            {snackbar.severity === 'success' ? (
+              <CheckCircle size={20} className="text-green-600" />
+            ) : (
+              <XCircle size={20} className="text-red-600" />
+            )}
+            <span className="font-medium">{snackbar.message}</span>
+            <button
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+              className="ml-4 text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
