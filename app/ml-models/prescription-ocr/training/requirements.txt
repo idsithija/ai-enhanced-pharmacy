@@ -1,0 +1,32 @@
+# ML Training Dependencies for Custom OCR Model
+
+# Core ML frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+
+# Hugging Face utilities
+datasets>=2.12.0
+evaluate>=0.4.0
+
+# Image processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+
+# Utilities
+numpy>=1.24.0
+pandas>=2.0.0
+tqdm>=4.65.0
+python-dotenv>=1.0.0
+
+# Metrics and evaluation
+scikit-learn>=1.3.0
+editdistance>=0.6.0
+
+# Optional: for advanced preprocessing
+albumentations>=1.3.0
+imgaug>=0.4.0
+
+# Visualization (optional)
+matplotlib>=3.7.0
+seaborn>=0.12.0

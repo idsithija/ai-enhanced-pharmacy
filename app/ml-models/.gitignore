@@ -1,0 +1,41 @@
+# Add trained models to .gitignore (files are too large for Git)
+*.bin
+*.pt
+*.pth
+*.onnx
+*.pb
+
+# Keep small config files
+!config.json
+!preprocessor_config.json
+!tokenizer_config.json
+!vocab.json
+!special_tokens_map.json
+
+# Training outputs
+test_results.json
+training_logs/
+checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+ml_env/
+env/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files
+*.csv
+*.json
+!metadata.json
+
+# IDE
+.vscode/
+.idea/

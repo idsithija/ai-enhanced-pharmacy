@@ -1,5 +1,8 @@
 import Tesseract from 'tesseract.js';
 import natural from 'natural';
+import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 interface OCRResult {
   text: string;
@@ -16,40 +19,153 @@ interface OCRResult {
     }>;
     date?: string;
   };
+  modelType?: string;
 }
 
 class OCRService {
   private tokenizer: any;
+  private customModelAvailable: boolean | null = null;
+  private customModelPath: string;
 
   constructor() {
     this.tokenizer = new natural.WordTokenizer();
+    this.customModelPath = path.join(__dirname, '../../../ml-models/prescription-ocr/model');
   }
 
   /**
-   * Process prescription image using Tesseract OCR
+   * Check if custom model is available
+   */
+  private checkCustomModel(): boolean {
+    if (this.customModelAvailable !== null) {
+      return this.customModelAvailable;
+    }
+
+    try {
+      // Check if model directory exists and has required files
+      const modelExists = fs.existsSync(this.customModelPath);
+      const configExists = fs.existsSync(path.join(this.customModelPath, 'config.json'));
+      const modelFileExists = fs.existsSync(path.join(this.customModelPath, 'pytorch_model.bin'));
+
+      this.customModelAvailable = modelExists && configExists && modelFileExists;
+      
+      if (this.customModelAvailable) {
+        console.log('✅ Custom TrOCR model detected and available');
+      } else {
+        console.log('ℹ️  Custom model not found. Using Tesseract fallback.');
+      }
+
+      return this.customModelAvailable;
+    } catch (error) {
+      console.error('Error checking custom model:', error);
+      this.customModelAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Process prescription with custom TrOCR model
+   */
+  private async processWithCustomModel(imageSource: string): Promise<OCRResult> {
+    return new Promise((resolve, reject) => {
+      const pythonScript = path.join(__dirname, '../services/customOcrModel.py');
+      
+      // Spawn Python process
+      const pythonProcess = spawn('python', [pythonScript, imageSource]);
+
+      let stdout = '';
+      let stderr = '';
+
+      pythonProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          console.error('Custom model error:', stderr);
+          reject(new Error('Custom model processing failed'));
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdout);
+          
+          if (!result.success) {
+            reject(new Error(result.error || 'Custom model failed'));
+            return;
+          }
+
+          resolve({
+            text: result.text,
+            confidence: result.confidence,
+            extractedData: result.extractedData,
+            modelType: 'custom-trocr'
+          });
+        } catch (error) {
+          console.error('Error parsing custom model output:', error);
+          reject(new Error('Failed to parse custom model output'));
+        }
+      });
+
+      pythonProcess.on('error', (error) => {
+        console.error('Failed to spawn Python process:', error);
+        reject(error);
+      });
+    });
+  }
+
+  /**
+   * Process prescription image using Tesseract OCR (fallback)
+   */
+  private async processWithTesseract(imageSource: string): Promise<OCRResult> {
+    console.log('Using Tesseract OCR...');
+
+    const result = await Tesseract.recognize(imageSource, 'eng', {
+      logger: (m) => console.log(m),
+    });
+
+    const text = result.data.text;
+    const confidence = result.data.confidence;
+
+    console.log(`Tesseract OCR completed with confidence: ${confidence}%`);
+
+    // Extract structured data from text
+    const extractedData = this.extractPrescriptionData(text);
+
+    return {
+      text,
+      confidence,
+      extractedData,
+      modelType: 'tesseract'
+    };
+  }
+
+  /**
+   * Process prescription image - tries custom model first, falls back to Tesseract
    */
   async processPrescription(imageSource: string): Promise<OCRResult> {
     try {
       console.log('Starting OCR processing...');
 
-      // Perform OCR
-      const result = await Tesseract.recognize(imageSource, 'eng', {
-        logger: (m) => console.log(m),
-      });
+      // Try custom model first if available
+      if (this.checkCustomModel()) {
+        try {
+          console.log('Attempting to use custom TrOCR model...');
+          const result = await this.processWithCustomModel(imageSource);
+          console.log('✅ Custom model processing successful');
+          return result;
+        } catch (error) {
+          console.warn('Custom model failed, falling back to Tesseract:', error);
+          // Fall through to Tesseract
+        }
+      }
 
-      const text = result.data.text;
-      const confidence = result.data.confidence;
+      // Use Tesseract as fallback
+      return await this.processWithTesseract(imageSource);
 
-      console.log(`OCR completed with confidence: ${confidence}%`);
-
-      // Extract structured data from text
-      const extractedData = this.extractPrescriptionData(text);
-
-      return {
-        text,
-        confidence,
-        extractedData,
-      };
     } catch (error) {
       console.error('OCR processing error:', error);
       throw new Error('Failed to process prescription image');
