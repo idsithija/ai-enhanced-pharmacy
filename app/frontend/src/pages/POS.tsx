@@ -377,7 +377,7 @@ export const POS = () => {
                       </p>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-xl font-bold text-indigo-600">
-                          ₹{medicine.unitPrice}
+                          Rs {medicine.unitPrice}
                         </span>
                         <span className={`text-xs px-2 py-1 rounded-full ${medicine.stock < 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                           Stock: {medicine.stock}
@@ -479,7 +479,7 @@ export const POS = () => {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{item.medicineName}</p>
                           <p className="text-sm text-gray-500">
-                            ₹{item.unitPrice} × {item.quantity} = ₹{(item.unitPrice * item.quantity).toFixed(2)}
+                            Rs {item.unitPrice} × {item.quantity} = Rs {(item.unitPrice * item.quantity).toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -620,15 +620,15 @@ export const POS = () => {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal:</span>
-                <span className="text-gray-900">₹{subtotal.toFixed(2)}</span>
+                <span className="text-gray-900">Rs {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Discount ({discount}%):</span>
-                <span className="text-red-600">-₹{discountAmount.toFixed(2)}</span>
+                <span className="text-red-600">-Rs {discountAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Tax (5%):</span>
-                <span className="text-gray-900">₹{tax.toFixed(2)}</span>
+                <span className="text-gray-900">Rs {tax.toFixed(2)}</span>
               </div>
             </div>
 
@@ -636,7 +636,7 @@ export const POS = () => {
 
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-bold text-gray-900">Total:</span>
-              <span className="text-lg font-bold text-indigo-600">₹{total.toFixed(2)}</span>
+              <span className="text-lg font-bold text-indigo-600">Rs {total.toFixed(2)}</span>
             </div>
 
             <button
@@ -777,11 +777,11 @@ export const POS = () => {
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-900">{item.medicineName}</span>
                           <span className="text-sm font-medium text-gray-900">
-                            ₹{(item.unitPrice * item.quantity).toFixed(2)}
+                            Rs {(item.unitPrice * item.quantity).toFixed(2)}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500">
-                          {item.quantity} × ₹{item.unitPrice}
+                          {item.quantity} × Rs {item.unitPrice}
                         </p>
                       </div>
                     ))}
@@ -790,21 +790,21 @@ export const POS = () => {
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="text-gray-900">₹{invoiceData.subtotal.toFixed(2)}</span>
+                      <span className="text-gray-900">Rs {invoiceData.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Discount:</span>
-                      <span className="text-gray-900">-₹{invoiceData.discount.toFixed(2)}</span>
+                      <span className="text-gray-900">-Rs {invoiceData.discount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax:</span>
-                      <span className="text-gray-900">₹{invoiceData.tax.toFixed(2)}</span>
+                      <span className="text-gray-900">Rs {invoiceData.tax.toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center mb-4 pt-2 border-t border-gray-200">
                     <span className="text-lg font-bold text-gray-900">Total:</span>
                     <span className="text-lg font-bold text-indigo-600">
-                      ₹{invoiceData.total.toFixed(2)}
+                      Rs {invoiceData.total.toFixed(2)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">

@@ -147,7 +147,7 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Today's Revenue"
-          value={`₹${stats?.todayRevenue?.toLocaleString() || 0}`}
+          value={`Rs ${stats?.todayRevenue?.toLocaleString() || 0}`}
           subtitle={`${stats?.todaySales || 0} transactions`}
           icon={<TrendingUp size={24} />}
           color="#667eea"
@@ -248,7 +248,7 @@ export const Dashboard = () => {
                         {sale.customer?.name || `Sale #${sale.id.slice(0, 8)}`}
                       </p>
                       <p className="text-sm font-bold text-gray-900">
-                        ₹{Number(sale.total || 0).toFixed(2)}
+                        Rs {Number(sale.total || 0).toFixed(2)}
                       </p>
                     </div>
                     <div className="flex justify-between items-center">

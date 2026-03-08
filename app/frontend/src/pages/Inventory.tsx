@@ -292,10 +292,10 @@ export const Inventory = () => {
                         {new Date(item.expiryDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                        ₹{Number(item.purchasePrice || 0).toFixed(2)}
+                        Rs {Number(item.purchasePrice || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                        ₹{Number(item.sellingPrice || 0).toFixed(2)}
+                        Rs {Number(item.sellingPrice || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.supplier?.name}
@@ -499,7 +499,7 @@ export const Inventory = () => {
 
                   <div>
                     <label htmlFor="purchasePrice" className="block text-sm font-medium text-gray-700 mb-1">
-                      Purchase Price (₹)
+                      Purchase Price (Rs)
                     </label>
                     <input
                       type="number"
@@ -522,7 +522,7 @@ export const Inventory = () => {
 
                   <div>
                     <label htmlFor="sellingPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                      Selling Price (₹)
+                      Selling Price (Rs)
                     </label>
                     <input
                       type="number"

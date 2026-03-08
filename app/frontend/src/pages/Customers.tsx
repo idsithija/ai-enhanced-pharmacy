@@ -297,7 +297,7 @@ export const Customers = () => {
             <div>
               <p className="text-gray-600 text-sm mb-2">Total Revenue</p>
               <h3 className="text-3xl font-bold text-gray-900">
-                ₹{customers.reduce((sum, c) => sum + Number(c.totalSpent || 0), 0).toLocaleString()}
+                Rs {customers.reduce((sum, c) => sum + Number(c.totalSpent || 0), 0).toLocaleString()}
               </h3>
             </div>
             <div className="p-3 bg-green-100 rounded-xl">
@@ -446,7 +446,7 @@ export const Customers = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-bold text-gray-900">₹{Number(customer.totalSpent || 0).toLocaleString()}</p>
+                        <p className="text-sm font-bold text-gray-900">Rs {Number(customer.totalSpent || 0).toLocaleString()}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
@@ -744,7 +744,7 @@ export const Customers = () => {
                 <h3 className="text-sm font-bold text-gray-900 mb-3">Purchase Statistics</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">₹{Number(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">Rs {Number(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
                     <p className="text-xs text-gray-600">Total Spent</p>
                   </div>
                   <div className="text-center">
@@ -752,7 +752,7 @@ export const Customers = () => {
                     <p className="text-xs text-gray-600">Total Purchases</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-amber-600">₹{(Number(selectedCustomer.totalSpent || 0) / Number(selectedCustomer.totalPurchases || 1)).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-amber-600">Rs {(Number(selectedCustomer.totalSpent || 0) / Number(selectedCustomer.totalPurchases || 1)).toFixed(2)}</p>
                     <p className="text-xs text-gray-600">Avg. Purchase</p>
                   </div>
                 </div>
@@ -794,7 +794,7 @@ export const Customers = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <p className="text-sm font-bold text-gray-900">₹{Number(purchase.totalAmount || 0).toFixed(2)}</p>
+                              <p className="text-sm font-bold text-gray-900">Rs {Number(purchase.totalAmount || 0).toFixed(2)}</p>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border bg-white text-gray-800 border-gray-300">

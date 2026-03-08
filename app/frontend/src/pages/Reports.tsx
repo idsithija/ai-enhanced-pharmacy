@@ -101,7 +101,7 @@ export const Reports = () => {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-600">Total Sales</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">₹69,500</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">Rs 69,500</p>
               <div className="flex items-center gap-1 mt-2">
                 <TrendingUp size={16} className="text-green-600" />
                 <span className="text-sm text-green-600 font-medium">+18.2%</span>
@@ -135,7 +135,7 @@ export const Reports = () => {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-600">Avg. Order Value</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">₹183</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">Rs 183</p>
               <div className="flex items-center gap-1 mt-2">
                 <TrendingUp size={16} className="text-green-600" />
                 <span className="text-sm text-green-600 font-medium">+5.1%</span>
@@ -180,7 +180,7 @@ export const Reports = () => {
               <YAxis yAxisId="right" orientation="right" />
               <Tooltip />
               <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="sales" stroke="#667eea" strokeWidth={3} name="Sales (₹)" />
+              <Line yAxisId="left" type="monotone" dataKey="sales" stroke="#667eea" strokeWidth={3} name="Sales (Rs)" />
               <Line yAxisId="right" type="monotone" dataKey="transactions" stroke="#764ba2" strokeWidth={3} name="Transactions" />
             </LineChart>
           </ResponsiveContainer>
@@ -218,7 +218,7 @@ export const Reports = () => {
                   <p className="text-sm text-gray-700">{cat.category}</p>
                 </div>
                 <p className="text-sm font-bold text-gray-900">
-                  ₹{cat.sales.toLocaleString()}
+                  Rs {cat.sales.toLocaleString()}
                 </p>
               </div>
             ))}
@@ -258,7 +258,7 @@ export const Reports = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{medicine.sold.toLocaleString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <p className="text-sm font-bold text-gray-900">
-                      ₹{medicine.revenue.toLocaleString()}
+                      Rs {medicine.revenue.toLocaleString()}
                     </p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -326,7 +326,7 @@ export const Reports = () => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="sales" fill="#667eea" name="Value (₹)" />
+              <Bar dataKey="sales" fill="#667eea" name="Value (Rs)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -462,7 +462,7 @@ export const Reports = () => {
                 Avg. Lifetime Value
               </p>
               <p className="text-3xl font-bold text-gray-900 mt-1">
-                ₹8,450
+                Rs 8,450
               </p>
             </div>
             <div className="h-14 w-14 rounded-full bg-amber-600 flex items-center justify-center">
@@ -512,7 +512,7 @@ export const Reports = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Jane Smith</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">78</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹28,500.75</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Rs 28,500.75</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">1,250</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -528,7 +528,7 @@ export const Reports = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Emily Davis</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">56</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹19,250.00</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Rs 19,250.00</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">820</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -544,7 +544,7 @@ export const Reports = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">42</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">₹15,680.50</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Rs 15,680.50</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">450</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -568,7 +568,7 @@ export const Reports = () => {
             Total Revenue
           </p>
           <p className="text-3xl font-bold text-green-600">
-            ₹161,500
+            Rs 161,500
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-md p-6">
@@ -576,7 +576,7 @@ export const Reports = () => {
             Total Expenses
           </p>
           <p className="text-3xl font-bold text-red-600">
-            ₹98,200
+            Rs 98,200
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-md p-6">
@@ -584,7 +584,7 @@ export const Reports = () => {
             Net Profit
           </p>
           <p className="text-3xl font-bold text-indigo-600">
-            ₹63,300
+            Rs 63,300
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-md p-6">
@@ -630,7 +630,7 @@ export const Reports = () => {
                   <p className="text-sm text-gray-700">{method.method}</p>
                 </div>
                 <p className="text-sm font-bold text-gray-900">
-                  ₹{method.amount.toLocaleString()}
+                  Rs {method.amount.toLocaleString()}
                 </p>
               </div>
             ))}

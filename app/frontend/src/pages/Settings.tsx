@@ -65,7 +65,7 @@ export const Settings = () => {
   const [preferences, setPreferences] = useState({
     theme: 'light',
     language: 'en',
-    currency: 'INR',
+    currency: 'LKR',
     dateFormat: 'DD/MM/YYYY',
     timeFormat: '12-hour',
   });
@@ -900,9 +900,7 @@ export const Settings = () => {
             onChange={(e) => handlePreferenceChange('currency', e.target.value)}
             className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
-            <option value="INR">INR (₹)</option>
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
+            <option value="LKR">LKR (Rs)</option>
           </select>
         </div>
 

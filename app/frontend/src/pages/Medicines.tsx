@@ -224,7 +224,7 @@ export const Medicines = () => {
                       {medicine.manufacturer}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      ₹{Number(medicine.unitPrice || 0).toFixed(2)}
+                      Rs {Number(medicine.unitPrice || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
@@ -404,7 +404,7 @@ export const Medicines = () => {
                   </div>
                   <div>
                     <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit Price (₹) *
+                      Unit Price (Rs) *
                     </label>
                     <input
                       type="number"
