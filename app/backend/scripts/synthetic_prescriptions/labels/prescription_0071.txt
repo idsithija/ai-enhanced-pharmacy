@@ -1,0 +1,26 @@
+Lanka Hospital
+
+Patient Name: Maria Perera
+Age: 27 years
+Date: 23/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Amlodipine 5mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+2. Omeprazole 20mg Cap
+   1-0-1 (Twice daily)
+   Duration: 7 days
+
+3. Metformin 500mg Tablet
+   Three times daily
+   Duration: 14 days
+
+4. Prednisolone 10mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 1 month
+
+Signature: Dr. R. Gunaratne

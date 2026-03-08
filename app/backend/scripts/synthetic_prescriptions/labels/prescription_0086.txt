@@ -1,0 +1,22 @@
+Durdans Hospital
+
+Patient Name: Nimal Rodrigo
+Age: 35 years
+Date: 15/02/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Metformin 1000mg Tab
+   1-0-1 (Twice daily)
+   Duration: 5 days
+
+2. Azithromycin 250mg Tab
+   Three times daily
+   Duration: 10 days
+
+3. Prednisolone 10mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 10 days
+
+Signature: Dr. M. Jayawardena

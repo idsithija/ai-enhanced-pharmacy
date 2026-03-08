@@ -1,0 +1,18 @@
+Asiri Medical Center
+
+Patient Name: Chaminda Gunasekara
+Age: 71 years
+Date: 04/03/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Atorvastatin 40mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+2. Cetirizine 10mg Tab
+   Three times daily
+   Duration: 7 days
+
+Signature: Dr. R. Gunaratne

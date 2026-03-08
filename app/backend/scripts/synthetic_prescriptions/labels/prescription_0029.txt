@@ -1,0 +1,30 @@
+Lanka Hospital
+
+Patient Name: Ruwan De Silva
+Age: 73 years
+Date: 03/03/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Paracetamol 650mg Tablet
+   Twice daily
+   Duration: 10 days
+
+2. Metformin 1000mg Tablet
+   Three times daily
+   Duration: 3 months
+
+3. Atorvastatin 20mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+4. Metformin 1000mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 5 days
+
+5. Atorvastatin 10mg Tab
+   1-0-1 (Twice daily)
+   Duration: 10 days
+
+Signature: Dr. R. Gunaratne

@@ -1,0 +1,26 @@
+City Hospital
+
+Patient Name: Anura Wijesinghe
+Age: 79 years
+Date: 06/03/2026
+Doctor: Dr. M. Jayawardena
+
+Rx
+
+1. Atorvastatin 10mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 1 month
+
+2. Prednisolone 10mg Tab
+   1-0-1 (Twice daily)
+   Duration: 14 days
+
+3. Cetirizine 10mg Tab
+   Twice daily
+   Duration: 7 days
+
+4. Metformin 1000mg Tab
+   As needed
+   Duration: 3 months
+
+Signature: Dr. M. Jayawardena

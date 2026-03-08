@@ -1,0 +1,30 @@
+National Hospital
+
+Patient Name: John Silva
+Age: 80 years
+Date: 19/02/2026
+Doctor: Dr. S. Wijesinghe
+
+Rx
+
+1. Amlodipine 5mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 7 days
+
+2. Omeprazole 20mg Cap
+   Three times daily
+   Duration: 7 days
+
+3. Paracetamol 650mg Tab
+   1-0-1 (Twice daily)
+   Duration: 7 days
+
+4. Amlodipine 5mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+5. Azithromycin 250mg Tablet
+   Twice daily
+   Duration: 7 days
+
+Signature: Dr. S. Wijesinghe

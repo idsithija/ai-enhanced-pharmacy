@@ -1,0 +1,18 @@
+Asiri Medical Center
+
+Patient Name: Saman Jayawardena
+Age: 75 years
+Date: 20/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Prednisolone 5mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+2. Amlodipine 10mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 14 days
+
+Signature: Dr. K. Perera

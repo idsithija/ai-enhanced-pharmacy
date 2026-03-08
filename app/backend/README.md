@@ -292,6 +292,73 @@ Server runs at: `http://localhost:5000`
 - **OpenFDA API** - Drug interaction checking (free government API)
 - **TensorFlow.js** - Inventory prediction (open-source)
 
+## 🎓 OCR Training & Synthetic Data Generation
+
+**NEW!** Generate synthetic prescription images for testing, demo, and OCR validation.
+
+### Quick Start
+
+**Windows:**
+```powershell
+cd app/backend
+setup_ocr_training.bat
+```
+
+**Manual:**
+```powershell
+cd scripts
+pip install -r requirements.txt
+python generate_prescriptions.py    # Generate 100 synthetic prescriptions
+python test_ocr_accuracy.py         # Test OCR accuracy (requires Tesseract)
+```
+
+### What You Get
+
+- ✅ **100 realistic prescription images** (high/medium/low quality)
+- ✅ **Ground truth labels** for accuracy validation
+- ✅ **OCR accuracy metrics** (character/word/medicine recall)
+- ✅ **Demo-ready data** for system presentation
+- ✅ **No real patient data** needed (privacy-safe)
+
+### Files Created
+
+```
+synthetic_prescriptions/
+├── prescription_0001_high.png     # Synthetic prescription images
+├── prescription_0002_medium.png
+├── prescription_0003_low.png
+├── metadata.json                   # All prescription data
+└── labels/
+    ├── prescription_0001.txt       # Ground truth for validation
+    └── ...
+```
+
+### Expected OCR Accuracy
+
+| Quality | Character Accuracy | Use Case |
+|---------|-------------------|----------|
+| **High** | 90-95% | Demos, testing |
+| **Medium** | 80-88% | Real-world validation |
+| **Low** | 60-75% | Error handling testing |
+
+### Documentation
+
+- 📖 **Complete Guide**: [scripts/README_OCR_TRAINING.md](scripts/README_OCR_TRAINING.md)
+- ⚡ **Quick Reference**: [scripts/QUICK_REFERENCE.md](scripts/QUICK_REFERENCE.md)
+
+### Do You Need to Train OCR Models?
+
+**For most campus projects: NO** ❌
+
+Pre-trained Tesseract works well (70-85% accuracy). Instead of complex model training:
+
+1. ✅ **Add image preprocessing** (grayscale, contrast, sharpen) → +10-15% accuracy
+2. ✅ **Implement medicine autocorrection** (fuzzy matching with DB) → +15-20% accuracy
+3. ✅ **Build good verification UI** (pharmacist reviews low-confidence results)
+4. ✅ **Use synthetic data** for demos and testing
+
+**See** [scripts/QUICK_REFERENCE.md](scripts/QUICK_REFERENCE.md) for details.
+
 ## 🔒 Security Features
 
 - Helmet.js for security headers

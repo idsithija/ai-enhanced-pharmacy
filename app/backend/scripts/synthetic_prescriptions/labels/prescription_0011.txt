@@ -1,0 +1,30 @@
+National Hospital
+
+Patient Name: Kasun Fernando
+Age: 67 years
+Date: 28/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Aspirin 100mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 3 months
+
+2. Metformin 1000mg Tab
+   As needed
+   Duration: 10 days
+
+3. Aspirin 100mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+4. Azithromycin 500mg Tab
+   Twice daily
+   Duration: 3 months
+
+5. Aspirin 100mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 1 month
+
+Signature: Dr. R. Gunaratne

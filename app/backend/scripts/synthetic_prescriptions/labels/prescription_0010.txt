@@ -1,0 +1,18 @@
+Asiri Medical Center
+
+Patient Name: Chaminda Gunasekara
+Age: 23 years
+Date: 28/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Paracetamol 500mg Tab
+   1-0-1 (Twice daily)
+   Duration: 14 days
+
+2. Paracetamol 500mg Tab
+   Twice daily
+   Duration: 14 days
+
+Signature: Dr. R. Gunaratne

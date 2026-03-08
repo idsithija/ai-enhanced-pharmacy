@@ -1,0 +1,22 @@
+National Hospital
+
+Patient Name: Anura Wijesinghe
+Age: 61 years
+Date: 17/02/2026
+Doctor: Dr. S. Wijesinghe
+
+Rx
+
+1. Cetirizine 10mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 14 days
+
+2. Prednisolone 10mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+3. Atorvastatin 10mg Tab
+   As needed
+   Duration: 10 days
+
+Signature: Dr. S. Wijesinghe

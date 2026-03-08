@@ -1,0 +1,125 @@
+{
+  "summary": {
+    "total_tested": 10,
+    "avg_character_accuracy": 31.725132328689092,
+    "avg_word_accuracy": 72.43708922775065,
+    "avg_confidence": 68.8,
+    "by_quality": {
+      "high": 43.60078631490456,
+      "medium": 25.42016806722689,
+      "low": 10.075479110078861
+    }
+  },
+  "detailed_results": [
+    {
+      "id": 1,
+      "filename": "prescription_0001_low.png",
+      "quality": "low",
+      "confidence": 36,
+      "accuracy": {
+        "characterAccuracy": 10.526315789473683,
+        "wordAccuracy": 23.076923076923077,
+        "similarityRatio": 0.10526315789473684
+      }
+    },
+    {
+      "id": 2,
+      "filename": "prescription_0002_low.png",
+      "quality": "low",
+      "confidence": 38,
+      "accuracy": {
+        "characterAccuracy": 8.705357142857142,
+        "wordAccuracy": 16.666666666666664,
+        "similarityRatio": 0.08705357142857142
+      }
+    },
+    {
+      "id": 3,
+      "filename": "prescription_0003_high.png",
+      "quality": "high",
+      "confidence": 82,
+      "accuracy": {
+        "characterAccuracy": 21.218487394957982,
+        "wordAccuracy": 93.87755102040816,
+        "similarityRatio": 0.21218487394957983
+      }
+    },
+    {
+      "id": 4,
+      "filename": "prescription_0004_high.png",
+      "quality": "high",
+      "confidence": 82,
+      "accuracy": {
+        "characterAccuracy": 93.5,
+        "wordAccuracy": 100,
+        "similarityRatio": 0.935
+      }
+    },
+    {
+      "id": 5,
+      "filename": "prescription_0005_high.png",
+      "quality": "high",
+      "confidence": 84,
+      "accuracy": {
+        "characterAccuracy": 26.722338204592898,
+        "wordAccuracy": 91.66666666666666,
+        "similarityRatio": 0.267223382045929
+      }
+    },
+    {
+      "id": 6,
+      "filename": "prescription_0006_medium.png",
+      "quality": "medium",
+      "confidence": 83,
+      "accuracy": {
+        "characterAccuracy": 25.42016806722689,
+        "wordAccuracy": 95.83333333333334,
+        "similarityRatio": 0.2542016806722689
+      }
+    },
+    {
+      "id": 7,
+      "filename": "prescription_0007_high.png",
+      "quality": "high",
+      "confidence": 79,
+      "accuracy": {
+        "characterAccuracy": 42.125984251968504,
+        "wordAccuracy": 94.11764705882352,
+        "similarityRatio": 0.421259842519685
+      }
+    },
+    {
+      "id": 8,
+      "filename": "prescription_0008_high.png",
+      "quality": "high",
+      "confidence": 84,
+      "accuracy": {
+        "characterAccuracy": 33.63636363636363,
+        "wordAccuracy": 95,
+        "similarityRatio": 0.33636363636363636
+      }
+    },
+    {
+      "id": 9,
+      "filename": "prescription_0009_low.png",
+      "quality": "low",
+      "confidence": 36,
+      "accuracy": {
+        "characterAccuracy": 10.99476439790576,
+        "wordAccuracy": 23.809523809523807,
+        "similarityRatio": 0.1099476439790576
+      }
+    },
+    {
+      "id": 10,
+      "filename": "prescription_0010_high.png",
+      "quality": "high",
+      "confidence": 84,
+      "accuracy": {
+        "characterAccuracy": 44.4015444015444,
+        "wordAccuracy": 90.32258064516128,
+        "similarityRatio": 0.444015444015444
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+National Hospital
+
+Patient Name: Nimal Rodrigo
+Age: 67 years
+Date: 17/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Metformin 1000mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 7 days
+
+Signature: Dr. A. Fernando

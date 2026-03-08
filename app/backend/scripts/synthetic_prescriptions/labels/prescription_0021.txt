@@ -1,0 +1,22 @@
+Asiri Medical Center
+
+Patient Name: Nimal Rodrigo
+Age: 63 years
+Date: 07/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Paracetamol 500mg Tablet
+   As needed
+   Duration: 7 days
+
+2. Amoxicillin 250mg Capsule
+   As needed
+   Duration: 7 days
+
+3. Cetirizine 10mg Tablet
+   As needed
+   Duration: 10 days
+
+Signature: Dr. A. Fernando

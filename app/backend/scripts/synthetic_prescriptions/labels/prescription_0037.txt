@@ -1,0 +1,18 @@
+City Hospital
+
+Patient Name: Maria Perera
+Age: 58 years
+Date: 17/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Azithromycin 250mg Tablet
+   1-0-0 (Once daily in morning)
+   Duration: 14 days
+
+2. Metformin 500mg Tablet
+   1-1-1 (Three times daily)
+   Duration: 14 days
+
+Signature: Dr. R. Gunaratne

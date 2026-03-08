@@ -1,0 +1,30 @@
+Nawaloka Hospital
+
+Patient Name: John Silva
+Age: 65 years
+Date: 26/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Omeprazole 20mg Capsule
+   1-1-1 (Three times daily)
+   Duration: 14 days
+
+2. Amlodipine 5mg Tab
+   Three times daily
+   Duration: 7 days
+
+3. Amlodipine 5mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 1 month
+
+4. Cetirizine 10mg Tab
+   1-0-0 (Once daily in morning)
+   Duration: 5 days
+
+5. Amoxicillin 500mg Cap
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+Signature: Dr. K. Perera

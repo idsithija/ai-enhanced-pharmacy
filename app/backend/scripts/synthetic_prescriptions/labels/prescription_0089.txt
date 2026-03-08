@@ -1,0 +1,22 @@
+Durdans Hospital
+
+Patient Name: Sandali Wickramasinghe
+Age: 21 years
+Date: 08/03/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Amoxicillin 250mg Capsule
+   1-0-1 (Twice daily)
+   Duration: 7 days
+
+2. Amoxicillin 250mg Capsule
+   0-0-1 (Once daily at night)
+   Duration: 7 days
+
+3. Atorvastatin 10mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+Signature: Dr. A. Fernando

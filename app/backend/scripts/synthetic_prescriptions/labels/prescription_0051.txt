@@ -1,0 +1,26 @@
+Nawaloka Hospital
+
+Patient Name: Dilini Rajapaksa
+Age: 79 years
+Date: 10/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Cetirizine 10mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 10 days
+
+2. Cetirizine 10mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 3 months
+
+3. Cetirizine 10mg Tab
+   As needed
+   Duration: 14 days
+
+4. Atorvastatin 20mg Tab
+   1-0-1 (Twice daily)
+   Duration: 5 days
+
+Signature: Dr. A. Fernando

@@ -1,0 +1,26 @@
+Lanka Hospital
+
+Patient Name: Kasun Fernando
+Age: 55 years
+Date: 14/02/2026
+Doctor: Dr. N. Silva
+
+Rx
+
+1. Azithromycin 500mg Tab
+   Three times daily
+   Duration: 3 months
+
+2. Metformin 1000mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 14 days
+
+3. Amlodipine 5mg Tablet
+   As needed
+   Duration: 14 days
+
+4. Azithromycin 250mg Tab
+   1-0-1 (Twice daily)
+   Duration: 5 days
+
+Signature: Dr. N. Silva

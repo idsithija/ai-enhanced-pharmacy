@@ -1,0 +1,30 @@
+National Hospital
+
+Patient Name: Maria Perera
+Age: 28 years
+Date: 19/02/2026
+Doctor: Dr. R. Gunaratne
+
+Rx
+
+1. Prednisolone 10mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 7 days
+
+2. Prednisolone 10mg Tablet
+   As needed
+   Duration: 14 days
+
+3. Omeprazole 40mg Cap
+   0-0-1 (Once daily at night)
+   Duration: 5 days
+
+4. Azithromycin 500mg Tablet
+   1-0-1 (Twice daily)
+   Duration: 1 month
+
+5. Omeprazole 40mg Cap
+   1-0-1 (Twice daily)
+   Duration: 10 days
+
+Signature: Dr. R. Gunaratne

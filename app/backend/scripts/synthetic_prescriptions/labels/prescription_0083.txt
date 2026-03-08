@@ -1,0 +1,14 @@
+National Hospital
+
+Patient Name: Dilini Rajapaksa
+Age: 73 years
+Date: 26/02/2026
+Doctor: Dr. K. Perera
+
+Rx
+
+1. Prednisolone 5mg Tab
+   0-0-1 (Once daily at night)
+   Duration: 5 days
+
+Signature: Dr. K. Perera

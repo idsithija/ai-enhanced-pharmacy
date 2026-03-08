@@ -1,0 +1,14 @@
+National Hospital
+
+Patient Name: Saman Jayawardena
+Age: 57 years
+Date: 06/02/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Omeprazole 20mg Capsule
+   1-1-1 (Three times daily)
+   Duration: 5 days
+
+Signature: Dr. A. Fernando

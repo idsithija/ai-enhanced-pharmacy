@@ -1,0 +1,18 @@
+Lanka Hospital
+
+Patient Name: Anura Wijesinghe
+Age: 68 years
+Date: 05/03/2026
+Doctor: Dr. A. Fernando
+
+Rx
+
+1. Omeprazole 20mg Capsule
+   Three times daily
+   Duration: 7 days
+
+2. Azithromycin 500mg Tablet
+   0-0-1 (Once daily at night)
+   Duration: 3 months
+
+Signature: Dr. A. Fernando

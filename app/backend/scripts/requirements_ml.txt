@@ -1,0 +1,23 @@
+# Machine Learning Dependencies for Custom OCR Model Training
+# Install with: pip install -r requirements_ml.txt
+
+# Core ML frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Hugging Face Transformers (for TrOCR)
+transformers>=4.30.0
+datasets>=2.14.0
+accelerate>=0.20.0
+
+# Metrics and utilities
+editdistance>=0.6.0
+evaluate>=0.4.0
+sentencepiece>=0.1.99
+
+# Image processing
+Pillow>=10.0.0
+
+# Optional but recommended
+# tensorboard  # For training visualization
+# wandb        # For experiment tracking
