@@ -1,10 +1,9 @@
-import Tesseract from 'tesseract.js';
 import natural from 'natural';
-import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import axios from 'axios';
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -30,222 +29,181 @@ interface OCRResult {
 
 class OCRService {
   private tokenizer: any;
-  private customModelAvailable: boolean | null = null;
   private customModelPath: string;
+  private ocrApiUrl: string;
 
   constructor() {
     this.tokenizer = new natural.WordTokenizer();
     this.customModelPath = path.join(__dirname, '../../../ml-models/prescription-ocr/model');
+    // Python OCR API endpoint - configurable via environment variable
+    this.ocrApiUrl = process.env.OCR_API_URL || 'http://127.0.0.1:8000';
   }
 
   /**
-   * Check if custom model is available
+   * Check if custom OCR API is available
    */
-  private checkCustomModel(): boolean {
-    if (this.customModelAvailable !== null) {
-      return this.customModelAvailable;
-    }
-
+  private async checkCustomModelApi(): Promise<boolean> {
     try {
-      // Check if model directory exists and has required files
-      const modelExists = fs.existsSync(this.customModelPath);
-      const configExists = fs.existsSync(path.join(this.customModelPath, 'config.json'));
-      const modelFileExists = fs.existsSync(path.join(this.customModelPath, 'pytorch_model.bin'));
-
-      this.customModelAvailable = modelExists && configExists && modelFileExists;
+      const response = await axios.get(`${this.ocrApiUrl}/health`, { timeout: 5000 });
       
-      if (this.customModelAvailable) {
-        console.log('✅ Custom TrOCR model detected and available');
-      } else {
-        console.log('ℹ️  Custom model not found. Using Tesseract fallback.');
+      if (response.data.status === 'healthy' && response.data.model_loaded) {
+        console.log('✅ Custom OCR API is available:', this.ocrApiUrl);
+        console.log('   Device:', response.data.device);
+        return true;
       }
-
-      return this.customModelAvailable;
-    } catch (error) {
-      console.error('Error checking custom model:', error);
-      this.customModelAvailable = false;
+      
+      console.warn('⚠️ OCR API responded but model not loaded');
+      return false;
+    } catch (error: any) {
+      console.warn(`⚠️ Custom OCR API not available at ${this.ocrApiUrl}`);
+      if (error.code === 'ECONNREFUSED') {
+        console.warn('   Hint: Start the Python API service with: python ml-models/prescription-ocr/api_service.py');
+      }
       return false;
     }
   }
+  
+  /**
+   * Check if custom model files exist (for reference)
+   */
+  private checkCustomModelFiles(): boolean {
+    // Check if model files exist (either pytorch_model.bin or model.safetensors)
+    const modelExists = fs.existsSync(this.customModelPath);
+    const configExists = fs.existsSync(path.join(this.customModelPath, 'config.json'));
+    const pytorchModelExists = fs.existsSync(path.join(this.customModelPath, 'pytorch_model.bin'));
+    const safetensorsExists = fs.existsSync(path.join(this.customModelPath, 'model.safetensors'));
+    
+    const filesExist = modelExists && configExists && (pytorchModelExists || safetensorsExists);
+    
+    if (filesExist) {
+      console.log('✅ Custom TrOCR model files found at:', this.customModelPath);
+    } else {
+      console.error('❌ Model files not found at:', this.customModelPath);
+      console.error('   Model directory exists:', modelExists);
+      console.error('   Config exists:', configExists);
+      console.error('   PyTorch model exists:', pytorchModelExists);
+      console.error('   Safetensors model exists:', safetensorsExists);
+    }
+    
+    return filesExist;
+  }
 
   /**
-   * Process prescription with custom TrOCR model
+   * Process prescription with custom TrOCR model via API
    */
   private async processWithCustomModel(imageSource: string): Promise<OCRResult> {
-    return new Promise((resolve, reject) => {
-      const pythonScript = path.join(__dirname, '../services/customOcrModel.py');
+    try {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 Starting OCR Processing');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('API URL:', this.ocrApiUrl);
+      console.log('Image Source Type:', 
+        imageSource.startsWith('data:') ? 'Base64 Data URL' :
+        imageSource.startsWith('http') ? 'HTTP URL' :
+        'File Path or Base64'
+      );
+      console.log('Image Source Length:', imageSource.length, 'characters');
+      console.log('Image Preview:', imageSource.substring(0, 100) + '...');
+      console.log('⏱️  Starting request at:', new Date().toISOString());
       
-      // Spawn Python process
-      const pythonProcess = spawn('python', [pythonScript, imageSource]);
-
-      let stdout = '';
-      let stderr = '';
-
-      pythonProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      pythonProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          console.error('Custom model error:', stderr);
-          reject(new Error('Custom model processing failed'));
-          return;
+      const startTime = Date.now();
+      
+      const response = await axios.post(
+        `${this.ocrApiUrl}/process`,
+        {
+          imageSource: imageSource
+        },
+        {
+          timeout: 180000, // 3 minute timeout for large images (increased from 60s)
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
         }
+      );
 
-        try {
-          const result = JSON.parse(stdout);
-          
-          if (!result.success) {
-            reject(new Error(result.error || 'Custom model failed'));
-            return;
-          }
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'OCR API returned failure');
+      }
 
-          resolve({
-            text: result.text,
-            confidence: result.confidence,
-            extractedData: result.extractedData,
-            modelType: 'custom-trocr'
-          });
-        } catch (error) {
-          console.error('Error parsing custom model output:', error);
-          reject(new Error('Failed to parse custom model output'));
-        }
-      });
-
-      pythonProcess.on('error', (error) => {
-        console.error('Failed to spawn Python process:', error);
-        reject(error);
-      });
-    });
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ OCR Processing Successful!');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('⏱️  Processing Time:', duration, 'seconds');
+      console.log('📝 Extracted Text Length:', response.data.text?.length || 0, 'characters');
+      console.log('💊 Medications Found:', response.data.extractedData?.medications?.length || 0);
+      console.log('🖥️  Model Device:', response.data.device);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      return {
+        text: response.data.text,
+        confidence: response.data.confidence,
+        extractedData: response.data.extractedData,
+        modelType: response.data.modelType
+      };
+    } catch (error: any) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('❌ OCR Processing Failed');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      if (error.response) {
+        // API returned an error response
+        console.error('📛 API Error Response:');
+        console.error('   Status:', error.response.status);
+        console.error('   Data:', JSON.stringify(error.response.data, null, 2));
+        throw new Error(`OCR API error: ${error.response.data.detail || error.response.statusText}`);
+      } else if (error.code === 'ECONNREFUSED') {
+        console.error('🔌 Connection Refused - OCR API not running');
+        console.error('   API URL:', this.ocrApiUrl);
+        throw new Error('OCR API service is not running. Please start it with: .\\start-ocr-api.ps1');
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        console.error('⏱️  Request Timeout');
+        console.error('   The OCR API took longer than 3 minutes to respond');
+        console.error('   This usually means:');
+        console.error('   1. Image is very large - try resizing it');
+        console.error('   2. Model is processing slowly on CPU - consider GPU');
+        console.error('   3. API might be stuck - check the Python API logs');
+        throw new Error('OCR API request timed out after 3 minutes. Try with a smaller image or check API logs.');
+      } else {
+        console.error('❓ Unknown Error:');
+        console.error('   Code:', error.code);
+        console.error('   Message:', error.message);
+        throw error;
+      }
+    }
   }
 
   /**
-   * Process prescription image using Tesseract OCR (fallback)
-   */
-  private async processWithTesseract(imageSource: string): Promise<OCRResult> {
-    console.log('Using Tesseract OCR...');
-
-    const result = await Tesseract.recognize(imageSource, 'eng', {
-      logger: (m) => console.log(m),
-    });
-
-    const text = result.data.text;
-    const confidence = result.data.confidence;
-
-    console.log(`Tesseract OCR completed with confidence: ${confidence}%`);
-
-    // Extract structured data from text
-    const extractedData = this.extractPrescriptionData(text);
-
-    return {
-      text,
-      confidence,
-      extractedData,
-      modelType: 'tesseract'
-    };
-  }
-
-  /**
-   * Process prescription image - tries custom model first, falls back to Tesseract
+   * Process prescription image - Uses custom TrOCR model API only
    */
   async processPrescription(imageSource: string): Promise<OCRResult> {
-    try {
-      console.log('Starting OCR processing...');
-
-      // Try custom model first if available
-      if (this.checkCustomModel()) {
-        try {
-          console.log('Attempting to use custom TrOCR model...');
-          const result = await this.processWithCustomModel(imageSource);
-          console.log('✅ Custom model processing successful');
-          return result;
-        } catch (error) {
-          console.warn('Custom model failed, falling back to Tesseract:', error);
-          // Fall through to Tesseract
-        }
-      }
-
-      // Use Tesseract as fallback
-      return await this.processWithTesseract(imageSource);
-
-    } catch (error) {
-      console.error('OCR processing error:', error);
-      throw new Error('Failed to process prescription image');
-    }
-  }
-
-  /**
-   * Extract structured data from OCR text using NLP
-   */
-  private extractPrescriptionData(text: string): OCRResult['extractedData'] {
-    const lines = text.split('\n').filter((line) => line.trim().length > 0);
-
-    const extractedData: OCRResult['extractedData'] = {
-      medications: [],
-    };
-
-    // Common patterns
-    const patientPattern = /patient[:\s]+([a-z\s]+)/i;
-    const doctorPattern = /(?:dr\.|doctor)[:\s]+([a-z\s]+)/i;
-    const hospitalPattern = /hospital[:\s]+([a-z\s]+)/i;
-    const datePattern = /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/;
-
-    // Extract patient name
-    const patientMatch = text.match(patientPattern);
-    if (patientMatch) {
-      extractedData.patientName = patientMatch[1].trim();
-    }
-
-    // Extract doctor name
-    const doctorMatch = text.match(doctorPattern);
-    if (doctorMatch) {
-      extractedData.doctorName = doctorMatch[1].trim();
-    }
-
-    // Extract hospital name
-    const hospitalMatch = text.match(hospitalPattern);
-    if (hospitalMatch) {
-      extractedData.hospitalName = hospitalMatch[1].trim();
-    }
-
-    // Extract date
-    const dateMatch = text.match(datePattern);
-    if (dateMatch) {
-      extractedData.date = dateMatch[1];
-    }
-
-    // Extract medications (simplified logic)
-    // Look for lines that might contain medication names
-    const medicationKeywords = ['tab', 'tablet', 'capsule', 'cap', 'syrup', 'injection', 'mg', 'ml'];
+    console.log('Starting OCR processing with custom TrOCR model API...');
     
-    for (const line of lines) {
-      const lowerLine = line.toLowerCase();
-      const hasMedicationKeyword = medicationKeywords.some((keyword) => lowerLine.includes(keyword));
-
-      if (hasMedicationKeyword) {
-        // Extract dosage patterns (e.g., 500mg, 10ml)
-        const dosageMatch = line.match(/(\d+\s*(?:mg|ml|g|mcg))/i);
-        
-        // Extract frequency patterns (e.g., twice daily, 1-0-1)
-        const frequencyMatch = line.match(/(?:once|twice|thrice|[\d-]+)\s*(?:daily|a day|per day)?/i);
-        
-        // Extract duration (e.g., 7 days, 2 weeks)
-        const durationMatch = line.match(/(\d+\s*(?:days?|weeks?|months?))/i);
-
-        extractedData.medications.push({
-          name: line.trim(),
-          dosage: dosageMatch ? dosageMatch[1] : undefined,
-          frequency: frequencyMatch ? frequencyMatch[0] : undefined,
-          duration: durationMatch ? durationMatch[1] : undefined,
-        });
-      }
+    // Check if model files exist
+    if (!this.checkCustomModelFiles()) {
+      throw new Error('Custom TrOCR model files not found at: ' + this.customModelPath);
     }
-
-    return extractedData;
+    
+    // Check if API is available
+    const apiAvailable = await this.checkCustomModelApi();
+    if (!apiAvailable) {
+      throw new Error(
+        'OCR API service is not running. Please start it with:\n' +
+        'cd ml-models/prescription-ocr && python api_service.py'
+      );
+    }
+    
+    try {
+      const result = await this.processWithCustomModel(imageSource);
+      console.log('✅ Custom TrOCR model processing successful');
+      return result;
+    } catch (error: any) {
+      console.error('❌ Custom model processing failed:', error);
+      throw new Error(`Custom TrOCR model processing failed: ${error.message}`);
+    }
   }
 
   /**

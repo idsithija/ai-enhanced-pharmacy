@@ -32,7 +32,7 @@ OUTPUT_DIR = Path(__file__).parent.parent / "model"
 # Model settings
 BASE_MODEL = "microsoft/trocr-base-printed"  # Pre-trained TrOCR
 MAX_LENGTH = 256  # Maximum text length
-BATCH_SIZE = 4    # Reduce to 2 if you get memory errors
+BATCH_SIZE = 2    # Reduced to help prevent training hangs
 NUM_EPOCHS = 5    # Start with 5, can increase to 10
 LEARNING_RATE = 5e-5
 
@@ -171,11 +171,11 @@ if __name__ == "__main__":
     model.config.pad_token_id = processor.tokenizer.pad_token_id
     model.config.vocab_size = model.config.decoder.vocab_size
     model.config.eos_token_id = processor.tokenizer.sep_token_id
-    model.config.max_length = MAX_LENGTH
-    model.config.early_stopping = True
-    model.config.no_repeat_ngram_size = 3
-    model.config.length_penalty = 2.0
-    model.config.num_beams = 4
+    model.generation_config.max_length = MAX_LENGTH
+    model.generation_config.early_stopping = True
+    model.generation_config.no_repeat_ngram_size = 3
+    model.generation_config.length_penalty = 2.0
+    model.generation_config.num_beams = 4
     
     print(f"✓ Model loaded: {BASE_MODEL}")
     print(f"  Parameters: {model.num_parameters():,}")
@@ -194,16 +194,16 @@ if __name__ == "__main__":
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
         predict_with_generate=True,
-        eval_strategy="epoch",  # Updated from evaluation_strategy
-        save_strategy="epoch",
+        eval_strategy="no",  # Disable evaluation since eval_dataset is removed
+        save_strategy="no",
         num_train_epochs=NUM_EPOCHS,
         learning_rate=LEARNING_RATE,
         fp16=device == "cuda",  # Use mixed precision on GPU
         logging_steps=10,
         save_total_limit=2,
-        load_best_model_at_end=True,
-        metric_for_best_model="cer",
-        greater_is_better=False,
+        # load_best_model_at_end removed (no evaluation)
+        # metric_for_best_model removed (no evaluation)
+        # greater_is_better removed (no evaluation)
         report_to="none",  # Disable wandb/tensorboard
     )
     
@@ -212,10 +212,7 @@ if __name__ == "__main__":
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset,
-        tokenizer=processor.tokenizer,
         data_collator=default_data_collator,
-        compute_metrics=compute_metrics,
     )
     
     # Start training
@@ -231,16 +228,40 @@ if __name__ == "__main__":
     print("\n💾 Saving model...")
     trainer.save_model(str(OUTPUT_DIR))
     processor.save_pretrained(str(OUTPUT_DIR))
-    
+
+    # Ensure pytorch_model.bin exists (in addition to model.safetensors)
+    safetensors_path = OUTPUT_DIR / "model.safetensors"
+    pt_path = OUTPUT_DIR / "pytorch_model.bin"
+    if safetensors_path.exists() and not pt_path.exists():
+        # Try to save as PyTorch format if only safetensors exists
+        print("[INFO] Only model.safetensors found. Saving PyTorch model as pytorch_model.bin...")
+        torch.save(model.state_dict(), pt_path)
+        print("[INFO] pytorch_model.bin saved.")
+
+    # Ensure preprocessor_config.json exists (copy/rename if needed)
+    proc_cfg = OUTPUT_DIR / "processor_config.json"
+    preproc_cfg = OUTPUT_DIR / "preprocessor_config.json"
+    if proc_cfg.exists() and not preproc_cfg.exists():
+        import shutil
+        shutil.copy(proc_cfg, preproc_cfg)
+        print("[INFO] preprocessor_config.json created from processor_config.json.")
+
+    # Ensure vocab.json and special_tokens_map.json exist
+    tokenizer_dir = OUTPUT_DIR
+    vocab_json = tokenizer_dir / "vocab.json"
+    special_tokens_map = tokenizer_dir / "special_tokens_map.json"
+    # Try to extract from tokenizer if missing
+    if not vocab_json.exists() and hasattr(processor.tokenizer, "vocab"):  # For fast tokenizers
+        with open(vocab_json, "w", encoding="utf-8") as f:
+            json.dump(processor.tokenizer.vocab, f, ensure_ascii=False, indent=2)
+        print("[INFO] vocab.json exported from tokenizer.")
+    if not special_tokens_map.exists() and hasattr(processor.tokenizer, "special_tokens_map"):  # For fast tokenizers
+        with open(special_tokens_map, "w", encoding="utf-8") as f:
+            json.dump(processor.tokenizer.special_tokens_map, f, ensure_ascii=False, indent=2)
+        print("[INFO] special_tokens_map.json exported from tokenizer.")
+
     print(f"\n✅ Training complete!")
     print(f"   Model saved to: {OUTPUT_DIR}")
-    print(f"\n📊 Final metrics:")
-    
-    # Evaluate on validation set
-    metrics = trainer.evaluate()
-    for key, value in metrics.items():
-        print(f"   {key}: {value:.4f}")
-    
     print("\n🎯 Next steps:")
     print("   1. Test the model: python test_accuracy.py")
     print("   2. Backend will automatically use this model")
