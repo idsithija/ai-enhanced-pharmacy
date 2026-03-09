@@ -3,16 +3,15 @@ Prescription Image Generator for OCR Training
 Generates synthetic prescription images with realistic variations
 """
 
-import json
 import random
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 import numpy as np
 
 # Configuration
-NUM_PRESCRIPTIONS = 100
+NUM_PRESCRIPTIONS = 1500  # Increased from 100 to 1500 for better model training
 IMAGE_WIDTH = 800
 IMAGE_HEIGHT = 1000
 
@@ -23,29 +22,81 @@ QUALITY_DISTRIBUTION = {
     'low': 0.20      # 20% low quality
 }
 
-# Sample data
+# Expanded Sample Data for Maximum Diversity
 PATIENT_NAMES = [
+    # Original Sri Lankan names
     "John Silva", "Maria Perera", "Kasun Fernando", "Dilini Rajapaksa",
     "Nimal De Silva", "Sanduni Wickramasinghe", "Chaminda Jayawardena",
     "Rushika Gunasekara", "Thilini Dissanayake", "Nuwan Bandara",
     "Hasini Samaraweera", "Rohan Gamage", "Savithri Herath",
     "Prasanna Mendis", "Ayesha Pathirana", "Lakmal Rathnayake",
-    "Ishara Rodrigo", "Buddhika Amarasinghe", "Shanika Kumarasinghe"
+    "Ishara Rodrigo", "Buddhika Amarasinghe", "Shanika Kumarasinghe",
+    # Additional Sri Lankan names (60+ more)
+    "Malith Jayakody", "Nadeesha Wickremasinghe", "Udara Gamage", "Yasmin Fonseka",
+    "Sameera Pathirana", "Janaki Munasinghe", "Kusal Rajapakse", "Dilrukshi Senanayake",
+    "Asanka Herath", "Minoli Samarasinghe", "Gayan Liyanage", "Rashmi Wanninayake",
+    "Manoj Gunathilake", "Thanuja Ratnayake", "Sachini Dharmasena", "Buddhika Wijesekara",
+    "Hasini Kudagama", "Danushka Perera", "Amaya Cooray", "Upul Mendis",
+    "Nethmi Karunaratne", "Charith Atapattu", "Madushani Ekanayake", "Dinesh Madushanka",
+    "Shashika Priyankara", "Chaminda Rajakaruna", "Gayani Kapukotuwa", "Nuwan Pradeep",
+    "Tharanga Vithanage", "Senali Weerasinghe", "Kavindya Gunaratne", "Chatura Alwis",
+    "Dimuthu Karunaratne", "Niluka Fernando", "Prabath Nissanka", "Shalini Kodagoda",
+    "Anuradha Jayalath", "Hemantha Silva", "Priyani Wijesinghe", "Sanjeewa Cooray",
+    "Mihira Rashmika", "Ravindra Pushpakumara", "Tharushi Handapangoda", "Mahinda Rajapaksa",
+    "Chandrika Kumaratunga", "Ranil Wickremesinghe", "Sajith Premadasa", "Maithripala Sirisena",
+    # South Asian diversity
+    "Rajesh Kumar", "Priya Sharma", "Amit Patel", "Sneha Reddy", "Vikram Singh",
+    "Anjali Gupta", "Suresh Nair", "Kavita Menon", "Arjun Krishnan", "Deepa Iyer",
+    "Ravi Mukherjee", "Pooja Desai", "Kiran Rao", "Meera Joshi", "Anil Chatterjee",
+    # International names
+    "David Anderson", "Sarah Johnson", "Michael Chen", "Emily Williams", "James Brown",
+    "Lisa Davis", "Robert Martinez", "Jennifer Garcia", "William Rodriguez", "Mary Wilson",
+    "John Taylor", "Patricia Moore", "Richard Jackson", "Linda Martin", "Thomas Lee",
+    "Elizabeth Thompson", "Christopher White", "Barbara Harris", "Daniel Clark", "Jessica Lewis",
+    "Matthew Robinson", "Ashley Walker", "Andrew Young", "Amanda Hall", "Joshua Allen",
+    "Stephanie King", "Ryan Wright", "Michelle Lopez", "Kevin Hill", "Melissa Green",
+    # Middle Eastern names
+    "Ahmed Hassan", "Fatima Ali", "Omar Abdullah", "Aisha Khan", "Mohammed Rahman",
+    # East Asian names
+    "Li Wei", "Zhang Mei", "Wang Jian", "Liu Yang", "Tanaka Hiroshi", "Kim Min-Jun"
 ]
 
 DOCTOR_NAMES = [
+    # Original doctors
     "Dr. A. Fernando", "Dr. K. Perera", "Dr. S. Silva",
     "Dr. M. Gunawardena", "Dr. R. Jayasinghe", "Dr. N. Dissanayake",
-    "Dr. P. Wickramasinghe", "Dr. T. Ratnayake"
+    "Dr. P. Wickramasinghe", "Dr. T. Ratnayake",
+    # Additional doctors (20+ more)
+    "Dr. Chandana Wijesuriya", "Dr. Lakshmi Fernando", "Dr. Ajith Perera",
+    "Dr. Suresh Bandara", "Dr. Nirmala Silva", "Dr. Rohan Jayasuriya",
+    "Dr. Priyanka De Silva", "Dr. Mahesh Rathnayake", "Dr. Sampath Kumarasinghe",
+    "Dr. Anoma Jayawardena", "Dr. Nishan Gunaratne", "Dr. Buddhika Wickramasinghe",
+    "Dr. Chamari Amarasena", "Dr. Ruwan Samarakoon", "Dr. Manjula Seneviratne",
+    "Dr. Indika Balasuriya", "Dr. Prasanna Gunasekara", "Dr. Yasmin Fonseka",
+    "Dr. Ashan Pathirana", "Dr. Sarah Chen", "Dr. Michael Thompson", "Dr. Priya Sharma",
+    "Dr. David Anderson", "Dr. Emily Williams", "Dr. Ahmed Hassan", "Dr. James Rodriguez",
+    "Dr. Lisa Wang", "Dr. Robert Kumar"
 ]
 
 HOSPITALS = [
+    # Original hospitals
     "Lanka Hospital", "Nawaloka Hospital", "Asiri Medical Center",
     "Durdans Hospital", "Apollo Hospital", "Central Hospital",
-    "City Medical Center", "National Hospital"
+    "City Medical Center", "National Hospital",
+    # Additional Sri Lankan hospitals (15+ more)
+    "Asiri Central Hospital", "Hemas Hospital", "Oasis Hospital",
+    "Ninewells Hospital", "Golden Key Hospital", "Royal Hospital",
+    "Colombo South Teaching Hospital", "National Hospital of Sri Lanka",
+    "Lady Ridgeway Hospital", "General Hospital Kandy", "Teaching Hospital Karapitiya",
+    # International/Generic hospitals
+    "St. Michael's Medical Center", "Metro Healthcare Hospital", "Prime Care Hospital",
+    "Sunshine Medical Center", "Greenfield Hospital", "Riverside Medical Center",
+    "Valley View Hospital", "Summit Healthcare", "Lakeside Medical Center",
+    "Harbor Medical Hospital", "Meadowbrook Healthcare", "Clearwater Hospital"
 ]
 
 MEDICINES = [
+    # Original medicines
     {"name": "Paracetamol", "dosages": ["500mg", "650mg"], "forms": ["Tablet", "Tab"]},
     {"name": "Amoxicillin", "dosages": ["250mg", "500mg"], "forms": ["Capsule", "Cap"]},
     {"name": "Omeprazole", "dosages": ["20mg", "40mg"], "forms": ["Capsule", "Cap"]},
@@ -58,6 +109,33 @@ MEDICINES = [
     {"name": "Losartan", "dosages": ["25mg", "50mg"], "forms": ["Tablet", "Tab"]},
     {"name": "Vitamin D3", "dosages": ["1000IU", "2000IU"], "forms": ["Capsule", "Cap"]},
     {"name": "Folic Acid", "dosages": ["5mg"], "forms": ["Tablet", "Tab"]},
+    # Additional common medicines (25+ more)
+    {"name": "Ibuprofen", "dosages": ["200mg", "400mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Ciprofloxacin", "dosages": ["250mg", "500mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Doxycycline", "dosages": ["100mg"], "forms": ["Capsule", "Cap"]},
+    {"name": "Simvastatin", "dosages": ["10mg", "20mg", "40mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Lisinopril", "dosages": ["5mg", "10mg", "20mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Levothyroxine", "dosages": ["50mcg", "100mcg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Pantoprazole", "dosages": ["20mg", "40mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Ranitidine", "dosages": ["150mg", "300mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Diclofenac", "dosages": ["25mg", "50mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Gabapentin", "dosages": ["100mg", "300mg"], "forms": ["Capsule", "Cap"]},
+    {"name": "Tramadol", "dosages": ["50mg", "100mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Furosemide", "dosages": ["20mg", "40mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Warfarin", "dosages": ["2mg", "5mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Propranolol", "dosages": ["10mg", "40mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Clarithromycin", "dosages": ["250mg", "500mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Montelukast", "dosages": ["4mg", "10mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Clopidogrel", "dosages": ["75mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Valsartan", "dosages": ["40mg", "80mg", "160mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Esomeprazole", "dosages": ["20mg", "40mg"], "forms": ["Capsule", "Cap"]},
+    {"name": "Rosuvastatin", "dosages": ["5mg", "10mg", "20mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Fexofenadine", "dosages": ["120mg", "180mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Metoprolol", "dosages": ["25mg", "50mg", "100mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Sertraline", "dosages": ["50mg", "100mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Prednisolone", "dosages": ["5mg", "10mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Salbutamol", "dosages": ["2mg", "4mg"], "forms": ["Tablet", "Tab", "Inhaler"]},
+    {"name": "Calcium Carbonate", "dosages": ["500mg", "1000mg"], "forms": ["Tablet", "Tab"]}
 ]
 
 FREQUENCIES = [
@@ -67,19 +145,29 @@ FREQUENCIES = [
     "1-0-0 (Once daily in morning)",
     "Twice daily",
     "Three times daily",
-    "As needed"
+    "As needed",
+    "Every 6 hours",
+    "Every 8 hours",
+    "Every 12 hours",
+    "At bedtime",
+    "Before meals",
+    "After meals",
+    "Four times daily"
 ]
 
-DURATIONS = ["5 days", "7 days", "10 days", "14 days", "1 month", "3 months"]
+DURATIONS = ["5 days", "7 days", "10 days", "14 days", "1 month", "3 months", "3 days", "21 days", "2 weeks", "30 days", "2 months", "6 months"]
 
 
 class PrescriptionGenerator:
     """Generate synthetic prescription images for training"""
     
-    def __init__(self, output_dir: str = "../data"):
+    def __init__(self, output_dir: str = "../data", clean_existing: bool = True):
         self.output_dir = Path(output_dir)
         self.labels_dir = self.output_dir / "labels"
-        self.metadata = []
+        
+        # Clean existing data if requested
+        if clean_existing:
+            self._clean_existing_data()
         
         # Create directories
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -87,6 +175,28 @@ class PrescriptionGenerator:
         
         # Try to load fonts (use default if not available)
         self.fonts = self._load_fonts()
+    
+    def _clean_existing_data(self):
+        """Remove existing prescription data but keep git-related files"""
+        if self.output_dir.exists():
+            print(f"🧹 Cleaning existing data in {self.output_dir}...")
+            
+            # Remove all prescription images
+            for img_file in self.output_dir.glob("prescription_*.png"):
+                img_file.unlink()
+            
+            # Remove metadata (not used by training)
+            metadata_file = self.output_dir / "metadata.json"
+            if metadata_file.exists():
+                metadata_file.unlink()
+            
+            # Remove label files
+            if self.labels_dir.exists():
+                for label_file in self.labels_dir.glob("prescription_*.txt"):
+                    label_file.unlink()
+            
+            print("   ✅ Existing data cleaned (git files preserved)")
+            print()
     
     def _load_fonts(self) -> Dict[str, ImageFont.FreeTypeFont]:
         """Load or create fonts for rendering"""
@@ -169,33 +279,24 @@ class PrescriptionGenerator:
         
         return "\n".join(lines)
     
-    def _draw_prescription(self, data: Dict) -> Image.Image:
-        """Draw prescription image"""
-        # Create white background
-        img = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), 'white')
-        draw = ImageDraw.Draw(img)
-        
+    def _draw_prescription_template_1(self, img, draw, data: Dict):
+        """Standard centered header layout"""
         y = 40
         x_margin = 50
         
-        # Hospital name (centered, bold)
-        hospital_text = data["hospital"]
-        draw.text((IMAGE_WIDTH // 2, y), hospital_text, fill='black', 
+        # Hospital name (centered)
+        draw.text((IMAGE_WIDTH // 2, y), data["hospital"], fill='black', 
                  font=self.fonts['title'], anchor='mt')
         y += 60
         
         # Patient info
-        draw.text((x_margin, y), f"Patient Name: {data['patient_name']}", 
-                 fill='black', font=self.fonts['body'])
+        draw.text((x_margin, y), f"Patient Name: {data['patient_name']}", fill='black', font=self.fonts['body'])
         y += 35
-        draw.text((x_margin, y), f"Age: {data['patient_age']} years", 
-                 fill='black', font=self.fonts['body'])
+        draw.text((x_margin, y), f"Age: {data['patient_age']} years", fill='black', font=self.fonts['body'])
         y += 35
-        draw.text((x_margin, y), f"Date: {data['date']}", 
-                 fill='black', font=self.fonts['body'])
+        draw.text((x_margin, y), f"Date: {data['date']}", fill='black', font=self.fonts['body'])
         y += 35
-        draw.text((x_margin, y), f"Doctor: {data['doctor_name']}", 
-                 fill='black', font=self.fonts['body'])
+        draw.text((x_margin, y), f"Doctor: {data['doctor_name']}", fill='black', font=self.fonts['body'])
         y += 50
         
         # Rx symbol
@@ -204,21 +305,146 @@ class PrescriptionGenerator:
         
         # Medicines
         for i, med in enumerate(data["medicines"], 1):
-            draw.text((x_margin, y), 
-                     f"{i}. {med['name']} {med['dosage']} {med['form']}", 
-                     fill='black', font=self.fonts['body'])
+            draw.text((x_margin, y), f"{i}. {med['name']} {med['dosage']} {med['form']}", fill='black', font=self.fonts['body'])
             y += 30
-            draw.text((x_margin + 30, y), med['frequency'], 
-                     fill='black', font=self.fonts['small'])
+            draw.text((x_margin + 30, y), med['frequency'], fill='black', font=self.fonts['small'])
             y += 28
-            draw.text((x_margin + 30, y), f"Duration: {med['duration']}", 
-                     fill='black', font=self.fonts['small'])
+            draw.text((x_margin + 30, y), f"Duration: {med['duration']}", fill='black', font=self.fonts['small'])
             y += 40
         
         # Signature
         y = max(y + 20, IMAGE_HEIGHT - 100)
-        draw.text((x_margin, y), f"Signature: {data['doctor_name']}", 
-                 fill='black', font=self.fonts['body'])
+        draw.text((x_margin, y), f"Signature: {data['doctor_name']}", fill='black', font=self.fonts['body'])
+    
+    def _draw_prescription_template_2(self, img, draw, data: Dict):
+        """Left-aligned header with box layout"""
+        y = 30
+        x_margin = 60
+        
+        # Draw border
+        draw.rectangle([(20, 20), (IMAGE_WIDTH - 20, IMAGE_HEIGHT - 20)], outline='black', width=2)
+        
+        # Hospital name (left-aligned)
+        draw.text((x_margin, y), data["hospital"], fill='black', font=self.fonts['title'])
+        y += 70
+        
+        # Divider line
+        draw.line([(40, y), (IMAGE_WIDTH - 40, y)], fill='black', width=1)
+        y += 30
+        
+        # Patient details in table format
+        draw.text((x_margin, y), "Patient:", fill='black', font=self.fonts['header'])
+        draw.text((x_margin + 150, y), data['patient_name'], fill='black', font=self.fonts['body'])
+        y += 35
+        draw.text((x_margin, y), "Age:", fill='black', font=self.fonts['body'])
+        draw.text((x_margin + 150, y), f"{data['patient_age']} years", fill='black', font=self.fonts['body'])
+        y += 30
+        draw.text((x_margin, y), "Date:", fill='black', font=self.fonts['body'])
+        draw.text((x_margin + 150, y), data['date'], fill='black', font=self.fonts['body'])
+        y += 40
+        
+        # Medicines section
+        draw.text((x_margin, y), "PRESCRIPTION", fill='black', font=self.fonts['header'])
+        y += 45
+        
+        for i, med in enumerate(data["medicines"], 1):
+            draw.text((x_margin + 10, y), f"{i}. {med['name']} - {med['dosage']} {med['form']}", fill='black', font=self.fonts['body'])
+            y += 28
+            draw.text((x_margin + 25, y), f"Frequency: {med['frequency']}", fill='black', font=self.fonts['small'])
+            y += 25
+            draw.text((x_margin + 25, y), f"Duration: {med['duration']}", fill='black', font=self.fonts['small'])
+            y += 35
+        
+        # Doctor signature at bottom
+        y = IMAGE_HEIGHT - 80
+        draw.text((IMAGE_WIDTH - 300, y), f"Dr. {data['doctor_name'].replace('Dr. ', '')}", fill='black', font=self.fonts['body'])
+    
+    def _draw_prescription_template_3(self, img, draw, data: Dict):
+        """Compact two-column layout"""
+        y = 35
+        x_left = 50
+        x_right = IMAGE_WIDTH // 2 + 20
+        
+        # Hospital header with underline
+        draw.text((IMAGE_WIDTH // 2, y), data["hospital"], fill='black', font=self.fonts['title'], anchor='mt')
+        y += 45
+        draw.line([(50, y), (IMAGE_WIDTH - 50, y)], fill='black', width=2)
+        y += 40
+        
+        # Two-column patient info
+        draw.text((x_left, y), "Patient:", fill='black', font=self.fonts['body'])
+        draw.text((x_left, y + 25), data['patient_name'], fill='black', font=self.fonts['body'])
+        draw.text((x_right, y), "Date:", fill='black', font=self.fonts['body'])
+        draw.text((x_right, y + 25), data['date'], fill='black', font=self.fonts['body'])
+        y += 60
+        
+        draw.text((x_left, y), f"Age: {data['patient_age']} years", fill='black', font=self.fonts['small'])
+        draw.text((x_right, y), f"Dr: {data['doctor_name'].replace('Dr. ', '')}", fill='black', font=self.fonts['small'])
+        y += 50
+        
+        # Rx header
+        draw.text((x_left, y), "Rx:", fill='black', font=self.fonts['header'])
+        y += 45
+        
+        # Medicine list
+        for i, med in enumerate(data["medicines"], 1):
+            draw.text((x_left + 20, y), f"{i}. {med['name']} {med['dosage']}", fill='black', font=self.fonts['body'])
+            y += 28
+            draw.text((x_left + 40, y), f"{med['frequency']} - {med['duration']}", fill='black', font=self.fonts['small'])
+            y += 35
+    
+    def _draw_prescription_template_4(self, img, draw, data: Dict):
+        """Modern minimal layout with header block"""
+        y = 25
+        x_margin = 55
+        
+        # Header block with background
+        draw.rectangle([(0, 0), (IMAGE_WIDTH, 100)], fill='#f0f0f0')
+        draw.text((IMAGE_WIDTH // 2, 50), data["hospital"], fill='black', font=self.fonts['title'], anchor='mm')
+        y = 130
+        
+        # Patient info section
+        draw.text((x_margin, y), f"PATIENT: {data['patient_name']}", fill='black', font=self.fonts['body'])
+        y += 35
+        draw.text((x_margin, y), f"AGE: {data['patient_age']} | DATE: {data['date']}", fill='black', font=self.fonts['small'])
+        y += 50
+        
+        # Prescription section
+        draw.text((x_margin, y), "MEDICATIONS:", fill='black', font=self.fonts['header'])
+        y += 40
+        
+        for i, med in enumerate(data["medicines"], 1):
+            # Medicine name and dosage
+            draw.text((x_margin + 15, y), f"{i}. {med['name']}", fill='black', font=self.fonts['body'])
+            y += 25
+            draw.text((x_margin + 30, y), f"Dose: {med['dosage']} {med['form']} | {med['frequency']}", fill='black', font=self.fonts['small'])
+            y += 22
+            draw.text((x_margin + 30, y), f"Duration: {med['duration']}", fill='black', font=self.fonts['small'])
+            y += 35
+        
+        # Footer
+        y = IMAGE_HEIGHT - 90
+        draw.line([(x_margin, y), (IMAGE_WIDTH - x_margin, y)], fill='gray', width=1)
+        y += 20
+        draw.text((IMAGE_WIDTH - 250, y), data['doctor_name'], fill='black', font=self.fonts['body'])
+    
+    def _draw_prescription(self, data: Dict) -> Image.Image:
+        """Draw prescription image using random template for diversity"""
+        # Create white background
+        img = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), 'white')
+        draw = ImageDraw.Draw(img)
+        
+        # Randomly select a template (4 different layouts)
+        template = random.randint(1, 4)
+        
+        if template == 1:
+            self._draw_prescription_template_1(img, draw, data)
+        elif template == 2:
+            self._draw_prescription_template_2(img, draw, data)
+        elif template == 3:
+            self._draw_prescription_template_3(img, draw, data)
+        else:
+            self._draw_prescription_template_4(img, draw, data)
         
         return img
     
@@ -269,10 +495,13 @@ class PrescriptionGenerator:
         print(f"   Output: {self.output_dir}")
         print()
         
+        quality_counts = {'high': 0, 'medium': 0, 'low': 0}
+        
         for i in range(1, num_prescriptions + 1):
             # Generate prescription data
             data = self._generate_prescription_data()
             quality = self._determine_quality(i)
+            quality_counts[quality] += 1
             
             # Create filenames
             prescription_id = f"{i:04d}"
@@ -292,36 +521,21 @@ class PrescriptionGenerator:
             label_text = self._create_label_text(data)
             (self.labels_dir / label_filename).write_text(label_text, encoding='utf-8')
             
-            # Store metadata
-            self.metadata.append({
-                "id": i,
-                "filename": image_filename,
-                "label_file": label_filename,
-                "quality": quality,
-                "data": data
-            })
-            
             # Progress
             if i % 20 == 0:
                 print(f"   Generated {i}/{num_prescriptions} prescriptions...")
-        
-        # Save metadata
-        metadata_file = self.output_dir / "metadata.json"
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(self.metadata, f, indent=2, ensure_ascii=False)
         
         # Print summary
         print()
         print("✅ Generation complete!")
         print(f"   Total prescriptions: {num_prescriptions}")
-        print(f"   High quality: {sum(1 for m in self.metadata if m['quality'] == 'high')}")
-        print(f"   Medium quality: {sum(1 for m in self.metadata if m['quality'] == 'medium')}")
-        print(f"   Low quality: {sum(1 for m in self.metadata if m['quality'] == 'low')}")
+        print(f"   High quality: {quality_counts['high']}")
+        print(f"   Medium quality: {quality_counts['medium']}")
+        print(f"   Low quality: {quality_counts['low']}")
         print()
         print(f"📁 Files saved to:")
         print(f"   Images: {self.output_dir}")
         print(f"   Labels: {self.labels_dir}")
-        print(f"   Metadata: {metadata_file}")
 
 
 if __name__ == "__main__":

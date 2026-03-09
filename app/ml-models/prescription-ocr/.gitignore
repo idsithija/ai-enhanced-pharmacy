@@ -1,0 +1,24 @@
+# Model files (too large for git)
+model/checkpoint-*/
+model/*.safetensors
+model/*.bin
+model/*.h5
+
+# Training data and backups
+data/
+data_backup_*/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Training logs and outputs
+training_output.log
+*.log
+
+# Test results
+test_results.json
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
