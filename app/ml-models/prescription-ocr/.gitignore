@@ -4,8 +4,9 @@ model/*.safetensors
 model/*.bin
 model/*.h5
 
-# Training data and backups
-data/
+# Training & test data (generated, too large for git)
+training_data/
+test_data/
 data_backup_*/
 
 # Python cache

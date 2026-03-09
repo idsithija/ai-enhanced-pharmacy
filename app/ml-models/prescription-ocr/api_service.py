@@ -1,7 +1,7 @@
 """
-Custom TrOCR Model API Service
-FastAPI service that exposes the custom TrOCR model via HTTP endpoints.
-Run this service independently and call it from the Node.js backend.
+Custom TrOCR Model API Service — Line-Level Pipeline
+=====================================================
+Pipeline: Full Image → Line Detection → TrOCR per line → Smart Parser
 """
 
 from fastapi import FastAPI, HTTPException
@@ -15,6 +15,7 @@ from io import BytesIO
 from PIL import Image
 import re
 import logging
+import numpy as np
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -99,42 +100,185 @@ app.add_middleware(
 )
 
 def load_image(image_input: str) -> Image.Image:
-    """Load image from various sources and preprocess"""
+    """Load image from various sources"""
     try:
         if image_input.startswith('data:image'):
-            # Base64 data URL
             image_data = image_input.split(',')[1]
             image_bytes = base64.b64decode(image_data)
         elif image_input.startswith('http://') or image_input.startswith('https://'):
-            # HTTP URL
             import requests
             response = requests.get(image_input, timeout=30)
             response.raise_for_status()
             image_bytes = response.content
         elif ':\\' in image_input or image_input.startswith('/'):
-            # File path
             with open(image_input, 'rb') as f:
                 image_bytes = f.read()
         else:
-            # Plain base64 string
             image_bytes = base64.b64decode(image_input)
-        
+
         image = Image.open(BytesIO(image_bytes)).convert('RGB')
-        
-        # Optimize: Resize large images for faster processing
-        # TrOCR works best with images around 384px height
-        max_dimension = 2048  # Maximum dimension to prevent memory issues
+
+        # Resize very large images to prevent memory issues
+        max_dimension = 2048
         if image.width > max_dimension or image.height > max_dimension:
-            logger.info(f"Resizing large image from {image.size}")
-            # Calculate new size maintaining aspect ratio
             ratio = min(max_dimension / image.width, max_dimension / image.height)
             new_size = (int(image.width * ratio), int(image.height * ratio))
             image = image.resize(new_size, Image.Resampling.LANCZOS)
-            logger.info(f"Resized to {image.size}")
-        
+
         return image
     except Exception as e:
         raise ValueError(f"Failed to load image: {str(e)}")
+
+
+# ==================== LINE DETECTION ====================
+
+def _projection_lines(binary, image: Image.Image, threshold_pct: float):
+    """Extract line crops using horizontal projection profile."""
+    h_proj = np.sum(binary, axis=1)
+    if np.max(h_proj) == 0:
+        return []
+    threshold = max(200, np.max(h_proj) * threshold_pct)
+    text_rows = h_proj > threshold
+    lines = []
+    in_line = False
+    start = 0
+    for i in range(len(text_rows)):
+        if text_rows[i] and not in_line:
+            start = i
+            in_line = True
+        elif not text_rows[i] and in_line:
+            if i - start >= 8:
+                lines.append((start, i))
+            in_line = False
+    if in_line and len(text_rows) - start >= 8:
+        lines.append((start, len(text_rows)))
+    pad = 6
+    crops = []
+    for s, e in lines:
+        y1 = max(0, s - pad)
+        y2 = min(image.height, e + pad)
+        crops.append(image.crop((0, y1, image.width, y2)))
+    return crops
+
+
+def _contour_lines(binary, image: Image.Image):
+    """Extract line crops using contour detection with horizontal dilation."""
+    import cv2
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (image.width // 4, 5))
+    dilated = cv2.dilate(binary, kernel, iterations=1)
+    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    min_width = image.width * 0.05
+    boxes = []
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w >= min_width and 10 <= h <= image.height * 0.3:
+            boxes.append((x, y, w, h))
+    boxes.sort(key=lambda b: b[1])
+
+    # Merge vertically overlapping boxes
+    merged = []
+    for box in boxes:
+        x, y, w, h = box
+        if merged:
+            px, py, pw, ph = merged[-1]
+            overlap = min(py + ph, y + h) - max(py, y)
+            if overlap > 0.5 * min(ph, h):
+                nx = min(px, x)
+                ny = min(py, y)
+                nw = max(px + pw, x + w) - nx
+                nh = max(py + ph, y + h) - ny
+                merged[-1] = (nx, ny, nw, nh)
+                continue
+        merged.append(box)
+
+    padding = 8
+    crops = []
+    for x, y, w, h in merged:
+        x1 = max(0, x - padding)
+        y1 = max(0, y - padding)
+        x2 = min(image.width, x + w + padding)
+        y2 = min(image.height, y + h + padding)
+        crops.append(image.crop((x1, y1, x2, y2)))
+    return crops
+
+
+def detect_text_lines(image: Image.Image):
+    """
+    Detect individual text lines using multiple strategies.
+    Tries contour-based, projection with morph-open, and projection with
+    fixed threshold, then picks the method that finds the most lines in a
+    reasonable range (5-30).
+    """
+    import cv2
+
+    img_array = np.array(image)
+    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    results = []
+
+    # Method 1: Contour-based (works well for clean / high-quality images)
+    lines_contour = _contour_lines(binary, image)
+    results.append(("contour", lines_contour))
+
+    # Method 2: Projection profile with morph-open cleaning + 5 % threshold
+    kernel_clean = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    cleaned = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_clean)
+    lines_proj = _projection_lines(cleaned, image, 0.05)
+    results.append(("projection", lines_proj))
+
+    # Method 3: Low fixed-threshold binarization + projection (fallback)
+    _, binary_fixed = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
+    lines_fixed = _projection_lines(binary_fixed, image, 0.02)
+    results.append(("fixed_thresh", lines_fixed))
+
+    # Pick the method with the most lines in the reasonable range [5, 30]
+    best = max(results, key=lambda r: len(r[1]) if 5 <= len(r[1]) <= 30 else 0)
+    if len(best[1]) < 5:
+        best = max(results, key=lambda r: len(r[1]))
+
+    logger.info(f"Detected {len(best[1])} text lines (method: {best[0]})")
+    return best[1]
+
+
+# ==================== OCR PER LINE ====================
+
+def ocr_single_line(line_image: Image.Image) -> str:
+    """Run TrOCR on a single line image"""
+    import torch
+
+    pixel_values = processor(line_image, return_tensors="pt").pixel_values.to(device)
+
+    with torch.no_grad():
+        generated_ids = model.generate(
+            pixel_values,
+            max_length=64,
+            num_beams=4,
+            early_stopping=True,
+        )
+
+    text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    return text.strip()
+
+
+def ocr_full_image(image: Image.Image) -> str:
+    """Full pipeline: detect lines → OCR each line → combine"""
+    line_images = detect_text_lines(image)
+
+    if not line_images:
+        logger.warning("No text lines detected, falling back to full-image OCR")
+        return ocr_single_line(image)
+
+    lines = []
+    for i, line_img in enumerate(line_images):
+        text = ocr_single_line(line_img)
+        if text:
+            lines.append(text)
+            logger.info(f"  Line {i+1}: {text[:80]}")
+
+    return "\n".join(lines)
 
 def parse_prescription_text(text: str) -> dict:
     """Parse prescription text to extract structured information"""
@@ -244,88 +388,61 @@ async def health_check():
 
 @app.post("/process", response_model=OCRResponse)
 async def process_prescription(request: OCRRequest):
-    """Process prescription image with OCR"""
-    
+    """Process prescription image using line-detection pipeline"""
+
     if model is None or processor is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
-    
+
     import time
     start_time = time.time()
-    
+
     try:
         logger.info("=" * 60)
-        logger.info("📸 New OCR Request Received")
+        logger.info("New OCR Request Received (Line Pipeline)")
         logger.info("=" * 60)
-        
-        # Load and process image
+
+        # Load image
         t1 = time.time()
         image = load_image(request.imageSource)
         load_time = time.time() - t1
-        logger.info(f"✅ Image loaded: {image.size} (took {load_time:.2f}s)")
-        
-        # Import torch for inference
-        import torch
-        
-        # Preprocess image
+        logger.info(f"Image loaded: {image.size} ({load_time:.2f}s)")
+
+        # Line-level OCR pipeline
         t2 = time.time()
-        pixel_values = processor(image, return_tensors="pt").pixel_values.to(device)
-        preprocess_time = time.time() - t2
-        logger.info(f"✅ Image preprocessed (took {preprocess_time:.2f}s)")
-        
-        # Generate prediction with proper parameters
+        predicted_text = ocr_full_image(image)
+        ocr_time = time.time() - t2
+        logger.info(f"OCR completed: {len(predicted_text)} chars ({ocr_time:.2f}s)")
+
+        # Parse structured data
         t3 = time.time()
-        with torch.no_grad():
-            generated_ids = model.generate(
-                pixel_values,
-                max_length=512,           # Allow full prescription text
-                num_beams=4,              # Beam search for better quality
-                early_stopping=True,      # Stop when done
-                no_repeat_ngram_size=3,   # Prevent repetition
-                temperature=1.0,          # Diversity
-                do_sample=False           # Deterministic beam search
-            )
-        inference_time = time.time() - t3
-        logger.info(f"✅ Model inference completed (took {inference_time:.2f}s)")
-        
-        # Decode text
-        t4 = time.time()
-        predicted_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        decode_time = time.time() - t4
-        logger.info(f"✅ Text decoded: {len(predicted_text)} chars (took {decode_time:.2f}s)")
-        
-        # Extract structured data
-        t5 = time.time()
         extracted_data = parse_prescription_text(predicted_text)
-        parse_time = time.time() - t5
-        
+        parse_time = time.time() - t3
+
         total_time = time.time() - start_time
-        
+
         logger.info("=" * 60)
-        logger.info("⏱️  Performance Breakdown:")
+        logger.info("Performance Breakdown:")
         logger.info(f"   Image Loading:    {load_time:.2f}s")
-        logger.info(f"   Preprocessing:    {preprocess_time:.2f}s")
-        logger.info(f"   Model Inference:  {inference_time:.2f}s")
-        logger.info(f"   Text Decoding:    {decode_time:.2f}s")
+        logger.info(f"   Line OCR:         {ocr_time:.2f}s")
         logger.info(f"   Data Parsing:     {parse_time:.2f}s")
         logger.info(f"   TOTAL:            {total_time:.2f}s")
+        logger.info(f"Medications found: {len(extracted_data.get('medications', []))}")
         logger.info("=" * 60)
-        logger.info(f"📊 Results: {len(extracted_data.get('medications', []))} medications found")
-        logger.info("=" * 60)
-        
+
         return OCRResponse(
             success=True,
             text=predicted_text,
-            confidence=0.90,  # TrOCR doesn't provide confidence scores
+            confidence=0.90,
             extractedData=extracted_data,
-            modelType="custom-trocr",
-            device=device
+            modelType="custom-trocr-line-pipeline",
+            device=device,
         )
-        
+
     except ValueError as e:
-        logger.error(f"❌ Image loading error: {e}")
+        logger.error(f"Image loading error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"❌ Processing error: {e}")
+        logger.error(f"Processing error: {e}")
         logger.exception("Full traceback:")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
