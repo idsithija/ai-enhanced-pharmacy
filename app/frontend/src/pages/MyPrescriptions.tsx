@@ -435,7 +435,7 @@ export const MyPrescriptions = () => {
                       }`}>
                         <CheckCircle size={18} style={{ color: conf.color }} />
                         <span className="text-sm font-medium" style={{ color: conf.color }}>
-                          OCR Complete — Confidence: {ocrResult.confidence.toFixed(1)}% ({conf.level})
+                          OCR Complete — Confidence: {(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}% ({conf.level})
                         </span>
                       </div>
                     );

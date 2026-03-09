@@ -97,11 +97,13 @@ export const analyzePrescriptionText = async (text: string): Promise<ExtractedDa
 
 /**
  * Get confidence level display
+ * Handles both 0-1 (decimal) and 0-100 (percentage) scales
  */
 export const getConfidenceDisplay = (confidence: number) => {
-  if (confidence >= 80) {
+  const pct = confidence <= 1 ? confidence * 100 : confidence;
+  if (pct >= 80) {
     return { level: 'High', color: '#4caf50', severity: 'success' as const };
-  } else if (confidence >= 60) {
+  } else if (pct >= 60) {
     return { level: 'Medium', color: '#ff9800', severity: 'warning' as const };
   } else {
     return { level: 'Low', color: '#f44336', severity: 'error' as const };

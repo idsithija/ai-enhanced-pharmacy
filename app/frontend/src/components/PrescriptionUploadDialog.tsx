@@ -448,7 +448,7 @@ export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete }: Pr
               >
                 <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: pharmacareColors.success }} />
                 <div className="text-sm">
-                  <strong>OCR Completed!</strong> Confidence: {ocrResult.confidence.toFixed(1)}% (
+                  <strong>OCR Completed!</strong> Confidence: {(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}% (
                   {confidenceDisplay?.level}) - Please verify the extracted data below.
                 </div>
               </div>

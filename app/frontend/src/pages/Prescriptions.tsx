@@ -328,7 +328,7 @@ export const Prescriptions = () => {
       customerPhone: '',
       doctorName: result.extractedData.doctorName || '',
       doctorLicense: '',
-      notes: `OCR Extracted - Confidence: ${result.confidence.toFixed(1)}%\n${result.extractedData.hospitalName ? `Hospital: ${result.extractedData.hospitalName}\n` : ''}${result.extractedData.date ? `Date: ${result.extractedData.date}` : ''}`,
+      notes: `OCR Extracted - Confidence: ${(result.confidence <= 1 ? result.confidence * 100 : result.confidence).toFixed(1)}%\n${result.extractedData.hospitalName ? `Hospital: ${result.extractedData.hospitalName}\n` : ''}${result.extractedData.date ? `Date: ${result.extractedData.date}` : ''}`,
     });
 
     const medicines: MedicineItem[] = result.extractedData.medications.map((med, index) => ({
