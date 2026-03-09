@@ -1,12 +1,13 @@
 """
-Fast Line-Level TrOCR Training Script
-======================================
-Key speed optimizations over train_improved.py:
+Line-Level TrOCR Training Script (Improved)
+=============================================
+Key features:
   - Trains on single text lines (not full documents)
-  - Freezes encoder (ViT) — only trains decoder (~60% fewer trainable params)
+  - Partial encoder unfreeze (top 2 ViT layers) for better adaptation
   - Batch size 8 (line images are small)
-  - MAX_LENGTH 64 instead of 512 (lines are short)
-  - 2 epochs (lines are simpler, converge fast)
+  - MAX_LENGTH 64 (lines are short)
+  - 5 epochs with cosine LR schedule
+  - Stronger augmentation for robustness
   - fp16 for GPU acceleration
 """
 
@@ -31,24 +32,25 @@ LABELS_DIR = DATA_DIR / "labels"
 OUTPUT_DIR = Path(__file__).parent.parent / "model"
 
 BASE_MODEL = "microsoft/trocr-base-printed"
-MAX_LENGTH = 64          # Lines are short — 64 tokens is plenty (was 512)
-BATCH_SIZE = 8           # Line images are small — fit more per batch (was 2)
-NUM_EPOCHS = 2           # Lines are simpler — converge in 2 epochs (was 3)
-LEARNING_RATE = 5e-5
-WARMUP_STEPS = 100
+MAX_LENGTH = 64          # Lines are short — 64 tokens is plenty
+BATCH_SIZE = 8           # Line images are small — fit more per batch
+NUM_EPOCHS = 5           # More epochs for better convergence
+LEARNING_RATE = 3e-5     # Slightly lower LR for stability
+WARMUP_RATIO = 0.1       # 10% warmup steps
 WEIGHT_DECAY = 0.01
-FREEZE_ENCODER = True    # Only train decoder — massive speedup
+FREEZE_ENCODER = "partial"  # Unfreeze top 2 ViT layers
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 print("=" * 70)
-print("LINE-LEVEL TrOCR TRAINING (FAST)")
+print("LINE-LEVEL TrOCR TRAINING (IMPROVED)")
 print("=" * 70)
 print(f"[*] Device:          {device}")
 print(f"[*] Epochs:          {NUM_EPOCHS}")
 print(f"[*] Batch Size:      {BATCH_SIZE}")
 print(f"[*] Max Length:       {MAX_LENGTH} tokens")
 print(f"[*] Learning Rate:   {LEARNING_RATE}")
+print(f"[*] Warmup Ratio:    {WARMUP_RATIO}")
 print(f"[*] Freeze Encoder:  {FREEZE_ENCODER}")
 print(f"[*] Data Dir:        {DATA_DIR}")
 print(f"[*] Output Dir:      {OUTPUT_DIR}")
@@ -58,13 +60,28 @@ print("=" * 70)
 # ==================== AUGMENTATION ====================
 
 def augment_image(image):
-    """Light augmentation for line images"""
-    if random.random() > 0.5:
+    """Stronger augmentation for line images — improves robustness"""
+    # Always apply at least one augmentation (80% of the time)
+    if random.random() > 0.8:
         return image
+
+    # Brightness variation
+    if random.random() > 0.3:
+        image = ImageEnhance.Brightness(image).enhance(random.uniform(0.7, 1.3))
+    # Contrast variation
+    if random.random() > 0.3:
+        image = ImageEnhance.Contrast(image).enhance(random.uniform(0.7, 1.3))
+    # Slight rotation (-3 to 3 degrees)
     if random.random() > 0.5:
-        image = ImageEnhance.Brightness(image).enhance(random.uniform(0.85, 1.15))
+        angle = random.uniform(-3, 3)
+        image = image.rotate(angle, fillcolor=(255, 255, 255), expand=False)
+    # Gaussian blur (simulates camera blur)
+    if random.random() > 0.6:
+        from PIL import ImageFilter
+        image = image.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.2)))
+    # Sharpness variation
     if random.random() > 0.5:
-        image = ImageEnhance.Contrast(image).enhance(random.uniform(0.85, 1.15))
+        image = ImageEnhance.Sharpness(image).enhance(random.uniform(0.5, 2.0))
     return image
 
 
@@ -130,8 +147,22 @@ def main():
     model.config.pad_token_id = processor.tokenizer.pad_token_id
     model.config.vocab_size = model.config.decoder.vocab_size
 
-    # Freeze encoder for speed
-    if FREEZE_ENCODER:
+    # Freeze encoder (fully or partially)
+    if FREEZE_ENCODER == "partial":
+        # Freeze all encoder layers first
+        for param in model.encoder.parameters():
+            param.requires_grad = False
+        # Unfreeze top 2 ViT encoder layers for domain adaptation
+        encoder_layers = model.encoder.encoder.layer
+        num_layers = len(encoder_layers)
+        for layer in encoder_layers[num_layers - 2:]:
+            for param in layer.parameters():
+                param.requires_grad = True
+        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        total = sum(p.numel() for p in model.parameters())
+        print(f"[OK] Partial freeze: top 2/{num_layers} encoder layers unfrozen")
+        print(f"     {trainable:,} trainable / {total:,} total params ({100*trainable/total:.1f}%)")
+    elif FREEZE_ENCODER is True:
         for param in model.encoder.parameters():
             param.requires_grad = False
         trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -163,6 +194,11 @@ def main():
 
     # 4. Configure training
     print("\n[4/6] Configuring training...")
+    # Calculate warmup steps from ratio
+    total_steps = (len(train_dataset) // BATCH_SIZE) * NUM_EPOCHS
+    warmup_steps = int(total_steps * WARMUP_RATIO)
+    print(f"[OK] Total steps: {total_steps}, Warmup: {warmup_steps}")
+
     training_args = Seq2SeqTrainingArguments(
         output_dir=str(OUTPUT_DIR),
         num_train_epochs=NUM_EPOCHS,
@@ -170,7 +206,8 @@ def main():
         per_device_eval_batch_size=BATCH_SIZE,
         learning_rate=LEARNING_RATE,
         weight_decay=WEIGHT_DECAY,
-        warmup_steps=WARMUP_STEPS,
+        warmup_steps=warmup_steps,
+        lr_scheduler_type="cosine",  # Cosine decay — smoother convergence
         logging_steps=50,
         eval_strategy="epoch",
         save_strategy="epoch",

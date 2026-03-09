@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 import numpy as np
 
 # Configuration
-NUM_PRESCRIPTIONS = 100  # Each prescription generates 8-15 lines → ~1500 line images
+NUM_PRESCRIPTIONS = 500  # Each prescription generates 8-15 lines → ~7500 line images
 LINE_IMAGE_WIDTH = 800
 LINE_IMAGE_HEIGHT = 60  # Single line height
 

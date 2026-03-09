@@ -9,7 +9,7 @@ export interface UserAttributes {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'pharmacist' | 'cashier' | 'inventory_manager';
+  role: 'admin' | 'staff' | 'user';
   phoneNumber?: string;
   isActive: boolean;
   lastLogin?: Date;
@@ -26,7 +26,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   declare password: string;
   declare firstName: string;
   declare lastName: string;
-  declare role: 'admin' | 'pharmacist' | 'cashier' | 'inventory_manager';
+  declare role: 'admin' | 'staff' | 'user';
   declare phoneNumber: string | undefined;
   declare isActive: boolean;
   declare lastLogin: Date | undefined;
@@ -90,9 +90,9 @@ User.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('admin', 'pharmacist', 'cashier', 'inventory_manager'),
+      type: DataTypes.ENUM('admin', 'staff', 'user'),
       allowNull: false,
-      defaultValue: 'cashier',
+      defaultValue: 'user',
     },
     phoneNumber: {
       type: DataTypes.STRING(20),

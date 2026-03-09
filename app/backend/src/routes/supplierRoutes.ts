@@ -17,8 +17,8 @@ router.use(authenticate);
 router.get('/', getSuppliers);
 router.get('/stats', getSupplierStats);
 router.get('/:id', getSupplier);
-router.post('/', authorize('admin', 'inventory_manager'), createSupplier);
-router.put('/:id', authorize('admin', 'inventory_manager'), updateSupplier);
+router.post('/', authorize('admin', 'staff'), createSupplier);
+router.put('/:id', authorize('admin', 'staff'), updateSupplier);
 router.delete('/:id', authorize('admin'), deleteSupplier);
 
 export default router;

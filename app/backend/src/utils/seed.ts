@@ -19,31 +19,31 @@ export const seedDatabase = async (): Promise<void> => {
       });
     }
 
-    // Create pharmacist user if not exists
-    const existingPharmacist = await User.findOne({ where: { email: 'pharmacist@pharmacy.com' } });
-    if (!existingPharmacist) {
+    // Create staff user if not exists
+    const existingStaff = await User.findOne({ where: { email: 'staff@pharmacy.com' } });
+    if (!existingStaff) {
       await User.create({
-        username: 'pharmacist',
-        email: 'pharmacist@pharmacy.com',
-        password: 'pharmacist123',
+        username: 'staff',
+        email: 'staff@pharmacy.com',
+        password: 'staff123',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'pharmacist',
+        role: 'staff',
         phoneNumber: '9876543211',
         isActive: true,
       });
     }
 
-    // Create cashier user if not exists
-    const existingCashier = await User.findOne({ where: { email: 'cashier@pharmacy.com' } });
-    if (!existingCashier) {
+    // Create regular user if not exists
+    const existingUser = await User.findOne({ where: { email: 'user@pharmacy.com' } });
+    if (!existingUser) {
       await User.create({
-        username: 'cashier',
-        email: 'cashier@pharmacy.com',
-        password: 'cashier123',
+        username: 'user',
+        email: 'user@pharmacy.com',
+        password: 'user123',
         firstName: 'Jane',
         lastName: 'Smith',
-        role: 'cashier',
+        role: 'user',
         phoneNumber: '9876543212',
         isActive: true,
       });

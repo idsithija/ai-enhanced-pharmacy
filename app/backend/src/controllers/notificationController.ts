@@ -187,7 +187,7 @@ export const generateSystemNotifications = async (_req: AuthRequest, res: Respon
     // Get admin and inventory manager users
     const users = await User.findAll({
       where: {
-        role: { [Op.in]: ['admin', 'inventory_manager'] },
+        role: { [Op.in]: ['admin', 'staff'] },
         isActive: true,
       },
     } as any);
@@ -270,7 +270,7 @@ export const generateSystemNotifications = async (_req: AuthRequest, res: Respon
     // Check for pending prescriptions
     const pharmacists = await User.findAll({
       where: {
-        role: { [Op.in]: ['admin', 'pharmacist'] },
+        role: { [Op.in]: ['admin', 'staff'] },
         isActive: true,
       },
     } as any);

@@ -19,8 +19,8 @@ router.get('/', getInventory);
 router.get('/alerts/low-stock', getLowStockItems);
 router.post('/check', checkAvailability);
 router.get('/:id', getInventoryItem);
-router.post('/', authorize('admin', 'inventory_manager'), addInventoryItem);
-router.put('/:id', authorize('admin', 'inventory_manager'), updateInventoryItem);
+router.post('/', authorize('admin', 'staff'), addInventoryItem);
+router.put('/:id', authorize('admin', 'staff'), updateInventoryItem);
 router.delete('/:id', authorize('admin'), deleteInventoryItem);
 
 export default router;

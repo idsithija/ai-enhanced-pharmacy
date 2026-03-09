@@ -6,19 +6,23 @@ interface MenuItem {
   text: string;
   icon: string;
   path: string;
+  roles?: string[]; // If undefined, visible to all authenticated users
 }
 
 const menuItems: MenuItem[] = [
   { text: 'Dashboard', icon: '📊', path: '/dashboard' },
-  { text: 'Medicines', icon: '💊', path: '/medicines' },
-  { text: 'Inventory', icon: '📦', path: '/inventory' },
-  { text: 'Point of Sale', icon: '🛒', path: '/pos' },
-  { text: 'Prescriptions', icon: '📋', path: '/prescriptions' },
+  { text: 'Place Order', icon: '🛒', path: '/place-order', roles: ['user'] },
+  { text: 'My Orders', icon: '📦', path: '/my-orders', roles: ['user'] },
+  { text: 'My Prescriptions', icon: '📋', path: '/my-prescriptions', roles: ['user'] },
+  { text: 'Medicines', icon: '💊', path: '/medicines', roles: ['admin', 'staff'] },
+  { text: 'Inventory', icon: '📦', path: '/inventory', roles: ['admin', 'staff'] },
+  { text: 'Point of Sale', icon: '🛒', path: '/pos', roles: ['admin', 'staff'] },
+  { text: 'Prescriptions', icon: '📋', path: '/prescriptions', roles: ['admin', 'staff'] },
   { text: 'Drug Checker (AI)', icon: '🔬', path: '/drug-checker' },
   { text: 'AI Assistant', icon: '💬', path: '/chatbot' },
-  { text: 'Demand Prediction', icon: '📈', path: '/demand-prediction' },
-  { text: 'Customers', icon: '👥', path: '/customers' },
-  { text: 'Reports', icon: '📊', path: '/reports' },
+  { text: 'Demand Prediction', icon: '📈', path: '/demand-prediction', roles: ['admin', 'staff'] },
+  { text: 'Customers', icon: '👥', path: '/customers', roles: ['admin', 'staff'] },
+  { text: 'Reports', icon: '📊', path: '/reports', roles: ['admin', 'staff'] },
   { text: 'Settings', icon: '⚙️', path: '/settings' },
 ];
 
@@ -57,7 +61,9 @@ export const MainLayout = () => {
 
         {/* Menu Items */}
         <nav className="px-3 py-4 space-y-1">
-          {menuItems.map((item) => (
+          {menuItems
+            .filter((item) => !item.roles || (user?.role && item.roles.includes(user.role)))
+            .map((item) => (
             <button
               key={item.path}
               onClick={() => handleMenuClick(item.path)}
@@ -81,7 +87,7 @@ export const MainLayout = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user?.fullName || 'User'}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.role || 'Role'}</p>
+              <p className="text-xs text-gray-400 truncate capitalize">{user?.role || 'Role'}</p>
             </div>
           </div>
         </div>

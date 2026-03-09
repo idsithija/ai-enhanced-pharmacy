@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, ShoppingCart, AlertTriangle, Package, Plus, CreditCard } from "lucide-react";
+import { TrendingUp, ShoppingCart, AlertTriangle, Package, Plus, CreditCard, FileText, Clock, CheckCircle } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { dashboardService } from "../services/dashboardService";
+import { saleService } from "../services/saleService";
 import type { DashboardStats, Sale } from "../types";
 
 // Temporary mock data for sales chart (until sales-chart endpoint is implemented)
@@ -54,6 +55,168 @@ const StatCard = ({ title, value, icon, color, subtitle }: StatCardProps) => (
 );
 
 export const Dashboard = () => {
+  const { user } = useAuthStore();
+
+  // Show user dashboard for 'user' role
+  if (user?.role === 'user') {
+    return <UserDashboard />;
+  }
+
+  // Show admin/staff dashboard
+  return <StaffDashboard />;
+};
+
+// ============================================
+// USER DASHBOARD - Order history & quick actions
+// ============================================
+const UserDashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [orders, setOrders] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMyOrders();
+  }, []);
+
+  const fetchMyOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await saleService.getSales(1, 5);
+      const salesData = response.data?.sales || response.data || [];
+      setOrders(Array.isArray(salesData) ? salesData : []);
+    } catch (err) {
+      console.log("Could not fetch orders");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
+        <p className="text-gray-600">
+          Hello, {user?.fullName}! What would you like to do today?
+        </p>
+      </div>
+
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <button
+          onClick={() => navigate('/place-order')}
+          className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-md p-6 text-left hover:shadow-lg transition-shadow group"
+        >
+          <div className="p-3 bg-white/20 rounded-xl w-fit mb-3">
+            <ShoppingCart size={24} className="text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">Place Order</h3>
+          <p className="text-indigo-100 text-sm">Browse medicines & order</p>
+        </button>
+
+        <button
+          onClick={() => navigate('/my-orders')}
+          className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-md p-6 text-left hover:shadow-lg transition-shadow group"
+        >
+          <div className="p-3 bg-white/20 rounded-xl w-fit mb-3">
+            <Package size={24} className="text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">My Orders</h3>
+          <p className="text-emerald-100 text-sm">View order history</p>
+        </button>
+
+        <button
+          onClick={() => navigate('/my-prescriptions')}
+          className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-md p-6 text-left hover:shadow-lg transition-shadow group"
+        >
+          <div className="p-3 bg-white/20 rounded-xl w-fit mb-3">
+            <FileText size={24} className="text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">Prescriptions</h3>
+          <p className="text-orange-100 text-sm">Upload & manage</p>
+        </button>
+
+        <button
+          onClick={() => navigate('/drug-checker')}
+          className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-md p-6 text-left hover:shadow-lg transition-shadow group"
+        >
+          <div className="p-3 bg-white/20 rounded-xl w-fit mb-3">
+            <CheckCircle size={24} className="text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">Drug Checker</h3>
+          <p className="text-cyan-100 text-sm">Check interactions</p>
+        </button>
+      </div>
+
+      {/* Recent Orders */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-gray-900">Recent Orders</h3>
+          <button
+            onClick={() => navigate('/my-orders')}
+            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+          >
+            View All →
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-12">
+            <ShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500 mb-4">You haven't placed any orders yet</p>
+            <button
+              onClick={() => navigate('/place-order')}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+            >
+              Place Your First Order
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <Package size={20} className="text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Order #{order.id?.toString().slice(0, 8)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.items?.length || 0} items • {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">Rs {Number(order.total || 0).toFixed(2)}</p>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                    <Clock size={10} />
+                    {order.paymentMethod}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// STAFF/ADMIN DASHBOARD - Original dashboard
+// ============================================
+const StaffDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);

@@ -12,12 +12,12 @@ const generateToken = (userId: number, username: string, email: string, role: st
   return jwt.sign(payload, secret, { expiresIn: '7d' });
 };
 
-// @desc    Register new user
+// @desc    Register new user (public - always creates 'user' role)
 // @route   POST /api/auth/register
-// @access  Public (but only admin can create other admins)
+// @access  Public
 export const register = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { username, email, password, firstName, lastName, role, phoneNumber } = req.body;
+    const { username, email, password, firstName, lastName, phoneNumber } = req.body;
 
     // Validation
     if (!username || !email || !password || !firstName || !lastName) {
@@ -43,14 +43,14 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
       return;
     }
 
-    // Create user
+    // Public registration always creates 'user' role
     const user = await User.create({
       username,
       email,
       password,
       firstName,
       lastName,
-      role: role || 'cashier',
+      role: 'user',
       phoneNumber,
       isActive: true,
     });
@@ -233,6 +233,83 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
     await user.save();
 
     res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          phoneNumber: user.phoneNumber,
+        },
+      },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Register staff member (admin only)
+// @route   POST /api/auth/register-staff
+// @access  Private (admin only)
+export const registerStaff = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { username, email, password, firstName, lastName, phoneNumber } = req.body;
+
+    // Validation
+    if (!username || !email || !password || !firstName || !lastName) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'Please provide all required fields' },
+      });
+      return;
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      where: {
+        email,
+      } as any,
+    });
+
+    if (existingUser) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'User with this email already exists' },
+      });
+      return;
+    }
+
+    // Check username too
+    const existingUsername = await User.findOne({
+      where: {
+        username,
+      } as any,
+    });
+
+    if (existingUsername) {
+      res.status(400).json({
+        success: false,
+        error: { message: 'Username already taken' },
+      });
+      return;
+    }
+
+    // Admin creates staff members
+    const user = await User.create({
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      role: 'staff',
+      phoneNumber,
+      isActive: true,
+    });
+
+    res.status(201).json({
       success: true,
       data: {
         user: {

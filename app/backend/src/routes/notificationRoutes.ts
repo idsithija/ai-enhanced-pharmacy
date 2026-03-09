@@ -19,6 +19,6 @@ router.put('/read-all', markAllAsRead);
 router.put('/:id/read', markAsRead);
 router.delete('/:id', deleteNotification);
 router.post('/', authorize('admin'), createNotification);
-router.post('/generate', authorize('admin', 'inventory_manager'), generateSystemNotifications);
+router.post('/generate', authorize('admin', 'staff'), generateSystemNotifications);
 
 export default router;

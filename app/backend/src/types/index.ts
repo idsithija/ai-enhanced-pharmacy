@@ -11,12 +11,12 @@ export interface AuthRequest extends Request {
     id: number;
     username: string;
     email: string;
-    role: 'admin' | 'pharmacist' | 'customer';
+    role: 'admin' | 'staff' | 'user';
   };
 }
 
 // User Roles
-export type UserRole = 'admin' | 'pharmacist' | 'customer';
+export type UserRole = 'admin' | 'staff' | 'user';
 
 // API Response
 export interface ApiResponse<T = any> {

@@ -16,9 +16,9 @@ router.use(authenticate);
 
 router.get('/', getPrescriptions);
 router.get('/:id', getPrescription);
-router.post('/', authorize('admin', 'pharmacist'), createPrescription);
-router.put('/:id', authorize('admin', 'pharmacist'), updatePrescription);
-router.put('/:id/verify', authorize('admin', 'pharmacist'), verifyPrescription);
-router.put('/:id/reject', authorize('admin', 'pharmacist'), rejectPrescription);
+router.post('/', createPrescription);
+router.put('/:id', authorize('admin', 'staff'), updatePrescription);
+router.put('/:id/verify', authorize('admin', 'staff'), verifyPrescription);
+router.put('/:id/reject', authorize('admin', 'staff'), rejectPrescription);
 
 export default router;

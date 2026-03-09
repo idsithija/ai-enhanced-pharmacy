@@ -119,7 +119,7 @@ export const createUser = async (req: AuthRequest, res: Response, next: NextFunc
       password,
       firstName,
       lastName,
-      role: role || 'cashier',
+      role: role || 'staff',
       phoneNumber,
       isActive: true,
     });

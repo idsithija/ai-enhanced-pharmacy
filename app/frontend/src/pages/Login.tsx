@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useAuthStore } from '../store/authStore';
@@ -131,8 +131,16 @@ export const Login = () => {
           </form>
 
           {/* Demo Credentials */}
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-4 text-center text-xs text-gray-400">
             Demo: admin@pharmacy.com / admin123
+          </p>
+
+          {/* Register Link */}
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary font-semibold hover:underline">
+              Create Account
+            </Link>
           </p>
         </div>
       </div>

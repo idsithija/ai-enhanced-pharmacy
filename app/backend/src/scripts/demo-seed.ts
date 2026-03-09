@@ -28,22 +28,22 @@ const demoSeed = async () => {
         isActive: true,
       },
       {
-        username: 'pharmacist',
-        email: 'pharmacist@pharmacy.com',
-        password: 'pharmacist123',
+        username: 'staff',
+        email: 'staff@pharmacy.com',
+        password: 'staff123',
         firstName: 'Dr. Sarah',
         lastName: 'Johnson',
-        role: 'pharmacist',
+        role: 'staff',
         phoneNumber: '555-0002',
         isActive: true,
       },
       {
-        username: 'cashier',
-        email: 'cashier@pharmacy.com',
-        password: 'cashier123',
+        username: 'user',
+        email: 'user@pharmacy.com',
+        password: 'user123',
         firstName: 'Emily',
         lastName: 'Davis',
-        role: 'cashier',
+        role: 'user',
         phoneNumber: '555-0003',
         isActive: true,
       },
@@ -361,7 +361,7 @@ const demoSeed = async () => {
     console.log('📋 Creating prescriptions...');
     
     const customerRecords = await Customer.findAll();
-    const pharmacist = await User.findOne({ where: { role: 'pharmacist' } });
+    const pharmacist = await User.findOne({ where: { role: 'staff' } });
     
     if (customerRecords.length > 0 && pharmacist && medicineRecords.length > 0) {
       const pharmacistId = pharmacist.id || pharmacist.dataValues?.id || (pharmacist as any).get('id');
@@ -455,7 +455,7 @@ const demoSeed = async () => {
     // ============================================
     console.log('💰 Creating sales transactions...');
     
-    const cashier = await User.findOne({ where: { role: 'cashier' } });
+    const cashier = await User.findOne({ where: { role: 'staff' } });
     
     if (customerRecords.length > 0 && cashier && medicineRecords.length >= 10) {
       const cashierId = cashier.id || cashier.dataValues?.id || (cashier as any).get('id');

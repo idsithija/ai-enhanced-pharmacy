@@ -19,10 +19,10 @@ router.use(authenticate);
 router.get('/', getPurchaseOrders);
 router.get('/stats', getPurchaseOrderStats);
 router.get('/:id', getPurchaseOrder);
-router.post('/', authorize('admin', 'inventory_manager'), createPurchaseOrder);
-router.put('/:id', authorize('admin', 'inventory_manager'), updatePurchaseOrder);
+router.post('/', authorize('admin', 'staff'), createPurchaseOrder);
+router.put('/:id', authorize('admin', 'staff'), updatePurchaseOrder);
 router.put('/:id/approve', authorize('admin'), approvePurchaseOrder);
-router.put('/:id/receive', authorize('admin', 'inventory_manager'), receivePurchaseOrder);
+router.put('/:id/receive', authorize('admin', 'staff'), receivePurchaseOrder);
 router.put('/:id/cancel', authorize('admin'), cancelPurchaseOrder);
 
 export default router;

@@ -10,6 +10,6 @@ router.use(authenticate);
 router.get('/', getSales);
 router.get('/summary', getSalesSummary);
 router.get('/:id', getSale);
-router.post('/', authorize('admin', 'cashier', 'pharmacist'), createSale);
+router.post('/', createSale);
 
 export default router;
