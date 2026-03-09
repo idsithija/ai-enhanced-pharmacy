@@ -143,44 +143,82 @@ def parse_prescription_text(text: str) -> dict:
         "medications": []
     }
     
-    # Extract patient name
-    patient_match = re.search(r'Patient[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', text, re.IGNORECASE)
+    # Extract patient name (fixed: capture after "Patient Name:")
+    patient_match = re.search(r'Patient\s+Name[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE)
     if patient_match:
-        data['patientName'] = patient_match.group(1)
+        data['patientName'] = patient_match.group(1).strip()
     
-    # Extract doctor name
-    doctor_match = re.search(r'(?:Dr\.|Doctor)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', text, re.IGNORECASE)
+    # Extract doctor name (fixed: capture after "Doctor:")
+    doctor_match = re.search(r'Doctor[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE)
     if doctor_match:
-        data['doctorName'] = doctor_match.group(1)
+        data['doctorName'] = doctor_match.group(1).strip()
     
-    # Extract hospital
-    hospital_match = re.search(r'(?:Hospital|Clinic)[:\s]*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', text, re.IGNORECASE)
+    # Extract hospital (usually first line)
+    hospital_match = re.search(r'^([A-Za-z\s]+(?:Hospital|Clinic|Medical Center))', text, re.IGNORECASE | re.MULTILINE)
     if hospital_match:
-        data['hospitalName'] = hospital_match.group(1)
+        data['hospitalName'] = hospital_match.group(1).strip()
     
     # Extract date
     date_match = re.search(r'\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b', text)
     if date_match:
         data['date'] = date_match.group(1)
     
-    # Extract medications
-    med_keywords = ['mg', 'ml', 'tablet', 'capsule', 'syrup', 'daily', 'twice', 'thrice']
-    for line in lines:
-        line_lower = line.lower()
-        if any(keyword in line_lower for keyword in med_keywords):
-            # Extract dosage
-            dosage_match = re.search(r'(\d+\s*(?:mg|ml|g|mcg))', line, re.IGNORECASE)
-            # Extract frequency
-            freq_match = re.search(r'(once|twice|thrice|[\d-]+)\s*(?:daily|a day)?', line, re.IGNORECASE)
-            # Extract duration
-            duration_match = re.search(r'(\d+\s*(?:day|week|month)s?)', line, re.IGNORECASE)
+    # Extract medications (improved to handle structured format)
+    # Pattern: "1. Medicine dosage form" - supports mg, ml, g, mcg, IU
+    med_pattern = r'^\s*\d+\.\s+(.+?)\s+(\d+\s*(?:mg|ml|g|mcg|IU))\s+(Tab|Cap|Syrup|Injection|Tablet|Capsule)'
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        med_match = re.search(med_pattern, line, re.IGNORECASE)
+        
+        if med_match:
+            med_name = med_match.group(1).strip()
+            dosage = med_match.group(2).strip()
+            form = med_match.group(3).strip()
+            
+            # Look ahead for frequency and duration
+            frequency = None
+            duration = None
+            
+            # Check next 5 lines for frequency/duration
+            for j in range(i+1, min(i+6, len(lines))):
+                next_line = lines[j].strip()
+                
+                # Skip empty lines
+                if not next_line:
+                    continue
+                
+                # Stop if we hit the next medication
+                if re.match(r'^\d+\.', next_line):
+                    break
+                
+                # Extract frequency (1-0-1, once daily, twice daily, as needed, etc.)
+                if not frequency:
+                    freq_match = re.search(r'((?:\d+-\d+-\d+|once|twice|thrice|three times|as needed)(?:\s*\([^)]+\))?)', next_line, re.IGNORECASE)
+                    if freq_match:
+                        frequency = freq_match.group(1).strip()
+                
+                # Extract duration (with or without "Duration:" prefix)
+                if not duration:
+                    # Try with "Duration:" prefix first
+                    dur_match = re.search(r'Duration:\s*(\d+\s*(?:day|week|month)s?)', next_line, re.IGNORECASE)
+                    if dur_match:
+                        duration = dur_match.group(1).strip()
+                    else:
+                        # Try standalone duration pattern
+                        dur_match = re.search(r'^\s*(\d+\s*(?:day|week|month)s?)$', next_line, re.IGNORECASE)
+                        if dur_match:
+                            duration = dur_match.group(1).strip()
             
             data['medications'].append({
-                'name': line.strip(),
-                'dosage': dosage_match.group(1) if dosage_match else None,
-                'frequency': freq_match.group(0) if freq_match else None,
-                'duration': duration_match.group(1) if duration_match else None
+                'name': f"{med_name} {dosage} {form}",
+                'dosage': dosage,
+                'frequency': frequency,
+                'duration': duration
             })
+        
+        i += 1
     
     return data
 
@@ -234,10 +272,18 @@ async def process_prescription(request: OCRRequest):
         preprocess_time = time.time() - t2
         logger.info(f"✅ Image preprocessed (took {preprocess_time:.2f}s)")
         
-        # Generate prediction
+        # Generate prediction with proper parameters
         t3 = time.time()
         with torch.no_grad():
-            generated_ids = model.generate(pixel_values)
+            generated_ids = model.generate(
+                pixel_values,
+                max_length=512,           # Allow full prescription text
+                num_beams=4,              # Beam search for better quality
+                early_stopping=True,      # Stop when done
+                no_repeat_ngram_size=3,   # Prevent repetition
+                temperature=1.0,          # Diversity
+                do_sample=False           # Deterministic beam search
+            )
         inference_time = time.time() - t3
         logger.info(f"✅ Model inference completed (took {inference_time:.2f}s)")
         

@@ -49,7 +49,7 @@ print(f"Base model: {BASE_MODEL}")
 print("=" * 60)
 
 if device == "cpu":
-    print("\n⚠️  WARNING: Training on CPU will be SLOW (8-12 hours)")
+    print("\n[!] WARNING: Training on CPU will be SLOW (8-12 hours)")
     print("   Recommendation: Use Google Colab with free GPU")
     print("   Visit: https://colab.research.google.com\n")
 
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     print(f"  Parameters: {model.num_parameters():,}")
     
     # Create datasets
-    print("\n📊 Loading datasets...")
+    print("\n[*] Loading datasets...")
     train_dataset = PrescriptionDataset(DATA_DIR, LABELS_DIR, processor, split='train')
     val_dataset = PrescriptionDataset(DATA_DIR, LABELS_DIR, processor, split='val')
     
@@ -260,9 +260,9 @@ if __name__ == "__main__":
             json.dump(processor.tokenizer.special_tokens_map, f, ensure_ascii=False, indent=2)
         print("[INFO] special_tokens_map.json exported from tokenizer.")
 
-    print(f"\n✅ Training complete!")
+    print(f"\n[✓] Training complete!")
     print(f"   Model saved to: {OUTPUT_DIR}")
-    print("\n🎯 Next steps:")
+    print("\n[>>] Next steps:")
     print("   1. Test the model: python test_accuracy.py")
     print("   2. Backend will automatically use this model")
     print("   3. Check backend/src/services/customOcrService.ts")
