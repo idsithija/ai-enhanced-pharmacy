@@ -1,8 +1,11 @@
 """
-Line-Level Training Data Generator for TrOCR
-=============================================
-Generates individual text line images + labels for proper TrOCR training.
-TrOCR reads ONE line at a time, so we train it on single lines.
+PaddleOCR Recognition Training Data Generator
+==============================================
+Generates line-level text images + label files in PaddleOCR format.
+PaddleOCR rec training expects:
+  - A directory of cropped text line images
+  - A label file: image_path\tlabel_text (one per line)
+  - A dictionary file (character set)
 """
 
 import random
@@ -12,14 +15,13 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 import numpy as np
 
 # Configuration
-NUM_PRESCRIPTIONS = 500  # Each prescription generates 8-15 lines → ~7500 line images
+NUM_PRESCRIPTIONS = 500  # ~8000 line images
 LINE_IMAGE_WIDTH = 800
-LINE_IMAGE_HEIGHT = 60  # Single line height
+LINE_IMAGE_HEIGHT = 60
 
-# Quality distribution for degradation
 QUALITY_WEIGHTS = [0.50, 0.30, 0.20]  # high, medium, low
 
-# ==================== DATA ====================
+# ==================== PRESCRIPTION DATA ====================
 
 PATIENT_NAMES = [
     "John Silva", "Maria Perera", "Kasun Fernando", "Dilini Rajapaksa",
@@ -38,7 +40,6 @@ PATIENT_NAMES = [
     "Tharanga Vithanage", "Senali Weerasinghe", "Kavindya Gunaratne", "Chatura Alwis",
     "Dimuthu Karunaratne", "Niluka Fernando", "Prabath Nissanka", "Shalini Kodagoda",
     "Anuradha Jayalath", "Hemantha Silva", "Priyani Wijesinghe", "Sanjeewa Cooray",
-    "Mihira Rashmika", "Ravindra Pushpakumara", "Tharushi Handapangoda",
     "Rajesh Kumar", "Priya Sharma", "Amit Patel", "Sneha Reddy", "Vikram Singh",
     "Anjali Gupta", "Suresh Nair", "Kavita Menon", "Arjun Krishnan", "Deepa Iyer",
     "David Anderson", "Sarah Johnson", "Michael Chen", "Emily Williams", "James Brown",
@@ -109,6 +110,7 @@ MEDICINES = [
     {"name": "Prednisolone", "dosages": ["5mg", "10mg"], "forms": ["Tablet", "Tab"]},
     {"name": "Salbutamol", "dosages": ["2mg", "4mg"], "forms": ["Tablet", "Inhaler"]},
     {"name": "Calcium Carbonate", "dosages": ["500mg", "1000mg"], "forms": ["Tablet", "Tab"]},
+    {"name": "Tramadol", "dosages": ["50mg", "100mg"], "forms": ["Tablet", "Tab"]},
 ]
 
 FREQUENCIES = [
@@ -125,23 +127,57 @@ DURATIONS = [
 ]
 
 
-def load_fonts():
-    """Load fonts for rendering"""
-    fonts = {}
-    sizes = {'large': 36, 'medium': 28, 'normal': 24, 'small': 20}
-    for key, size in sizes.items():
-        try:
-            fonts[key] = ImageFont.truetype("arial.ttf", size)
-        except OSError:
-            try:
-                fonts[key] = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size)
-            except OSError:
-                fonts[key] = ImageFont.load_default()
-    return fonts
+# ==================== FONT LOADING ====================
 
+def load_fonts():
+    """Load multiple font families for diversity"""
+    font_families = [
+        "arial.ttf", "times.ttf", "cour.ttf", "verdana.ttf",
+        "calibri.ttf", "cambria.ttc", "georgia.ttf", "tahoma.ttf",
+        "trebuc.ttf", "comic.ttf", "consola.ttf", "segoeui.ttf",
+    ]
+    linux_fonts = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    ]
+
+    sizes = {'large': 36, 'medium': 28, 'normal': 24, 'small': 20}
+    available_fonts = []
+
+    for font_name in font_families:
+        try:
+            ImageFont.truetype(font_name, 24)
+            available_fonts.append(font_name)
+        except OSError:
+            continue
+
+    if not available_fonts:
+        for font_path in linux_fonts:
+            try:
+                ImageFont.truetype(font_path, 24)
+                available_fonts.append(font_path)
+            except OSError:
+                continue
+
+    if not available_fonts:
+        return [{ key: ImageFont.load_default() for key in sizes }]
+
+    print(f"   Found {len(available_fonts)} fonts: {available_fonts}")
+    all_font_sets = []
+    for font_name in available_fonts:
+        font_set = {}
+        for key, size in sizes.items():
+            try:
+                font_set[key] = ImageFont.truetype(font_name, size)
+            except OSError:
+                font_set[key] = ImageFont.load_default()
+        all_font_sets.append(font_set)
+    return all_font_sets
+
+
+# ==================== IMAGE RENDERING ====================
 
 def random_date():
-    """Generate a random date string"""
     days_ago = random.randint(0, 30)
     d = datetime.now() - timedelta(days=days_ago)
     fmt = random.choice(["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"])
@@ -149,22 +185,16 @@ def random_date():
 
 
 def render_line(text, font, width=LINE_IMAGE_WIDTH, height=LINE_IMAGE_HEIGHT):
-    """Render a single text line as an image"""
     img = Image.new('RGB', (width, height), 'white')
     draw = ImageDraw.Draw(img)
-
-    # Slight random vertical offset for variety
     y_offset = random.randint(5, max(6, height - 40))
     x_offset = random.randint(10, 40)
-
     draw.text((x_offset, y_offset), text, fill='black', font=font)
     return img
 
 
 def degrade_image(img, quality):
-    """Apply quality degradation"""
     if quality == 'high':
-        # Minor variations only
         if random.random() > 0.5:
             factor = random.uniform(0.9, 1.1)
             img = ImageEnhance.Brightness(img).enhance(factor)
@@ -193,34 +223,32 @@ def pick_quality():
     return random.choices(['high', 'medium', 'low'], weights=QUALITY_WEIGHTS)[0]
 
 
-def generate_line_dataset(num_prescriptions=NUM_PRESCRIPTIONS):
-    """Generate line-level training data from synthetic prescriptions"""
-    script_dir = Path(__file__).parent
-    output_dir = script_dir.parent / "training_data"
-    labels_dir = output_dir / "labels"
+# ==================== MAIN GENERATOR ====================
+
+def generate_paddleocr_dataset(num_prescriptions=NUM_PRESCRIPTIONS):
+    """Generate training data in PaddleOCR recognition format."""
+    base_dir = Path(__file__).parent.parent
+    train_dir = base_dir / "training_data" / "train"
+    val_dir = base_dir / "training_data" / "val"
 
     # Clean existing
-    if output_dir.exists():
-        print("Cleaning existing line data...")
-        for f in output_dir.glob("line_*.png"):
-            f.unlink()
-        if labels_dir.exists():
-            for f in labels_dir.glob("line_*.txt"):
+    for d in [train_dir, val_dir]:
+        if d.exists():
+            for f in d.glob("*.png"):
                 f.unlink()
+        d.mkdir(parents=True, exist_ok=True)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    labels_dir.mkdir(parents=True, exist_ok=True)
+    font_sets = load_fonts()
+    all_samples = []  # (filename, label_text)
 
-    fonts = load_fonts()
+    print(f"Generating PaddleOCR training data from {num_prescriptions} prescriptions...")
+    print(f"Using {len(font_sets)} font families")
+    print()
+
     line_count = 0
     quality_counts = {'high': 0, 'medium': 0, 'low': 0}
 
-    print(f"Generating line-level data from {num_prescriptions} prescriptions...")
-    print(f"Output: {output_dir}")
-    print()
-
     for rx_idx in range(1, num_prescriptions + 1):
-        # Generate random prescription content
         patient = random.choice(PATIENT_NAMES)
         doctor = random.choice(DOCTOR_NAMES)
         hospital = random.choice(HOSPITALS)
@@ -228,7 +256,6 @@ def generate_line_dataset(num_prescriptions=NUM_PRESCRIPTIONS):
         age = random.randint(18, 80)
         num_meds = random.randint(1, 5)
 
-        # Build list of (text, font_key) tuples for this prescription
         lines = []
         lines.append((hospital, 'large'))
         lines.append((f"Patient Name: {patient}", 'normal'))
@@ -250,35 +277,71 @@ def generate_line_dataset(num_prescriptions=NUM_PRESCRIPTIONS):
 
         lines.append((f"Signature: {doctor}", 'normal'))
 
-        # Render each line as separate image
         quality = pick_quality()
         quality_counts[quality] += 1
+        fonts = random.choice(font_sets)
 
         for text, font_key in lines:
             line_count += 1
-            line_id = f"{line_count:06d}"
-
+            filename = f"line_{line_count:06d}.png"
             img = render_line(text, fonts[font_key])
             img = degrade_image(img, quality)
+            # Save to train_dir initially, val split moves files later
+            img.save(train_dir / filename)
+            all_samples.append((filename, text.strip()))
 
-            img.save(output_dir / f"line_{line_id}.png")
-            (labels_dir / f"line_{line_id}.txt").write_text(text.strip(), encoding='utf-8')
+        if rx_idx % 100 == 0:
+            print(f"   {rx_idx}/{num_prescriptions} prescriptions ({line_count} lines)")
 
-        if rx_idx % 50 == 0:
-            print(f"   Processed {rx_idx}/{num_prescriptions} prescriptions ({line_count} lines so far)...")
+    # Shuffle and split 90/10
+    random.seed(42)
+    random.shuffle(all_samples)
+    split_idx = int(0.9 * len(all_samples))
+    train_samples = all_samples[:split_idx]
+    val_samples = all_samples[split_idx:]
 
-    print()
-    print(f"Generation complete!")
-    print(f"   Total prescriptions: {num_prescriptions}")
-    print(f"   Total line images:   {line_count}")
+    # Move val images to val_dir
+    for filename, _ in val_samples:
+        src = train_dir / filename
+        dst = val_dir / filename
+        if src.exists():
+            src.rename(dst)
+
+    # Write label files in PaddleOCR format: image_path\tlabel
+    train_label_file = base_dir / "training_data" / "train_label.txt"
+    val_label_file = base_dir / "training_data" / "val_label.txt"
+
+    with open(train_label_file, 'w', encoding='utf-8') as f:
+        for filename, label in train_samples:
+            f.write(f"train/{filename}\t{label}\n")
+
+    with open(val_label_file, 'w', encoding='utf-8') as f:
+        for filename, label in val_samples:
+            f.write(f"val/{filename}\t{label}\n")
+
+    # Build character dictionary
+    all_chars = set()
+    for _, label in all_samples:
+        all_chars.update(label)
+    dict_file = base_dir / "training_data" / "en_dict.txt"
+    with open(dict_file, 'w', encoding='utf-8') as f:
+        for ch in sorted(all_chars):
+            f.write(f"{ch}\n")
+
+    print(f"\nGeneration complete!")
+    print(f"   Total lines:  {line_count}")
+    print(f"   Train:        {len(train_samples)}")
+    print(f"   Validation:   {len(val_samples)}")
+    print(f"   Dictionary:   {len(all_chars)} characters")
     print(f"   Quality: high={quality_counts['high']}, medium={quality_counts['medium']}, low={quality_counts['low']}")
-    print(f"   Saved to: {output_dir}")
+    print(f"   Labels: {train_label_file}")
+    print(f"   Dict:   {dict_file}")
     return line_count
 
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("LINE-LEVEL TRAINING DATA GENERATOR")
+    print("PaddleOCR TRAINING DATA GENERATOR")
     print("=" * 60)
     print()
-    generate_line_dataset(NUM_PRESCRIPTIONS)
+    generate_paddleocr_dataset()

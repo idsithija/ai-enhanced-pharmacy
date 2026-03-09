@@ -1,7 +1,8 @@
 """
-Custom TrOCR Model API Service — Line-Level Pipeline
-=====================================================
-Pipeline: Full Image → Line Detection → TrOCR per line → Smart Parser
+Prescription OCR API Service — PaddleOCR Pipeline
+==================================================
+Uses PaddleOCR for full-page text detection + recognition.
+Supports both pretrained and custom-trained recognition models.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -21,86 +22,98 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Model configuration
-MODEL_DIR = Path(__file__).parent / "model"
-model = None
-processor = None
-device = None
+# PaddleOCR engine (initialized on startup)
+ocr_engine = None
+MODEL_TYPE = "paddleocr-pretrained"  # updated if custom model loaded
 
 class OCRRequest(BaseModel):
     imageSource: str  # Base64 string, data URL, file path, or HTTP URL
-    
+
 class OCRResponse(BaseModel):
     success: bool
     text: str = ""
     confidence: float = 0.0
     extractedData: dict = {}
-    modelType: str = "custom-trocr"
+    modelType: str = "paddleocr"
     device: str = ""
     error: str = ""
 
+
 def load_model():
-    """Load the TrOCR model on startup"""
-    global model, processor, device
-    
+    """Initialize PaddleOCR engine on startup.
+    Loads custom-trained rec model if available, otherwise pretrained."""
+    global ocr_engine, MODEL_TYPE
+
     try:
-        logger.info("Loading TrOCR model...")
-        
-        # Check if model exists
-        if not MODEL_DIR.exists():
-            raise FileNotFoundError(f"Model directory not found: {MODEL_DIR}")
-        
-        # Import ML libraries
-        import torch
-        from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-        
-        # Load model and processor
-        processor = TrOCRProcessor.from_pretrained(str(MODEL_DIR))
-        model = VisionEncoderDecoderModel.from_pretrained(str(MODEL_DIR))
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model.to(device)
-        model.eval()
-        
-        logger.info(f"✅ Model loaded successfully on {device}")
-        logger.info(f"Model path: {MODEL_DIR}")
-        
+        logger.info("Initializing PaddleOCR engine...")
+        from paddleocr import PaddleOCR
+
+        # Check for custom-trained recognition model
+        custom_model_dir = Path(__file__).parent / "model" / "inference"
+        custom_dict = Path(__file__).parent / "training_data" / "en_dict.txt"
+
+        kwargs = {
+            'use_angle_cls': True,
+            'lang': 'en',
+            'show_log': False,
+        }
+
+        if custom_model_dir.exists() and any(custom_model_dir.glob("*.pdmodel")):
+            logger.info(f"Loading CUSTOM rec model from {custom_model_dir}")
+            kwargs['rec_model_dir'] = str(custom_model_dir)
+            if custom_dict.exists():
+                kwargs['rec_char_dict_path'] = str(custom_dict)
+            MODEL_TYPE = "paddleocr-custom"
+        else:
+            logger.info("Using PRETRAINED PaddleOCR model")
+            MODEL_TYPE = "paddleocr-pretrained"
+
+        ocr_engine = PaddleOCR(**kwargs)
+
+        # Check GPU availability
+        try:
+            import paddle
+            use_gpu = paddle.device.is_compiled_with_cuda()
+        except Exception:
+            use_gpu = False
+        logger.info(f"PaddleOCR initialized — model: {MODEL_TYPE}, GPU: {use_gpu}")
+
     except ImportError as e:
         logger.error(f"Missing dependencies: {e}")
-        logger.error("Please install: pip install torch transformers")
+        logger.error("Install: pip install paddlepaddle==2.6.2 paddleocr==2.7.3")
         raise
     except Exception as e:
-        logger.error(f"Failed to load model: {e}")
+        logger.error(f"Failed to initialize PaddleOCR: {e}")
         raise
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load model on startup, cleanup on shutdown"""
-    # Startup
     load_model()
     yield
-    # Shutdown (cleanup if needed)
     logger.info("Shutting down OCR API service...")
 
-# Initialize FastAPI app with lifespan
 app = FastAPI(
     title="Prescription OCR API",
-    description="Custom TrOCR model for prescription image processing",
-    version="1.0.0",
+    description="PaddleOCR-powered prescription image processing",
+    version="3.0.0",
     lifespan=lifespan
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your backend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def load_image(image_input: str) -> Image.Image:
-    """Load image from various sources"""
+
+# ==================== IMAGE LOADING ====================
+
+def load_image(image_input: str) -> np.ndarray:
+    """Load image from various sources, return as numpy array for PaddleOCR"""
     try:
         if image_input.startswith('data:image'):
             image_data = image_input.split(',')[1]
@@ -118,298 +131,336 @@ def load_image(image_input: str) -> Image.Image:
 
         image = Image.open(BytesIO(image_bytes)).convert('RGB')
 
-        # Resize very large images to prevent memory issues
+        # Resize very large images
         max_dimension = 2048
         if image.width > max_dimension or image.height > max_dimension:
             ratio = min(max_dimension / image.width, max_dimension / image.height)
             new_size = (int(image.width * ratio), int(image.height * ratio))
             image = image.resize(new_size, Image.Resampling.LANCZOS)
 
-        return image
+        return np.array(image)
     except Exception as e:
         raise ValueError(f"Failed to load image: {str(e)}")
 
 
-# ==================== LINE DETECTION ====================
+# ==================== OCR WITH PADDLEOCR ====================
 
-def _projection_lines(binary, image: Image.Image, threshold_pct: float):
-    """Extract line crops using horizontal projection profile."""
-    h_proj = np.sum(binary, axis=1)
-    if np.max(h_proj) == 0:
-        return []
-    threshold = max(200, np.max(h_proj) * threshold_pct)
-    text_rows = h_proj > threshold
-    lines = []
-    in_line = False
-    start = 0
-    for i in range(len(text_rows)):
-        if text_rows[i] and not in_line:
-            start = i
-            in_line = True
-        elif not text_rows[i] and in_line:
-            if i - start >= 8:
-                lines.append((start, i))
-            in_line = False
-    if in_line and len(text_rows) - start >= 8:
-        lines.append((start, len(text_rows)))
-    pad = 6
-    crops = []
-    for s, e in lines:
-        y1 = max(0, s - pad)
-        y2 = min(image.height, e + pad)
-        crops.append(image.crop((0, y1, image.width, y2)))
-    return crops
-
-
-def _contour_lines(binary, image: Image.Image):
-    """Extract line crops using contour detection with horizontal dilation."""
-    import cv2
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (image.width // 4, 5))
-    dilated = cv2.dilate(binary, kernel, iterations=1)
-    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    min_width = image.width * 0.05
-    boxes = []
-    for cnt in contours:
-        x, y, w, h = cv2.boundingRect(cnt)
-        if w >= min_width and 10 <= h <= image.height * 0.3:
-            boxes.append((x, y, w, h))
-    boxes.sort(key=lambda b: b[1])
-
-    # Merge vertically overlapping boxes
-    merged = []
-    for box in boxes:
-        x, y, w, h = box
-        if merged:
-            px, py, pw, ph = merged[-1]
-            overlap = min(py + ph, y + h) - max(py, y)
-            if overlap > 0.5 * min(ph, h):
-                nx = min(px, x)
-                ny = min(py, y)
-                nw = max(px + pw, x + w) - nx
-                nh = max(py + ph, y + h) - ny
-                merged[-1] = (nx, ny, nw, nh)
-                continue
-        merged.append(box)
-
-    padding = 8
-    crops = []
-    for x, y, w, h in merged:
-        x1 = max(0, x - padding)
-        y1 = max(0, y - padding)
-        x2 = min(image.width, x + w + padding)
-        y2 = min(image.height, y + h + padding)
-        crops.append(image.crop((x1, y1, x2, y2)))
-    return crops
-
-
-def detect_text_lines(image: Image.Image):
+def run_ocr(image_array: np.ndarray) -> tuple[str, float]:
     """
-    Detect individual text lines using multiple strategies.
-    Tries contour-based, projection with morph-open, and projection with
-    fixed threshold, then picks the method that finds the most lines in a
-    reasonable range (5-30).
+    Run PaddleOCR on the full image.
+    Returns (full_text, average_confidence).
+    PaddleOCR returns: [[[bbox, (text, conf)], ...]]
     """
-    import cv2
+    result = ocr_engine.ocr(image_array, cls=True)
 
-    img_array = np.array(image)
-    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    if not result or not result[0]:
+        return "", 0.0
 
-    results = []
-
-    # Method 1: Contour-based (works well for clean / high-quality images)
-    lines_contour = _contour_lines(binary, image)
-    results.append(("contour", lines_contour))
-
-    # Method 2: Projection profile with morph-open cleaning + 5 % threshold
-    kernel_clean = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    cleaned = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_clean)
-    lines_proj = _projection_lines(cleaned, image, 0.05)
-    results.append(("projection", lines_proj))
-
-    # Method 3: Low fixed-threshold binarization + projection (fallback)
-    _, binary_fixed = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV)
-    lines_fixed = _projection_lines(binary_fixed, image, 0.02)
-    results.append(("fixed_thresh", lines_fixed))
-
-    # Pick the method with the most lines in the reasonable range [5, 30]
-    best = max(results, key=lambda r: len(r[1]) if 5 <= len(r[1]) <= 30 else 0)
-    if len(best[1]) < 5:
-        best = max(results, key=lambda r: len(r[1]))
-
-    logger.info(f"Detected {len(best[1])} text lines (method: {best[0]})")
-    return best[1]
-
-
-# ==================== OCR PER LINE ====================
-
-def ocr_single_line(line_image: Image.Image) -> str:
-    """Run TrOCR on a single line image"""
-    import torch
-
-    pixel_values = processor(line_image, return_tensors="pt").pixel_values.to(device)
-
-    with torch.no_grad():
-        generated_ids = model.generate(
-            pixel_values,
-            max_length=64,
-            num_beams=4,
-            early_stopping=True,
-        )
-
-    text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    return text.strip()
-
-
-def ocr_full_image(image: Image.Image) -> str:
-    """Full pipeline: detect lines → OCR each line → combine"""
-    line_images = detect_text_lines(image)
-
-    if not line_images:
-        logger.warning("No text lines detected, falling back to full-image OCR")
-        return ocr_single_line(image)
+    # Sort by y-coordinate (top-to-bottom reading order)
+    items = sorted(result[0], key=lambda r: r[0][0][1])
 
     lines = []
-    for i, line_img in enumerate(line_images):
-        text = ocr_single_line(line_img)
+    confidences = []
+    for item in items:
+        bbox, (text, conf) = item
+        text = text.strip()
         if text:
             lines.append(text)
-            logger.info(f"  Line {i+1}: {text[:80]}")
+            confidences.append(conf)
+            logger.info(f"  [{conf:.3f}] {text}")
 
-    return "\n".join(lines)
+    full_text = "\n".join(lines)
+    avg_confidence = float(np.mean(confidences)) if confidences else 0.0
+
+    return full_text, avg_confidence
+
+
+# ==================== SMART PARSER ====================
+
+def _fix_ocr_artifacts(text: str) -> str:
+    """Fix common OCR misreads: O/o for 0, l for 1 in numeric contexts."""
+    # Fix patterns like "10Omg" → "100mg", "5Omcg" → "50mcg"
+    text = re.sub(r'(\d)[Oo](\d)', r'\g<1>0\2', text)
+    text = re.sub(r'(\d)[Oo](mg|mcg|ml|g\b|IU)', r'\g<1>0\2', text, flags=re.IGNORECASE)
+    return text
+
 
 def parse_prescription_text(text: str) -> dict:
     """Parse prescription text to extract structured information"""
+    text = _fix_ocr_artifacts(text)
     lines = text.split('\n')
     data = {
         "medications": []
     }
-    
-    # Extract patient name (fixed: capture after "Patient Name:")
-    patient_match = re.search(r'Patient\s+Name[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE)
+
+    # Extract patient name
+    patient_match = re.search(
+        r'Patient(?:\s+Name)?[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE
+    )
     if patient_match:
         data['patientName'] = patient_match.group(1).strip()
-    
-    # Extract doctor name (fixed: capture after "Doctor:")
-    doctor_match = re.search(r'Doctor[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE)
+
+    # Extract doctor name
+    doctor_match = re.search(
+        r'Doctor[:\s]+([A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE
+    )
+    if not doctor_match:
+        doctor_match = re.search(
+            r'Signature[:\s]+(Dr\.?\s*[A-Za-z\.\s]+?)(?:\n|$)', text, re.IGNORECASE
+        )
+    if not doctor_match:
+        # Standalone "DR.NAME" at end of text
+        doctor_match = re.search(
+            r'^(Dr\.?\s*[A-Za-z\.\s]+?)$', text, re.IGNORECASE | re.MULTILINE
+        )
     if doctor_match:
         data['doctorName'] = doctor_match.group(1).strip()
-    
-    # Extract hospital (usually first line)
-    hospital_match = re.search(r'^([A-Za-z\s]+(?:Hospital|Clinic|Medical Center))', text, re.IGNORECASE | re.MULTILINE)
+
+    # Extract hospital / clinic name
+    hospital_match = re.search(
+        r'^([A-Za-z\s\.\'\-]+(?:Hospital|Clinic|Medical\s+Center|Health\s+Center|Pharmacy))',
+        text, re.IGNORECASE | re.MULTILINE
+    )
     if hospital_match:
         data['hospitalName'] = hospital_match.group(1).strip()
-    
+
     # Extract date
     date_match = re.search(r'\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b', text)
+    if not date_match:
+        date_match = re.search(r'Date[:\s]+(\S+)', text, re.IGNORECASE)
     if date_match:
         data['date'] = date_match.group(1)
-    
-    # Extract medications (improved to handle structured format)
-    # Pattern: "1. Medicine dosage form" - supports mg, ml, g, mcg, IU
-    med_pattern = r'^\s*\d+\.\s+(.+?)\s+(\d+\s*(?:mg|ml|g|mcg|IU))\s+(Tab|Cap|Syrup|Injection|Tablet|Capsule)'
-    
+
+    # Extract age
+    age_match = re.search(r'Age[:\s]+(\d+)\s*(?:years?|yrs?)?', text, re.IGNORECASE)
+    if age_match:
+        data['age'] = age_match.group(1)
+
+    # ---- Medication extraction ----
+    # Dose pattern used across all formats
+    dose_pattern = (
+        r'(?:D[OI]SE|DOSE|POSE)[:\s]+(\d+\s*(?:mg|ml|g|mcg|IU))\s*'
+        r'(Tab(?:let)?|Cap(?:sule)?|Syrup|Injection|Cream|Ointment|Drops)?'
+    )
+
+    # Format A: "1. Medicine 300mg Cap" (all on one line)
+    med_pattern_a = (
+        r'^\s*\d+\.\s*(.+?)\s+(\d+\s*(?:mg|ml|g|mcg|IU))\s+'
+        r'(Tab(?:let)?|Cap(?:sule)?|Syrup|Injection|Cream|Ointment|Drops)'
+    )
+    # Format B: numbered line "1. Medicine"
+    med_pattern_b = r'^\s*\d+\.\s*(\S+.*?)$'
+
+    # Skip lines that are headers / metadata / non-medication text
+    skip_keywords = {
+        'patient', 'age', 'date', 'doctor', 'signature', 'rx',
+        'medications', 'hospital', 'clinic', 'medical', 'center',
+        'name', 'phone', 'address', 'diagnosis', 'dose', 'duration',
+        'every', 'after', 'before', 'once', 'twice', 'thrice', 'as',
+    }
+
+    consumed = set()  # line indices already assigned to a medication
+
     i = 0
     while i < len(lines):
         line = lines[i]
-        med_match = re.search(med_pattern, line, re.IGNORECASE)
-        
-        if med_match:
-            med_name = med_match.group(1).strip()
-            dosage = med_match.group(2).strip()
-            form = med_match.group(3).strip()
-            
-            # Look ahead for frequency and duration
-            frequency = None
-            duration = None
-            
-            # Check next 5 lines for frequency/duration
-            for j in range(i+1, min(i+6, len(lines))):
-                next_line = lines[j].strip()
-                
-                # Skip empty lines
-                if not next_line:
-                    continue
-                
-                # Stop if we hit the next medication
-                if re.match(r'^\d+\.', next_line):
-                    break
-                
-                # Extract frequency (1-0-1, once daily, twice daily, as needed, etc.)
-                if not frequency:
-                    freq_match = re.search(r'((?:\d+-\d+-\d+|once|twice|thrice|three times|as needed)(?:\s*\([^)]+\))?)', next_line, re.IGNORECASE)
-                    if freq_match:
-                        frequency = freq_match.group(1).strip()
-                
-                # Extract duration (with or without "Duration:" prefix)
-                if not duration:
-                    # Try with "Duration:" prefix first
-                    dur_match = re.search(r'Duration:\s*(\d+\s*(?:day|week|month)s?)', next_line, re.IGNORECASE)
-                    if dur_match:
-                        duration = dur_match.group(1).strip()
-                    else:
-                        # Try standalone duration pattern
-                        dur_match = re.search(r'^\s*(\d+\s*(?:day|week|month)s?)$', next_line, re.IGNORECASE)
-                        if dur_match:
-                            duration = dur_match.group(1).strip()
-            
+
+        # Format A: numbered line with dose on same line
+        med_a = re.search(med_pattern_a, line, re.IGNORECASE)
+        if med_a:
+            med_name = med_a.group(1).strip()
+            dosage = med_a.group(2).strip()
+            form = med_a.group(3).strip()
+            frequency, duration = _scan_freq_dur(lines, i)
             data['medications'].append({
                 'name': f"{med_name} {dosage} {form}",
                 'dosage': dosage,
                 'frequency': frequency,
                 'duration': duration
             })
-        
+            consumed.add(i)
+            i += 1
+            continue
+
+        # Format B: numbered line with name only
+        med_b = re.search(med_pattern_b, line, re.IGNORECASE)
+        if med_b:
+            med_name = med_b.group(1).strip()
+            # Skip if it looks like a header
+            if med_name.lower().split()[0] in skip_keywords:
+                i += 1
+                continue
+            med_info = _extract_med_details(lines, i, dose_pattern)
+            if med_info:
+                data['medications'].append(med_info)
+                consumed.add(i)
+            i += 1
+            continue
+
+        # Format C: standalone medicine name (no number prefix)
+        # followed by a "Dose:" line within the next few lines
+        stripped = line.strip()
+        if stripped and i not in consumed:
+            first_word = stripped.split()[0].lower().rstrip(':')
+            is_header = first_word in skip_keywords
+            # Also skip lines with colons (likely field labels), frequency patterns, or short noise
+            is_metadata = (
+                ':' in stripped or
+                re.match(r'^\d+-\d+-\d+', stripped) or
+                re.match(r'^[~\-]', stripped) or
+                len(stripped) < 3
+            )
+            has_dose_ahead = False
+            if not is_header and not is_metadata:
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    if re.search(dose_pattern, lines[j], re.IGNORECASE):
+                        has_dose_ahead = True
+                        break
+            if has_dose_ahead:
+                med_info = _extract_med_details(lines, i, dose_pattern, name_override=stripped)
+                if med_info:
+                    data['medications'].append(med_info)
+                    consumed.add(i)
+
         i += 1
-    
+
     return data
+
+
+def _extract_med_details(lines: list[str], start: int, dose_pattern: str, name_override: str = None) -> dict | None:
+    """Look ahead from a medication line and extract dosage, frequency, duration."""
+    if name_override:
+        med_name = name_override
+    else:
+        # Extract name from numbered line
+        m = re.search(r'^\s*\d+\.\s*(\S+.*?)$', lines[start])
+        if not m:
+            return None
+        med_name = m.group(1).strip()
+
+    dosage = form = frequency = duration = None
+
+    for j in range(start + 1, min(start + 8, len(lines))):
+        nxt = lines[j].strip()
+        if not nxt:
+            continue
+        # Stop at next numbered medication
+        if re.match(r'^\s*\d+\.', nxt):
+            break
+        # Stop at a standalone word that looks like another medicine name
+        # (single capitalized word followed by Dose: line)
+        if not re.search(r'(?:dose|duration|every|after|before|once|twice|\d+-\d+-\d+)', nxt, re.IGNORECASE):
+            if j + 1 < len(lines) and re.search(dose_pattern, lines[j + 1], re.IGNORECASE):
+                break
+        if not dosage:
+            dm = re.search(dose_pattern, nxt, re.IGNORECASE)
+            if dm:
+                dosage = dm.group(1).strip()
+                form = dm.group(2).strip() if dm.group(2) else None
+                # Check same line for frequency
+                fm = re.search(
+                    r'(every\s+\d+\s+hours?|after\s+meals?|before\s+meals?|\d+-\d+-\d+)',
+                    nxt, re.IGNORECASE
+                )
+                if fm:
+                    frequency = fm.group(0).strip()
+        if not frequency:
+            frequency = _match_frequency(nxt)
+        if not duration:
+            duration = _match_duration(nxt)
+
+    if not dosage:
+        return None
+
+    name_str = med_name
+    if dosage:
+        name_str += f" {dosage}"
+    if form:
+        name_str += f" {form}"
+    return {
+        'name': name_str,
+        'dosage': dosage,
+        'frequency': frequency,
+        'duration': duration
+    }
+
+
+def _scan_freq_dur(lines: list[str], start: int) -> tuple:
+    """Look ahead from a medication line to find frequency and duration."""
+    frequency = duration = None
+    for j in range(start + 1, min(start + 6, len(lines))):
+        nxt = lines[j].strip()
+        if not nxt:
+            continue
+        if re.match(r'^\d+\.', nxt):
+            break
+        if not frequency:
+            frequency = _match_frequency(nxt)
+        if not duration:
+            duration = _match_duration(nxt)
+    return frequency, duration
+
+
+def _match_frequency(text: str):
+    m = re.search(
+        r'((?:\d+-\d+-\d+|once|twice|thrice|three times|as needed|'
+        r'every\s+\d+\s+hours?|after\s+meals?|before\s+meals?)'
+        r'(?:\s*\([^)]+\))?)',
+        text, re.IGNORECASE
+    )
+    return m.group(1).strip() if m else None
+
+
+def _match_duration(text: str):
+    m = re.search(r'(?:Duration:\s*)?(\d+\s*(?:day|week|month)s?)', text, re.IGNORECASE)
+    return m.group(1).strip() if m else None
+
+
+# ==================== API ENDPOINTS ====================
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
     return {
-        "service": "Prescription OCR API",
+        "service": "Prescription OCR API (PaddleOCR)",
         "status": "running",
-        "model_loaded": model is not None,
-        "device": device
+        "model_loaded": ocr_engine is not None,
+        "model_type": MODEL_TYPE,
     }
 
 @app.get("/health")
 async def health_check():
-    """Detailed health check"""
     return {
-        "status": "healthy" if model is not None else "unhealthy",
-        "model_loaded": model is not None,
-        "device": device,
-        "model_path": str(MODEL_DIR)
+        "status": "healthy" if ocr_engine is not None else "unhealthy",
+        "model_loaded": ocr_engine is not None,
+        "engine": "PaddleOCR",
+        "model_type": MODEL_TYPE,
     }
 
 @app.post("/process", response_model=OCRResponse)
 async def process_prescription(request: OCRRequest):
-    """Process prescription image using line-detection pipeline"""
+    """Process prescription image using PaddleOCR"""
 
-    if model is None or processor is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    if ocr_engine is None:
+        raise HTTPException(status_code=503, detail="OCR engine not loaded")
 
     import time
     start_time = time.time()
 
     try:
         logger.info("=" * 60)
-        logger.info("New OCR Request Received (Line Pipeline)")
+        logger.info(f"New OCR Request ({MODEL_TYPE})")
         logger.info("=" * 60)
 
         # Load image
         t1 = time.time()
-        image = load_image(request.imageSource)
+        image_array = load_image(request.imageSource)
         load_time = time.time() - t1
-        logger.info(f"Image loaded: {image.size} ({load_time:.2f}s)")
+        h, w = image_array.shape[:2]
+        logger.info(f"Image loaded: {w}x{h} ({load_time:.2f}s)")
 
-        # Line-level OCR pipeline
+        # Run PaddleOCR (detection + recognition in one step)
         t2 = time.time()
-        predicted_text = ocr_full_image(image)
+        predicted_text, confidence = run_ocr(image_array)
         ocr_time = time.time() - t2
         logger.info(f"OCR completed: {len(predicted_text)} chars ({ocr_time:.2f}s)")
 
@@ -421,21 +472,22 @@ async def process_prescription(request: OCRRequest):
         total_time = time.time() - start_time
 
         logger.info("=" * 60)
-        logger.info("Performance Breakdown:")
-        logger.info(f"   Image Loading:    {load_time:.2f}s")
-        logger.info(f"   Line OCR:         {ocr_time:.2f}s")
-        logger.info(f"   Data Parsing:     {parse_time:.2f}s")
-        logger.info(f"   TOTAL:            {total_time:.2f}s")
-        logger.info(f"Medications found: {len(extracted_data.get('medications', []))}")
+        logger.info("Performance:")
+        logger.info(f"   Image Loading:  {load_time:.2f}s")
+        logger.info(f"   PaddleOCR:      {ocr_time:.2f}s")
+        logger.info(f"   Parsing:        {parse_time:.2f}s")
+        logger.info(f"   TOTAL:          {total_time:.2f}s")
+        logger.info(f"Confidence:      {confidence:.3f} ({confidence*100:.1f}%)")
+        logger.info(f"Medications:     {len(extracted_data.get('medications', []))}")
         logger.info("=" * 60)
 
         return OCRResponse(
             success=True,
             text=predicted_text,
-            confidence=0.90,
+            confidence=round(confidence, 4),
             extractedData=extracted_data,
-            modelType="custom-trocr-line-pipeline",
-            device=device,
+            modelType=MODEL_TYPE,
+            device="gpu" if _has_gpu() else "cpu",
         )
 
     except ValueError as e:
@@ -446,11 +498,40 @@ async def process_prescription(request: OCRRequest):
         logger.exception("Full traceback:")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
+
+def _has_gpu() -> bool:
+    try:
+        import paddle
+        return paddle.device.is_compiled_with_cuda()
+    except Exception:
+        return False
+
+
+# ==================== CLI TEST MODE ====================
+
 if __name__ == "__main__":
-    # Run the API service
-    uvicorn.run(
-        app,
-        host="127.0.0.1",  # localhost only for security
-        port=8000,  # You can change this port
-        log_level="info"
-    )
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        # Quick test: python api_service.py test <image_path>
+        load_model()
+        test_path = sys.argv[2] if len(sys.argv) > 2 else "test_data/prescription_0001_high.png"
+        print(f"\n{'='*60}")
+        print(f"Testing: {test_path}")
+        print(f"{'='*60}")
+        img = np.array(Image.open(test_path).convert('RGB'))
+        text, confidence = run_ocr(img)
+        extracted = parse_prescription_text(text)
+        print(f"\n--- OCR Output ---")
+        print(text)
+        print(f"\n--- Confidence: {confidence:.4f} ({confidence*100:.1f}%) ---")
+        print(f"\n--- Extracted Data ---")
+        for key, val in extracted.items():
+            print(f"  {key}: {val}")
+    else:
+        uvicorn.run(
+            app,
+            host="127.0.0.1",
+            port=8000,
+            log_level="info"
+        )

@@ -1,264 +1,389 @@
 """
-Line-Level TrOCR Training Script (Improved)
-=============================================
-Key features:
-  - Trains on single text lines (not full documents)
-  - Partial encoder unfreeze (top 2 ViT layers) for better adaptation
-  - Batch size 8 (line images are small)
-  - MAX_LENGTH 64 (lines are short)
-  - 5 epochs with cosine LR schedule
-  - Stronger augmentation for robustness
-  - fp16 for GPU acceleration
+PaddleOCR Recognition Model Fine-Tuning Script
+================================================
+Fine-tunes PP-OCRv4 English recognition model on custom prescription data.
+
+Steps:
+  1. Clones PaddleOCR repo (for training tools)
+  2. Downloads pretrained PP-OCRv4 English rec model
+  3. Generates training config YAML
+  4. Runs fine-tuning
+  5. Exports inference model
+
+Usage:
+  python train_model.py              # Full pipeline
+  python train_model.py --skip-clone # Skip repo clone if already done
+  python train_model.py --export-only # Only export (after training)
 """
 
 import os
-import torch
-from PIL import Image, ImageEnhance
-import random
+import sys
+import subprocess
+import shutil
+import argparse
+import yaml
 from pathlib import Path
-from torch.utils.data import Dataset
-from transformers import (
-    TrOCRProcessor,
-    VisionEncoderDecoderModel,
-    Seq2SeqTrainer,
-    Seq2SeqTrainingArguments,
-    default_data_collator,
-)
 
-# ==================== CONFIGURATION ====================
+BASE_DIR = Path(__file__).parent.parent  # ml-models/prescription-ocr/
+PADDLEOCR_DIR = BASE_DIR / "PaddleOCR"
+PRETRAINED_DIR = BASE_DIR / "pretrained"
+OUTPUT_DIR = BASE_DIR / "model"
+TRAINING_DATA_DIR = BASE_DIR / "training_data"
 
-DATA_DIR = Path(__file__).parent.parent / "training_data"
-LABELS_DIR = DATA_DIR / "labels"
-OUTPUT_DIR = Path(__file__).parent.parent / "model"
+# PP-OCRv4 English rec model
+PRETRAINED_URL = "https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_rec_train.tar"
+PRETRAINED_MODEL_NAME = "en_PP-OCRv4_rec_train"
 
-BASE_MODEL = "microsoft/trocr-base-printed"
-MAX_LENGTH = 64          # Lines are short — 64 tokens is plenty
-BATCH_SIZE = 8           # Line images are small — fit more per batch
-NUM_EPOCHS = 5           # More epochs for better convergence
-LEARNING_RATE = 3e-5     # Slightly lower LR for stability
-WARMUP_RATIO = 0.1       # 10% warmup steps
-WEIGHT_DECAY = 0.01
-FREEZE_ENCODER = "partial"  # Unfreeze top 2 ViT layers
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-print("=" * 70)
-print("LINE-LEVEL TrOCR TRAINING (IMPROVED)")
-print("=" * 70)
-print(f"[*] Device:          {device}")
-print(f"[*] Epochs:          {NUM_EPOCHS}")
-print(f"[*] Batch Size:      {BATCH_SIZE}")
-print(f"[*] Max Length:       {MAX_LENGTH} tokens")
-print(f"[*] Learning Rate:   {LEARNING_RATE}")
-print(f"[*] Warmup Ratio:    {WARMUP_RATIO}")
-print(f"[*] Freeze Encoder:  {FREEZE_ENCODER}")
-print(f"[*] Data Dir:        {DATA_DIR}")
-print(f"[*] Output Dir:      {OUTPUT_DIR}")
-print("=" * 70)
+# Training hyperparameters
+EPOCHS = 100
+BATCH_SIZE = 64
+LEARNING_RATE = 0.0005
+SAVE_EPOCH_STEP = 10
+EVAL_BATCH_STEP = 200
+LOG_SMOOTH_WINDOW = 20
 
 
-# ==================== AUGMENTATION ====================
-
-def augment_image(image):
-    """Stronger augmentation for line images — improves robustness"""
-    # Always apply at least one augmentation (80% of the time)
-    if random.random() > 0.8:
-        return image
-
-    # Brightness variation
-    if random.random() > 0.3:
-        image = ImageEnhance.Brightness(image).enhance(random.uniform(0.7, 1.3))
-    # Contrast variation
-    if random.random() > 0.3:
-        image = ImageEnhance.Contrast(image).enhance(random.uniform(0.7, 1.3))
-    # Slight rotation (-3 to 3 degrees)
-    if random.random() > 0.5:
-        angle = random.uniform(-3, 3)
-        image = image.rotate(angle, fillcolor=(255, 255, 255), expand=False)
-    # Gaussian blur (simulates camera blur)
-    if random.random() > 0.6:
-        from PIL import ImageFilter
-        image = image.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 1.2)))
-    # Sharpness variation
-    if random.random() > 0.5:
-        image = ImageEnhance.Sharpness(image).enhance(random.uniform(0.5, 2.0))
-    return image
+def run_cmd(cmd, cwd=None, check=True):
+    """Run a command and stream output."""
+    print(f"\n>>> {cmd}")
+    result = subprocess.run(cmd, shell=True, cwd=cwd)
+    if check and result.returncode != 0:
+        print(f"Command failed with return code {result.returncode}")
+        sys.exit(1)
+    return result
 
 
-# ==================== DATASET ====================
-
-class LineDataset(Dataset):
-    def __init__(self, image_files, labels, processor, max_length, is_train=True):
-        self.image_files = image_files
-        self.labels = labels
-        self.processor = processor
-        self.max_length = max_length
-        self.is_train = is_train
-
-    def __len__(self):
-        return len(self.image_files)
-
-    def __getitem__(self, idx):
-        image = Image.open(self.image_files[idx]).convert("RGB")
-        if self.is_train:
-            image = augment_image(image)
-
-        pixel_values = self.processor(image, return_tensors="pt").pixel_values.squeeze()
-
-        labels = self.processor.tokenizer(
-            self.labels[idx],
-            padding="max_length",
-            max_length=self.max_length,
-            truncation=True,
-            return_tensors="pt",
-        ).input_ids.squeeze()
-
-        labels[labels == self.processor.tokenizer.pad_token_id] = -100
-
-        return {"pixel_values": pixel_values, "labels": labels}
-
-
-# ==================== MAIN ====================
-
-def main():
-    # 1. Load data
-    print("\n[1/6] Loading dataset...")
-    image_files = sorted(list(DATA_DIR.glob("line_*.png")))
-    if not image_files:
-        print("[ERROR] No line images found. Run generate_line_data.py first!")
+def clone_paddleocr():
+    """Clone PaddleOCR repository (shallow)."""
+    if PADDLEOCR_DIR.exists():
+        print(f"PaddleOCR repo already exists at {PADDLEOCR_DIR}")
         return
 
-    labels = []
-    for img_file in image_files:
-        label_file = LABELS_DIR / f"{img_file.stem}.txt"
-        if label_file.exists():
-            labels.append(label_file.read_text(encoding="utf-8").strip())
-        else:
-            labels.append("")
+    print("Cloning PaddleOCR repository (shallow clone)...")
+    run_cmd(
+        f'git clone --depth 1 -b release/2.7 '
+        f'https://github.com/PaddlePaddle/PaddleOCR.git "{PADDLEOCR_DIR}"'
+    )
+    # Install PaddleOCR's requirements
+    req_file = PADDLEOCR_DIR / "requirements.txt"
+    if req_file.exists():
+        run_cmd(f'pip install -r "{req_file}"', check=False)
 
-    print(f"[OK] Found {len(image_files)} line images")
 
-    # 2. Load model
-    print("\n[2/6] Loading base model...")
-    processor = TrOCRProcessor.from_pretrained(BASE_MODEL)
-    model = VisionEncoderDecoderModel.from_pretrained(BASE_MODEL)
+def download_pretrained():
+    """Download pretrained PP-OCRv4 rec model."""
+    PRETRAINED_DIR.mkdir(parents=True, exist_ok=True)
+    model_dir = PRETRAINED_DIR / PRETRAINED_MODEL_NAME
 
-    model.config.decoder_start_token_id = processor.tokenizer.cls_token_id
-    model.config.pad_token_id = processor.tokenizer.pad_token_id
-    model.config.vocab_size = model.config.decoder.vocab_size
+    if model_dir.exists() and any(model_dir.glob("*.pdparams")):
+        print(f"Pretrained model already exists at {model_dir}")
+        return model_dir
 
-    # Freeze encoder (fully or partially)
-    if FREEZE_ENCODER == "partial":
-        # Freeze all encoder layers first
-        for param in model.encoder.parameters():
-            param.requires_grad = False
-        # Unfreeze top 2 ViT encoder layers for domain adaptation
-        encoder_layers = model.encoder.encoder.layer
-        num_layers = len(encoder_layers)
-        for layer in encoder_layers[num_layers - 2:]:
-            for param in layer.parameters():
-                param.requires_grad = True
-        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        total = sum(p.numel() for p in model.parameters())
-        print(f"[OK] Partial freeze: top 2/{num_layers} encoder layers unfrozen")
-        print(f"     {trainable:,} trainable / {total:,} total params ({100*trainable/total:.1f}%)")
-    elif FREEZE_ENCODER is True:
-        for param in model.encoder.parameters():
-            param.requires_grad = False
-        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        total = sum(p.numel() for p in model.parameters())
-        print(f"[OK] Encoder frozen: {trainable:,} trainable / {total:,} total params ({100*trainable/total:.1f}%)")
+    tar_file = PRETRAINED_DIR / f"{PRETRAINED_MODEL_NAME}.tar"
+    print(f"Downloading pretrained model from {PRETRAINED_URL}...")
+
+    # Try wget first, then curl, then Python
+    if shutil.which("wget"):
+        run_cmd(f'wget -O "{tar_file}" "{PRETRAINED_URL}"')
+    elif shutil.which("curl"):
+        run_cmd(f'curl -L -o "{tar_file}" "{PRETRAINED_URL}"')
     else:
-        total = sum(p.numel() for p in model.parameters())
-        print(f"[OK] All parameters trainable: {total:,}")
+        import urllib.request
+        print("Downloading with Python urllib (may be slow)...")
+        urllib.request.urlretrieve(PRETRAINED_URL, str(tar_file))
 
-    model.to(device)
+    print("Extracting...")
+    import tarfile
+    with tarfile.open(tar_file, 'r') as tf:
+        tf.extractall(path=str(PRETRAINED_DIR))
+    tar_file.unlink()
 
-    # 3. Split train/val
-    print("\n[3/6] Splitting dataset...")
-    indices = list(range(len(image_files)))
-    random.seed(42)
-    random.shuffle(indices)
-    split = int(0.9 * len(indices))  # 90/10 split for lines (more training data)
+    print(f"Pretrained model ready at {model_dir}")
+    return model_dir
 
-    train_files = [image_files[i] for i in indices[:split]]
-    train_labels = [labels[i] for i in indices[:split]]
-    val_files = [image_files[i] for i in indices[split:]]
-    val_labels = [labels[i] for i in indices[split:]]
 
-    train_dataset = LineDataset(train_files, train_labels, processor, MAX_LENGTH, is_train=True)
-    val_dataset = LineDataset(val_files, val_labels, processor, MAX_LENGTH, is_train=False)
+def count_dict_chars():
+    """Count characters in dictionary file."""
+    dict_file = TRAINING_DATA_DIR / "en_dict.txt"
+    if not dict_file.exists():
+        print("ERROR: Dictionary file not found. Run generate_training_data.py first!")
+        sys.exit(1)
+    with open(dict_file, 'r', encoding='utf-8') as f:
+        chars = f.read().strip().split('\n')
+    return len(chars)
 
-    print(f"[OK] Training samples:   {len(train_dataset)}")
-    print(f"[OK] Validation samples: {len(val_dataset)}")
 
-    # 4. Configure training
-    print("\n[4/6] Configuring training...")
-    # Calculate warmup steps from ratio
-    total_steps = (len(train_dataset) // BATCH_SIZE) * NUM_EPOCHS
-    warmup_steps = int(total_steps * WARMUP_RATIO)
-    print(f"[OK] Total steps: {total_steps}, Warmup: {warmup_steps}")
+def create_training_config(pretrained_model_dir, epochs=EPOCHS, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE):
+    """Create PaddleOCR training YAML configuration."""
+    num_chars = count_dict_chars()
+    # +2 for blank and unknown tokens in CTC
+    num_classes = num_chars + 2
 
-    training_args = Seq2SeqTrainingArguments(
-        output_dir=str(OUTPUT_DIR),
-        num_train_epochs=NUM_EPOCHS,
-        per_device_train_batch_size=BATCH_SIZE,
-        per_device_eval_batch_size=BATCH_SIZE,
-        learning_rate=LEARNING_RATE,
-        weight_decay=WEIGHT_DECAY,
-        warmup_steps=warmup_steps,
-        lr_scheduler_type="cosine",  # Cosine decay — smoother convergence
-        logging_steps=50,
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        save_total_limit=2,
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
-        fp16=(device == "cuda"),
-        report_to="none",
-        remove_unused_columns=False,
-        dataloader_num_workers=0,  # Windows compatibility
-    )
-    print("[OK] Training configured")
+    # Detect GPU availability
+    try:
+        import paddle
+        has_gpu = paddle.device.is_compiled_with_cuda()
+    except Exception:
+        has_gpu = False
 
-    # 5. Train
-    print("\n[5/6] Creating trainer and starting training...")
-    trainer = Seq2SeqTrainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
-        data_collator=default_data_collator,
-    )
+    config = {
+        'Global': {
+            'debug': False,
+            'use_gpu': has_gpu,
+            'epoch_num': epochs,
+            'log_smooth_window': LOG_SMOOTH_WINDOW,
+            'print_batch_step': 10,
+            'save_model_dir': str(OUTPUT_DIR / "training_output"),
+            'save_epoch_step': SAVE_EPOCH_STEP,
+            'eval_batch_step': [0, EVAL_BATCH_STEP],
+            'cal_metric_during_train': True,
+            'pretrained_model': str(pretrained_model_dir / "best_accuracy"),
+            'checkpoints': None,
+            'save_inference_dir': str(OUTPUT_DIR / "inference"),
+            'use_visualdl': False,
+            'infer_img': None,
+            'character_dict_path': str(TRAINING_DATA_DIR / "en_dict.txt"),
+            'max_text_length': 80,
+            'infer_mode': False,
+            'use_space_char': True,
+            'distributed': False,
+            'save_res_path': str(OUTPUT_DIR / "rec_results.txt"),
+        },
+        'Optimizer': {
+            'name': 'Adam',
+            'beta1': 0.9,
+            'beta2': 0.999,
+            'lr': {
+                'name': 'Cosine',
+                'learning_rate': learning_rate,
+                'warmup_epoch': 5,
+            },
+            'regularizer': {
+                'name': 'L2',
+                'factor': 3.0e-5,
+            },
+        },
+        'Architecture': {
+            'model_type': 'rec',
+            'algorithm': 'SVTR_LCNet',
+            'Transform': None,
+            'Backbone': {
+                'name': 'PPLCNetV3',
+                'scale': 0.95,
+            },
+            'Head': {
+                'name': 'MultiHead',
+                'head_list': [
+                    {
+                        'CTCHead': {
+                            'Neck': {
+                                'name': 'svtr',
+                                'dims': 120,
+                                'depth': 2,
+                                'hidden_dims': 120,
+                                'kernel_size': [1, 3],
+                                'use_guide': True,
+                            },
+                            'Head': {
+                                'fc_decay': 1.0e-5,
+                            },
+                        }
+                    },
+                    {
+                        'NRTRHead': {
+                            'nrtr_dim': 384,
+                            'max_text_length': 80,
+                        }
+                    },
+                ],
+                'out_channels_list': {
+                    'CTCLabelDecode': num_classes,
+                    'NRTRLabelDecode': num_classes,
+                },
+            },
+        },
+        'Loss': {
+            'name': 'MultiLoss',
+            'loss_config_list': [
+                {'CTCLoss': None},
+                {'NRTRLoss': None},
+            ],
+        },
+        'PostProcess': {
+            'name': 'CTCLabelDecode',
+        },
+        'Metric': {
+            'name': 'RecMetric',
+            'main_indicator': 'acc',
+            'ignore_space': False,
+        },
+        'Train': {
+            'dataset': {
+                'name': 'SimpleDataSet',
+                'data_dir': str(TRAINING_DATA_DIR),
+                'ext_op_transform_idx': 1,
+                'label_file_list': [str(TRAINING_DATA_DIR / "train_label.txt")],
+                'transforms': [
+                    {'DecodeImage': {'img_mode': 'BGR', 'channel_first': False}},
+                    {'RecConAug': {
+                        'prob': 0.5,
+                        'ext_data_num': 2,
+                        'image_shape': [48, 320, 3],
+                        'max_text_length': 80,
+                    }},
+                    {'RecAug': None},
+                    {'MultiLabelEncode': {
+                        'gtc_encode': 'NRTRLabelEncode',
+                    }},
+                    {'RecResizeImg': {'image_shape': [3, 48, 320]}},
+                    {'KeepKeys': {'keep_keys': ['image', 'label_ctc', 'label_gtc', 'length', 'valid_ratio']}},
+                ],
+            },
+            'loader': {
+                'shuffle': True,
+                'batch_size_per_card': batch_size,
+                'drop_last': True,
+                'num_workers': 4,
+            },
+        },
+        'Eval': {
+            'dataset': {
+                'name': 'SimpleDataSet',
+                'data_dir': str(TRAINING_DATA_DIR),
+                'label_file_list': [str(TRAINING_DATA_DIR / "val_label.txt")],
+                'transforms': [
+                    {'DecodeImage': {'img_mode': 'BGR', 'channel_first': False}},
+                    {'MultiLabelEncode': {
+                        'gtc_encode': 'NRTRLabelEncode',
+                    }},
+                    {'RecResizeImg': {'image_shape': [3, 48, 320]}},
+                    {'KeepKeys': {'keep_keys': ['image', 'label_ctc', 'label_gtc', 'length', 'valid_ratio']}},
+                ],
+            },
+            'loader': {
+                'shuffle': False,
+                'drop_last': False,
+                'batch_size_per_card': batch_size,
+                'num_workers': 4,
+            },
+        },
+    }
 
-    print("=" * 70)
-    print("TRAINING IN PROGRESS")
-    print("=" * 70)
-
-    trainer.train()
-
-    print("\n" + "=" * 70)
-    print("TRAINING COMPLETED!")
-    print("=" * 70)
-
-    # 6. Save
-    print("\n[6/6] Saving model...")
+    config_path = OUTPUT_DIR / "rec_prescription_train.yml"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    trainer.save_model(str(OUTPUT_DIR))
-    processor.save_pretrained(str(OUTPUT_DIR))
+    with open(config_path, 'w') as f:
+        yaml.dump(config, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
-    # Verify
-    saved_files = sorted(OUTPUT_DIR.glob("*"))
-    print(f"[OK] Saved {len(saved_files)} files to {OUTPUT_DIR}:")
-    for f in saved_files:
-        if f.is_file():
-            size_mb = f.stat().st_size / (1024 * 1024)
-            print(f"     {f.name:35s} ({size_mb:>8.2f} MB)")
+    print(f"Training config saved to {config_path}")
+    return config_path
 
-    print("\n" + "=" * 70)
-    print("SUCCESS! Line-level model training complete.")
-    print("=" * 70)
+
+def train(config_path):
+    """Run PaddleOCR recognition training."""
+    tools_dir = PADDLEOCR_DIR / "tools"
+    if not tools_dir.exists():
+        print("ERROR: PaddleOCR tools not found. Run with --clone first!")
+        sys.exit(1)
+
+    print("\n" + "=" * 60)
+    print("STARTING TRAINING")
+    print("=" * 60)
+
+    train_script = tools_dir / "train.py"
+    run_cmd(
+        f'python "{train_script}" -c "{config_path}"',
+        cwd=str(PADDLEOCR_DIR)
+    )
+    print("\nTraining complete!")
+
+
+def export_model(config_path):
+    """Export trained model for inference."""
+    tools_dir = PADDLEOCR_DIR / "tools"
+    export_script = tools_dir / "export_model.py"
+
+    training_output = OUTPUT_DIR / "training_output"
+    best_model = training_output / "best_accuracy"
+    latest_model = training_output / "latest"
+
+    # Find best checkpoint
+    checkpoint = None
+    if best_model.exists() or Path(str(best_model) + ".pdparams").exists():
+        checkpoint = str(best_model)
+    elif latest_model.exists() or Path(str(latest_model) + ".pdparams").exists():
+        checkpoint = str(latest_model)
+    else:
+        print("ERROR: No trained model found! Run training first.")
+        sys.exit(1)
+
+    inference_dir = OUTPUT_DIR / "inference"
+    print(f"\nExporting model from: {checkpoint}")
+    print(f"Export to: {inference_dir}")
+
+    run_cmd(
+        f'python "{export_script}" '
+        f'-c "{config_path}" '
+        f'-o Global.pretrained_model="{checkpoint}" '
+        f'Global.save_inference_dir="{inference_dir}"',
+        cwd=str(PADDLEOCR_DIR)
+    )
+    print(f"\nInference model exported to {inference_dir}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Train PaddleOCR recognition model")
+    parser.add_argument("--skip-clone", action="store_true", help="Skip cloning PaddleOCR repo")
+    parser.add_argument("--export-only", action="store_true", help="Only export model (skip training)")
+    parser.add_argument("--epochs", type=int, default=EPOCHS, help=f"Number of epochs (default: {EPOCHS})")
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE, help=f"Batch size (default: {BATCH_SIZE})")
+    parser.add_argument("--lr", type=float, default=LEARNING_RATE, help=f"Learning rate (default: {LEARNING_RATE})")
+    args = parser.parse_args()
+
+    epochs = args.epochs
+    batch_size = args.batch_size
+    learning_rate = args.lr
+
+    # Verify training data exists
+    if not (TRAINING_DATA_DIR / "train_label.txt").exists():
+        print("ERROR: Training data not found!")
+        print("Run: python training/generate_training_data.py")
+        sys.exit(1)
+
+    print("=" * 60)
+    print("PaddleOCR RECOGNITION MODEL TRAINING")
+    print("=" * 60)
+    print(f"   Epochs:     {epochs}")
+    print(f"   Batch size: {batch_size}")
+    print(f"   LR:         {learning_rate}")
+    print(f"   Data dir:   {TRAINING_DATA_DIR}")
+    print(f"   Output dir: {OUTPUT_DIR}")
+    print()
+
+    # Step 1: Clone PaddleOCR
+    if not args.skip_clone and not args.export_only:
+        clone_paddleocr()
+
+    # Step 2: Download pretrained model
+    pretrained_dir = download_pretrained()
+
+    # Step 3: Create config
+    config_path = create_training_config(pretrained_dir, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate)
+
+    if args.export_only:
+        export_model(config_path)
+        return
+
+    # Step 4: Train
+    train(config_path)
+
+    # Step 5: Export
+    export_model(config_path)
+
+    print("\n" + "=" * 60)
+    print("ALL DONE!")
+    print(f"   Inference model: {OUTPUT_DIR / 'inference'}")
+    print("   Use this model in api_service.py")
+    print("=" * 60)
 
 
 if __name__ == "__main__":

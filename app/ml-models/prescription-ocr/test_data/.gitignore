@@ -1,0 +1,14 @@
+# Ignore bulk generated test data
+*.jpg
+*.jpeg
+metadata.json
+ocr_results/
+
+# Keep the 2 reference test prescriptions
+!prescription_0001_high.png
+!prescription_0005_high.png
+!labels/prescription_0001.txt
+!labels/prescription_0005.txt
+
+# Keep the structure
+!.gitkeep

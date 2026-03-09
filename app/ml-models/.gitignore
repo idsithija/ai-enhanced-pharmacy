@@ -29,7 +29,8 @@ env/
 
 # Jupyter notebooks
 .ipynb_checkpoints/
-*.ipynb
+# Allow Colab training notebook
+# *.ipynb
 
 # Data files
 *.csv
