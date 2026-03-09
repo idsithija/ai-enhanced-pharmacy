@@ -16,7 +16,6 @@ import { Chatbot } from './pages/Chatbot';
 import { DemandPrediction } from './pages/DemandPrediction';
 import { PlaceOrder } from './pages/PlaceOrder';
 import { MyOrders } from './pages/MyOrders';
-import { MyPrescriptions } from './pages/MyPrescriptions';
 
 function App() {
   return (
@@ -46,7 +45,6 @@ function App() {
           <Route path="/demand-prediction" element={<DemandPrediction />} />
           <Route path="/place-order" element={<PlaceOrder />} />
           <Route path="/my-orders" element={<MyOrders />} />
-          <Route path="/my-prescriptions" element={<MyPrescriptions />} />
         </Route>
       </Routes>
     </BrowserRouter>

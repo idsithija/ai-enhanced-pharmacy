@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { drugInteractionService, type DrugInteraction } from '../services/drugInteractionService';
+import { drugInteractionService, type DrugInteraction, type MedicationInfo } from '../services/drugInteractionService';
+
+// Safely extract text from FDA fields which can be string, string[], or nested arrays
+const toText = (val: unknown, maxLen = 500): string => {
+  if (!val) return '';
+  if (typeof val === 'string') return val.substring(0, maxLen);
+  if (Array.isArray(val)) return toText(val.flat(3).join(' '), maxLen);
+  return String(val).substring(0, maxLen);
+};
 
 export const DrugInteractionChecker = () => {
   const [medications, setMedications] = useState<string[]>([]);
   const [currentMedication, setCurrentMedication] = useState('');
   const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
+  const [medicationInfos, setMedicationInfos] = useState<Record<string, MedicationInfo>>({});
+  const [expandedDrug, setExpandedDrug] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState(false);
   const [error, setError] = useState('');
 
   const handleAddMedication = () => {
@@ -29,6 +40,7 @@ export const DrugInteractionChecker = () => {
     setMedications(medications.filter((_, i) => i !== index));
     if (medications.length - 1 < 2) {
       setInteractions([]);
+      setChecked(false);
     }
   };
 
@@ -42,8 +54,23 @@ export const DrugInteractionChecker = () => {
     setError('');
 
     try {
-      const result = await drugInteractionService.checkInteractions(medications);
+      // Run interaction check and FDA lookups in parallel
+      const [result, ...fdaResults] = await Promise.all([
+        drugInteractionService.checkInteractions(medications),
+        ...medications.map(med => drugInteractionService.getMedicationInfo(med)),
+      ]);
+
       setInteractions(result.interactions);
+      setChecked(true);
+
+      // Build medication info map
+      const infos: Record<string, MedicationInfo> = {};
+      medications.forEach((med, i) => {
+        if (fdaResults[i]) {
+          infos[med] = fdaResults[i]!;
+        }
+      });
+      setMedicationInfos(infos);
     } catch (err: any) {
       setError(err.message || 'Failed to check drug interactions');
     } finally {
@@ -54,6 +81,9 @@ export const DrugInteractionChecker = () => {
   const handleClear = () => {
     setMedications([]);
     setInteractions([]);
+    setMedicationInfos({});
+    setExpandedDrug(null);
+    setChecked(false);
     setCurrentMedication('');
     setError('');
   };
@@ -129,23 +159,73 @@ export const DrugInteractionChecker = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {medications.map((medication, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{medication}</p>
-                    <p className="text-xs text-gray-600">Medication {index + 1}</p>
+              {medications.map((medication, index) => {
+                const info = medicationInfos[medication];
+                const isExpanded = expandedDrug === medication;
+                return (
+                  <div key={index} className="border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors">
+                    <div className="flex items-center justify-between p-3">
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={() => info && setExpandedDrug(isExpanded ? null : medication)}
+                      >
+                        <p className="text-sm font-semibold text-gray-900">
+                          {medication}
+                          {info && (
+                            <span className="ml-2 text-xs font-normal text-green-600">✓ FDA data</span>
+                          )}
+                        </p>
+                        {info?.genericName && info.genericName.toLowerCase() !== medication.toLowerCase() && (
+                          <p className="text-xs text-gray-500">Generic: {info.genericName}</p>
+                        )}
+                        {info?.brandName && info.brandName.toLowerCase() !== medication.toLowerCase() && (
+                          <p className="text-xs text-gray-500">Brand: {info.brandName}</p>
+                        )}
+                        {!info && Object.keys(medicationInfos).length > 0 && (
+                          <p className="text-xs text-gray-400">No FDA data found</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleRemoveMedication(index)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    {info && isExpanded && (
+                      <div className="px-3 pb-3 border-t border-gray-100 pt-2 space-y-2 text-xs">
+                        {info.manufacturer && (
+                          <p className="text-gray-600"><span className="font-semibold">Manufacturer:</span> {info.manufacturer}</p>
+                        )}
+                        {info.indications && (Array.isArray(info.indications) ? info.indications.length > 0 : !!info.indications) && (
+                          <div>
+                            <p className="font-semibold text-gray-700 mb-1">Indications:</p>
+                            <p className="text-gray-600 line-clamp-3">{toText(info.indications, 300)}</p>
+                          </div>
+                        )}
+                        {info.warnings && (Array.isArray(info.warnings) ? info.warnings.length > 0 : !!info.warnings) && (
+                          <div className="bg-amber-50 border border-amber-200 rounded p-2">
+                            <p className="font-semibold text-amber-800 mb-1">⚠️ FDA Warnings:</p>
+                            <p className="text-amber-700 line-clamp-4">{toText(info.warnings, 400)}</p>
+                          </div>
+                        )}
+                        {info.adverseReactions && (Array.isArray(info.adverseReactions) ? info.adverseReactions.length > 0 : !!info.adverseReactions) && (
+                          <div className="bg-red-50 border border-red-200 rounded p-2">
+                            <p className="font-semibold text-red-800 mb-1">Adverse Reactions:</p>
+                            <p className="text-red-700 line-clamp-3">{toText(info.adverseReactions, 300)}</p>
+                          </div>
+                        )}
+                        {info.dosageAndAdministration && (
+                          <div>
+                            <p className="font-semibold text-gray-700 mb-1">Dosage & Administration:</p>
+                            <p className="text-gray-600 line-clamp-3">{toText(info.dosageAndAdministration, 300)}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleRemoveMedication(index)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -191,7 +271,13 @@ export const DrugInteractionChecker = () => {
             <div className="flex justify-center items-center py-16">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : interactions.length === 0 && medications.length >= 2 ? (
+          ) : !checked ? (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Click "Check Interactions" to analyze your medications.
+              </p>
+            </div>
+          ) : interactions.length === 0 ? (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-start gap-3">
                 <span className="text-green-600 text-2xl">✅</span>
@@ -267,7 +353,7 @@ export const DrugInteractionChecker = () => {
       {/* How It Works */}
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-6">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
               <span className="text-primary text-5xl">+</span>
@@ -283,16 +369,25 @@ export const DrugInteractionChecker = () => {
             </div>
             <h3 className="text-sm font-bold text-gray-900 mb-2">2. AI Analysis</h3>
             <p className="text-sm text-gray-600">
-              Our AI checks for known interactions using comprehensive databases
+              Our AI checks for known interactions using drug class matching
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
+              <span className="text-primary text-5xl">🏛️</span>
+            </div>
+            <h3 className="text-sm font-bold text-gray-900 mb-2">3. FDA Data</h3>
+            <p className="text-sm text-gray-600">
+              Drug details fetched from the FDA OpenFDA public database
             </p>
           </div>
           <div className="text-center">
             <div className="inline-block p-4 bg-blue-100 rounded-lg mb-3">
               <span className="text-primary text-5xl">⚠️</span>
             </div>
-            <h3 className="text-sm font-bold text-gray-900 mb-2">3. Get Results</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-2">4. Get Results</h3>
             <p className="text-sm text-gray-600">
-              Receive detailed information about potential interactions
+              Receive interactions, warnings, and dosage info
             </p>
           </div>
         </div>

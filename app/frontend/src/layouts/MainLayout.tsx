@@ -13,7 +13,6 @@ const menuItems: MenuItem[] = [
   { text: 'Dashboard', icon: '📊', path: '/dashboard' },
   { text: 'Place Order', icon: '🛒', path: '/place-order', roles: ['user'] },
   { text: 'My Orders', icon: '📦', path: '/my-orders', roles: ['user'] },
-  { text: 'My Prescriptions', icon: '📋', path: '/my-prescriptions', roles: ['user'] },
   { text: 'Medicines', icon: '💊', path: '/medicines', roles: ['admin', 'staff'] },
   { text: 'Inventory', icon: '📦', path: '/inventory', roles: ['admin', 'staff'] },
   { text: 'Point of Sale', icon: '🛒', path: '/pos', roles: ['admin', 'staff'] },

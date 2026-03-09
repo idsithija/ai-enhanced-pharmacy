@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { Sale, User, Prescription, Inventory } from '../models/index.js';
+import { Sale, User, Prescription, Inventory, Medicine } from '../models/index.js';
 import { AuthRequest } from '../middleware/auth.js';
 import sequelize from '../config/database.js';
 
@@ -111,23 +111,26 @@ export const createSale = async (req: AuthRequest, res: Response, next: NextFunc
     const saleItems = [];
 
     for (const item of items) {
-      // Check inventory availability
-      const inventoryItem = await Inventory.findOne({
-        where: {
-          medicineId: item.medicineId,
-          batchNumber: item.batchNumber,
-        } as any,
-        transaction: t,
-      });
+      // Check inventory availability — look up by inventoryId or fall back to medicineId
+      const inventoryItem = item.inventoryId
+        ? await Inventory.findByPk(item.inventoryId, { transaction: t })
+        : await Inventory.findOne({
+            where: { medicineId: item.medicineId } as any,
+            transaction: t,
+          });
 
       if (!inventoryItem || inventoryItem.quantity < item.quantity) {
         await t.rollback();
+        const medicine = await Medicine.findByPk(item.medicineId);
         res.status(400).json({
           success: false,
-          error: { message: `Insufficient stock for ${item.medicineName}` },
+          error: { message: `Insufficient stock for ${item.medicineName || medicine?.name || 'item'}` },
         });
         return;
       }
+
+      // Get medicine name from DB if not provided
+      const medicine = await Medicine.findByPk(inventoryItem.medicineId, { transaction: t });
 
       // Update inventory quantity
       inventoryItem.quantity -= item.quantity;
@@ -139,8 +142,8 @@ export const createSale = async (req: AuthRequest, res: Response, next: NextFunc
 
       saleItems.push({
         medicineId: item.medicineId,
-        medicineName: item.medicineName,
-        batchNumber: item.batchNumber,
+        medicineName: item.medicineName || medicine?.name || 'Unknown',
+        batchNumber: item.batchNumber || inventoryItem.batchNumber,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discount: item.discount || 0,

@@ -1,0 +1,10 @@
+prescription_0001_C_high.png	format=C	quality=high	patient=Sarah Johnson	doctor=Dr. K. Perera	meds=Metformin 500mg Tab; Folic Acid 5mg Tablet
+prescription_0002_B_low.png	format=B	quality=low	patient=Ishara Rodrigo	doctor=Dr. M. Gunawardena	meds=Ibuprofen 200mg Tablet; Azithromycin 250mg Tab
+prescription_0003_C_high.png	format=C	quality=high	patient=Dilini Rajapaksa	doctor=Dr. Chandana Wijesuriya	meds=Omeprazole 20mg Capsule; Amoxicillin 500mg Cap; Cetirizine 10mg Tablet; Losartan 25mg Tablet; Gabapentin 100mg Cap
+prescription_0004_A_medium.png	format=A	quality=medium	patient=Priya Sharma	doctor=Dr. A. Fernando	meds=Aspirin 100mg Tab; Vitamin D3 1000IU Cap; Ibuprofen 400mg Tab; Gabapentin 300mg Capsule
+prescription_0005_C_medium.png	format=C	quality=medium	patient=Sanduni Wickramasinghe	doctor=Dr. Emily Williams	meds=Prednisolone 5mg Tab; Metoprolol 25mg Tab; Azithromycin 500mg Tablet; Paracetamol 500mg Tablet
+prescription_0006_A_high.png	format=A	quality=high	patient=Asanka Herath	doctor=Dr. Emily Williams	meds=Ciprofloxacin 250mg Tablet; Losartan 25mg Tablet; Cetirizine 10mg Tab; Amoxicillin 250mg Capsule
+prescription_0007_C_high.png	format=C	quality=high	patient=Kusal Rajapakse	doctor=Dr. Lakshmi Fernando	meds=Folic Acid 5mg Tablet; Cetirizine 10mg Tablet; Vitamin D3 1000IU Capsule
+prescription_0008_C_high.png	format=C	quality=high	patient=Sameera Pathirana	doctor=Dr. M. Gunawardena	meds=Diclofenac 50mg Tab
+prescription_0009_C_high.png	format=C	quality=high	patient=Lakmal Rathnayake	doctor=Dr. David Anderson	meds=Prednisolone 10mg Tablet; Amlodipine 5mg Tablet
+prescription_0010_B_high.png	format=B	quality=high	patient=Kasun Fernando	doctor=Dr. Emily Williams	meds=Amoxicillin 500mg Cap; Atorvastatin 20mg Tab; Pantoprazole 40mg Tablet; Paracetamol 500mg Tab

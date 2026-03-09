@@ -37,6 +37,10 @@ Prescription.hasMany(Sale, { foreignKey: 'prescriptionId', as: 'prescriptionSale
 Prescription.belongsTo(User, { foreignKey: 'verifiedBy', as: 'verifiedByUser' });
 User.hasMany(Prescription, { foreignKey: 'verifiedBy', as: 'verifiedPrescriptions' });
 
+// Prescription belongs to User (created by)
+Prescription.belongsTo(User, { foreignKey: 'createdBy', as: 'createdByUser' });
+User.hasMany(Prescription, { foreignKey: 'createdBy', as: 'createdPrescriptions' });
+
 // Notification belongs to User
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });

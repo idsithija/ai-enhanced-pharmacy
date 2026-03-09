@@ -43,6 +43,19 @@ export const prescriptionService = {
     return response.data;
   },
 
+  // Get current user's prescriptions
+  getMyPrescriptions: async (page: number = 1, limit: number = 10, status?: string) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (status) {
+      params.append('status', status);
+    }
+    const response = await api.get(`/prescriptions/my?${params}`);
+    return response.data;
+  },
+
   // Get single prescription
   getPrescription: async (id: string): Promise<Prescription> => {
     const response = await api.get<ApiResponse<Prescription>>(`/prescriptions/${id}`);
@@ -83,6 +96,16 @@ export const prescriptionService = {
       },
     });
     return response.data.data.url;
+  },
+
+  // Upload prescription image with patient details (FormData)
+  createPrescriptionWithImage: async (formData: FormData) => {
+    const response = await api.post('/prescriptions/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   },
 
   // Search prescriptions

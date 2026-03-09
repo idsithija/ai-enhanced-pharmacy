@@ -18,10 +18,10 @@ export interface MedicationInfo {
   genericName?: string;
   brandName?: string;
   manufacturer?: string;
-  warnings?: string[];
-  indications?: string[];
-  adverseReactions?: string[];
-  dosageAndAdministration?: string;
+  warnings?: unknown;
+  indications?: unknown;
+  adverseReactions?: unknown;
+  dosageAndAdministration?: unknown;
 }
 
 export const drugInteractionService = {

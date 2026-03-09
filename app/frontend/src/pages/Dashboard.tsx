@@ -128,7 +128,7 @@ const UserDashboard = () => {
         </button>
 
         <button
-          onClick={() => navigate('/my-prescriptions')}
+          onClick={() => navigate('/place-order')}
           className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-md p-6 text-left hover:shadow-lg transition-shadow group"
         >
           <div className="p-3 bg-white/20 rounded-xl w-fit mb-3">

@@ -1,27 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, Search, ChevronDown, ChevronUp } from 'lucide-react';
-import { saleService } from '../services/saleService';
-import type { Sale } from '../types';
+import {
+  Package,
+  Clock,
+  Search,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  FileText,
+} from 'lucide-react';
+import { prescriptionService } from '../services/prescriptionService';
+
+interface PrescriptionOrder {
+  id: number;
+  prescriptionNumber: string;
+  patientName: string;
+  patientPhone?: string;
+  doctorName?: string;
+  imageUrl?: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const statusConfig: Record<string, { color: string; bg: string; icon: typeof Clock; label: string }> = {
+  pending: { color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', icon: Clock, label: 'Pending Review' },
+  verified: { color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', icon: CheckCircle, label: 'Verified — Ready for Pickup' },
+  dispensed: { color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: Package, label: 'Dispensed' },
+  rejected: { color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: AlertCircle, label: 'Rejected' },
+  expired: { color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', icon: Clock, label: 'Expired' },
+};
 
 export const MyOrders = () => {
-  const [orders, setOrders] = useState<Sale[]>([]);
+  const [orders, setOrders] = useState<PrescriptionOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchOrders();
-  }, [page]);
+  }, [page, statusFilter]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await saleService.getSales(page, 10);
-      const salesData = response.data?.sales || response.data || [];
-      setOrders(Array.isArray(salesData) ? salesData : []);
-      setTotalPages(response.data?.pagination?.pages || 1);
+      const response = await prescriptionService.getMyPrescriptions(page, 10, statusFilter || undefined);
+      const data = response?.data?.prescriptions || [];
+      setOrders(Array.isArray(data) ? data : []);
+      setTotalPages(response?.data?.pagination?.pages || 1);
     } catch (err) {
       console.error('Failed to fetch orders:', err);
       setOrders([]);
@@ -32,154 +60,133 @@ export const MyOrders = () => {
 
   const filteredOrders = orders.filter((order) => {
     if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return (
-      order.id?.toString().toLowerCase().includes(query) ||
-      order.paymentMethod?.toLowerCase().includes(query) ||
-      order.items?.some((item) =>
-        item.medicine?.name?.toLowerCase().includes(query)
-      )
+      order.prescriptionNumber?.toLowerCase().includes(q) ||
+      order.patientName?.toLowerCase().includes(q) ||
+      order.notes?.toLowerCase().includes(q)
     );
   });
 
-  const toggleExpand = (id: string) => {
-    setExpandedOrder(expandedOrder === id ? null : id);
-  };
+  const getStatus = (s: string) => statusConfig[s] || statusConfig.pending;
+
+  const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
-        <p className="text-gray-600">View your order history and details</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">My Orders</h1>
+        <p className="text-gray-500 text-sm">Track your uploaded prescriptions and their status</p>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search orders..."
+            placeholder="Search by reference number or name..."
             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm"
+        >
+          <option value="">All Statuses</option>
+          <option value="pending">Pending Review</option>
+          <option value="verified">Verified</option>
+          <option value="dispensed">Dispensed</option>
+          <option value="rejected">Rejected</option>
+        </select>
       </div>
 
       {/* Orders List */}
       {loading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-16">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <Package size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
-          <p className="text-gray-500">
-            {searchQuery ? 'Try a different search term' : "You haven't placed any orders yet"}
+          <p className="text-gray-500 mb-4">
+            {searchQuery || statusFilter
+              ? 'Try different filters'
+              : "You haven't uploaded any prescriptions yet"}
           </p>
+          {!searchQuery && !statusFilter && (
+            <a
+              href="/place-order"
+              className="inline-block px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+            >
+              Upload Prescription
+            </a>
+          )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-xl shadow-md overflow-hidden">
-              {/* Order Header */}
-              <button
-                onClick={() => toggleExpand(order.id)}
-                className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-indigo-50 rounded-lg">
-                    <Package size={22} className="text-indigo-600" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900">
-                      Order #{order.id?.toString().slice(0, 8)}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock size={14} className="text-gray-400" />
-                      <span className="text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString()} at{' '}
-                        {new Date(order.createdAt).toLocaleTimeString()}
+        <div className="space-y-3">
+          {filteredOrders.map((order) => {
+            const st = getStatus(order.status);
+            const StIcon = st.icon;
+            return (
+              <div key={order.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden`}>
+                <div className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2.5 bg-indigo-50 rounded-lg mt-0.5">
+                        <FileText size={20} className="text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{order.prescriptionNumber}</p>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {order.patientName}
+                          {order.patientPhone && ` • ${order.patientPhone}`}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Clock size={13} className="text-gray-400" />
+                          <span className="text-xs text-gray-400">
+                            {new Date(order.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric', month: 'short', day: 'numeric',
+                            })}
+                            {' at '}
+                            {new Date(order.createdAt).toLocaleTimeString('en-US', {
+                              hour: '2-digit', minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                        {order.notes && (
+                          <p className="text-sm text-gray-600 mt-2 italic leading-snug">"{order.notes}"</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1 rounded-full border ${st.bg} ${st.color}`}>
+                        <StIcon size={14} />
+                        {st.label}
                       </span>
+                      {order.imageUrl && (
+                        <a
+                          href={`${apiBase}${order.imageUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition"
+                        >
+                          <Eye size={14} />
+                          View Image
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">Rs {Number(order.total || 0).toFixed(2)}</p>
-                    <span className="inline-flex items-center text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full capitalize">
-                      {order.paymentMethod}
-                    </span>
-                  </div>
-                  {expandedOrder === order.id ? (
-                    <ChevronUp size={20} className="text-gray-400" />
-                  ) : (
-                    <ChevronDown size={20} className="text-gray-400" />
-                  )}
-                </div>
-              </button>
-
-              {/* Order Details (expanded) */}
-              {expandedOrder === order.id && (
-                <div className="border-t border-gray-100 px-5 pb-5">
-                  <table className="w-full mt-4">
-                    <thead>
-                      <tr className="text-left text-xs text-gray-500 uppercase">
-                        <th className="pb-2">Item</th>
-                        <th className="pb-2 text-center">Qty</th>
-                        <th className="pb-2 text-right">Unit Price</th>
-                        <th className="pb-2 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {order.items?.map((item, idx) => (
-                        <tr key={idx} className="text-sm">
-                          <td className="py-3 font-medium text-gray-900">
-                            {item.medicine?.name || `Item #${item.medicineId?.toString().slice(0, 6)}`}
-                          </td>
-                          <td className="py-3 text-center text-gray-600">{item.quantity}</td>
-                          <td className="py-3 text-right text-gray-600">
-                            Rs {Number(item.unitPrice || 0).toFixed(2)}
-                          </td>
-                          <td className="py-3 text-right font-medium text-gray-900">
-                            Rs {Number(item.subtotal || 0).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  {/* Order Summary */}
-                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Subtotal</span>
-                      <span>Rs {Number(order.subtotal || 0).toFixed(2)}</span>
-                    </div>
-                    {Number(order.discount) > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount</span>
-                        <span>- Rs {Number(order.discount).toFixed(2)}</span>
-                      </div>
-                    )}
-                    {Number(order.tax) > 0 && (
-                      <div className="flex justify-between text-sm text-gray-600">
-                        <span>Tax</span>
-                        <span>Rs {Number(order.tax).toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-200">
-                      <span>Total</span>
-                      <span>Rs {Number(order.total || 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
 
           {/* Pagination */}
           {totalPages > 1 && (

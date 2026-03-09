@@ -1,6 +1,40 @@
 import { Response, NextFunction } from 'express';
+import { Op } from 'sequelize';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 import { Prescription, User } from '../models/index.js';
 import { AuthRequest } from '../middleware/auth.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Multer config — save prescription images to backend/uploads/prescriptions/
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, path.join(__dirname, '../../uploads/prescriptions'));
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const safeName = `rx-${Date.now()}-${Math.floor(Math.random() * 10000)}${ext}`;
+    cb(null, safeName);
+  },
+});
+
+export const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp|pdf/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype);
+    if (ext && mime) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files (jpg, png, webp) and PDFs are allowed'));
+    }
+  },
+});
 
 // @desc    Get all prescriptions
 // @route   GET /api/prescriptions
@@ -11,12 +45,17 @@ export const getPrescriptions = async (req: AuthRequest, res: Response, next: Ne
 
     const where: any = {};
 
+    // Regular users only see their own prescriptions
+    if (req.user && req.user.role === 'user') {
+      where.createdBy = req.user.id;
+    }
+
     if (status) {
       where.status = status;
     }
 
     if (patientName) {
-      where.patientName = { $iLike: `%${patientName}%` };
+      where.patientName = { [Op.iLike]: `%${patientName}%` };
     }
 
     const offset = (Number(page) - 1) * Number(limit);
@@ -25,7 +64,50 @@ export const getPrescriptions = async (req: AuthRequest, res: Response, next: Ne
       where,
       limit: Number(limit),
       offset,
-      include: [{ model: User, as: 'verifier', attributes: ['id', 'username', 'firstName', 'lastName'] }],
+      include: [{ model: User, as: 'verifiedByUser', attributes: ['id', 'username', 'firstName', 'lastName'] }],
+      order: [['createdAt', 'DESC']],
+    } as any);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        prescriptions,
+        pagination: {
+          total: count,
+          page: Number(page),
+          pages: Math.ceil(count / Number(limit)),
+        },
+      },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Get current user's prescriptions
+// @route   GET /api/prescriptions/my
+// @access  Private
+export const getMyPrescriptions = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
+      return;
+    }
+
+    const { status, page = 1, limit = 20 } = req.query;
+    const where: any = { createdBy: req.user.id };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const { count, rows: prescriptions } = await Prescription.findAndCountAll({
+      where,
+      limit: Number(limit),
+      offset,
+      include: [{ model: User, as: 'verifiedByUser', attributes: ['id', 'username', 'firstName', 'lastName'] }],
       order: [['createdAt', 'DESC']],
     } as any);
 
@@ -51,7 +133,7 @@ export const getPrescriptions = async (req: AuthRequest, res: Response, next: Ne
 export const getPrescription = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const prescription = await Prescription.findByPk(req.params.id, {
-      include: [{ model: User, as: 'verifier', attributes: ['id', 'username', 'firstName', 'lastName'] }],
+      include: [{ model: User, as: 'verifiedByUser', attributes: ['id', 'username', 'firstName', 'lastName'] }],
     } as any);
 
     if (!prescription) {
@@ -170,6 +252,46 @@ export const rejectPrescription = async (req: AuthRequest, res: Response, next: 
     await prescription.save();
 
     res.status(200).json({
+      success: true,
+      data: { prescription },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Upload prescription image and create prescription order
+// @route   POST /api/prescriptions/upload
+// @access  Private
+export const uploadPrescription = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ success: false, error: { message: 'No image file uploaded' } });
+      return;
+    }
+
+    const imageUrl = `/uploads/prescriptions/${req.file.filename}`;
+    const prescriptionNumber = `RX-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+    const prescription = await Prescription.create({
+      prescriptionNumber,
+      patientName: req.body.patientName || req.user.username || 'Unknown',
+      patientPhone: req.body.patientPhone || '',
+      doctorName: req.body.doctorName || 'Pending Review',
+      medications: [],
+      prescriptionDate: new Date(),
+      imageUrl,
+      status: 'pending',
+      notes: req.body.notes || '',
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({
       success: true,
       data: { prescription },
     });

@@ -23,6 +23,7 @@ export interface PrescriptionAttributes {
   imageUrl?: string;
   ocrText?: string;
   ocrConfidence?: number;
+  createdBy?: number;
   verifiedBy?: number;
   verifiedAt?: Date;
   status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
@@ -32,7 +33,7 @@ export interface PrescriptionAttributes {
   updatedAt?: Date;
 }
 
-export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'patientPhone' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
+export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'patientPhone' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'createdBy' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
 
 class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAttributes> implements PrescriptionAttributes {
   public id!: number;
@@ -55,6 +56,7 @@ class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAtt
   public imageUrl?: string;
   public ocrText?: string;
   public ocrConfidence?: number;
+  public createdBy?: number;
   public verifiedBy?: number;
   public verifiedAt?: Date;
   public status!: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
@@ -134,6 +136,14 @@ Prescription.init(
         max: 100,
       },
     },
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: User,
+        key: 'id',
+      },
+    },
     verifiedBy: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -168,6 +178,7 @@ Prescription.init(
     indexes: [
       { fields: ['prescription_number'] },
       { fields: ['patient_name'] },
+      { fields: ['created_by'] },
       { fields: ['status'] },
       { fields: ['prescription_date'] },
     ],
