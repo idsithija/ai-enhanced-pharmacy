@@ -1,6 +1,6 @@
-# Pharmacy Management System
+# AI-Enhanced Pharmacy Management System
 
-An AI-enhanced pharmacy management system built with React, Node.js, and PostgreSQL. Features prescription OCR scanning, drug interaction checking, demand prediction, and a full POS system.
+A full-stack pharmacy management system built with React, Node.js, and PostgreSQL, enhanced with AI features including prescription OCR scanning, drug interaction checking, demand prediction, and an intelligent chatbot.
 
 ---
 
@@ -58,7 +58,7 @@ An AI-enhanced pharmacy management system built with React, Node.js, and Postgre
 ## Project Structure
 
 ```
-app/
+ai-enhanced-pharmacy/
 ├── package.json              # Monorepo root (npm workspaces)
 ├── backend/                  # Express API server
 │   ├── src/
@@ -111,8 +111,8 @@ Before you begin, make sure you have the following installed:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd pharmacy-main/app
+git clone https://github.com/idsithija/ai-enhanced-pharmacy.git
+cd ai-enhanced-pharmacy
 
 # Install all dependencies (frontend + backend)
 npm install
@@ -368,4 +368,4 @@ Make sure the Python OCR service is running separately on port 8000, and `OCR_AP
 
 ## License
 
-MIT © @idsithija
+MIT © [@idsithija](https://github.com/idsithija)
