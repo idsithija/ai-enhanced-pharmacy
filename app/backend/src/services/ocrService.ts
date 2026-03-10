@@ -1,12 +1,4 @@
-import natural from 'natural';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import axios from 'axios';
-
-// ES module equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 interface OCRResult {
   text: string;
@@ -27,13 +19,9 @@ interface OCRResult {
 }
 
 class OCRService {
-  private tokenizer: any;
-  private customModelPath: string;
   private ocrApiUrl: string;
 
   constructor() {
-    this.tokenizer = new natural.WordTokenizer();
-    this.customModelPath = path.join(__dirname, '../../../ml-models/prescription-ocr/model');
     // Python OCR API endpoint - configurable via environment variable
     this.ocrApiUrl = process.env.OCR_API_URL || 'http://127.0.0.1:8000';
   }
@@ -184,7 +172,7 @@ class OCRService {
     quality: 'good' | 'fair' | 'poor';
     suggestions: string[];
   } {
-    const wordCount = this.tokenizer.tokenize(text).length;
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
     const suggestions: string[] = [];
 
     let quality: 'good' | 'fair' | 'poor' = 'good';
