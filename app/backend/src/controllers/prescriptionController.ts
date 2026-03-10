@@ -1,18 +1,14 @@
 import { Response, NextFunction } from 'express';
 import { Op } from 'sequelize';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import multer from 'multer';
 import { Prescription, User } from '../models/index.js';
 import { AuthRequest } from '../middleware/auth.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Multer config — save prescription images to backend/uploads/prescriptions/
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads/prescriptions'));
+    cb(null, path.join(process.cwd(), 'uploads/prescriptions'));
   },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
