@@ -9,6 +9,7 @@ import {
   rejectPrescription,
   dispensePrescription,
   uploadPrescription,
+  uploadPrescriptionImage,
   upload,
 } from '../controllers/prescriptionController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
@@ -20,6 +21,7 @@ router.use(authenticate);
 
 // Upload must be before /:id to avoid matching 'upload' as an id
 router.post('/upload', upload.single('image'), uploadPrescription);
+router.post('/upload-image', upload.single('image'), uploadPrescriptionImage);
 
 router.get('/my', getMyPrescriptions);
 router.get('/', getPrescriptions);

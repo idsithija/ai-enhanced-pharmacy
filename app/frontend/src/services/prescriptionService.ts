@@ -4,7 +4,7 @@ export interface PrescriptionRequest {
   patientName: string;
   patientPhone: string;
   patientAge?: number;
-  doctorName: string;
+  doctorName?: string;
   doctorLicense?: string;
   hospitalName?: string;
   medications: {
@@ -82,11 +82,11 @@ export const prescriptionService = {
     return response.data.data?.prescription || response.data.data;
   },
 
-  // Upload prescription image
+  // Upload prescription image only (returns URL)
   uploadImage: async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('image', file);
-    const response = await api.post<ApiResponse<{ url: string }>>('/prescriptions/upload', formData, {
+    const response = await api.post('/prescriptions/upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

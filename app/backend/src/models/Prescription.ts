@@ -8,7 +8,7 @@ export interface PrescriptionAttributes {
   patientName: string;
   patientAge?: number;
   patientPhone: string;
-  doctorName: string;
+  doctorName?: string;
   doctorLicense?: string;
   hospitalName?: string;
   medications: {
@@ -33,7 +33,7 @@ export interface PrescriptionAttributes {
   updatedAt?: Date;
 }
 
-export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'createdBy' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
+export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'doctorName' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'createdBy' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
 
 class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAttributes> implements PrescriptionAttributes {
   declare id: number;
@@ -41,7 +41,7 @@ class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAtt
   declare patientName: string;
   declare patientAge: number | undefined;
   declare patientPhone: string;
-  declare doctorName: string;
+  declare doctorName: string | undefined;
   declare doctorLicense: string | undefined;
   declare hospitalName: string | undefined;
   declare medications: {
@@ -97,7 +97,7 @@ Prescription.init(
     },
     doctorName: {
       type: DataTypes.STRING(200),
-      allowNull: false,
+      allowNull: true,
     },
     doctorLicense: {
       type: DataTypes.STRING(50),

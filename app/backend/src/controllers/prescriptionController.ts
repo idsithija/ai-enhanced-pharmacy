@@ -158,7 +158,14 @@ export const getPrescription = async (req: AuthRequest, res: Response, next: Nex
 // @access  Private (pharmacist, admin)
 export const createPrescription = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const prescription = await Prescription.create(req.body);
+    const prescriptionNumber = `RX-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+    const prescription = await Prescription.create({
+      ...req.body,
+      prescriptionNumber,
+      createdBy: req.user?.id,
+      status: req.body.status || 'pending',
+    });
 
     res.status(201).json({
       success: true,
@@ -333,6 +340,23 @@ export const uploadPrescription = async (req: AuthRequest, res: Response, next: 
       success: true,
       data: { prescription },
     });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Upload prescription image only (returns URL)
+// @route   POST /api/prescriptions/upload-image
+// @access  Private
+export const uploadPrescriptionImage = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ success: false, error: { message: 'No image file uploaded' } });
+      return;
+    }
+
+    const url = `/uploads/prescriptions/${req.file.filename}`;
+    res.status(200).json({ success: true, data: { url } });
   } catch (error: any) {
     next(error);
   }

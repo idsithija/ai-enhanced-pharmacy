@@ -4,6 +4,9 @@ import * as yup from 'yup';
 import { ocrService } from '../services/ocrService';
 import type { OCRResult } from '../services/ocrService';
 import { prescriptionService } from '../services/prescriptionService';
+import { customerService } from '../services/customerService';
+import { useAuthStore } from '../store/authStore';
+import type { Customer } from '../types';
 
 const apiBase = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 import {
@@ -17,6 +20,8 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
+  Search,
+  UserPlus,
 } from 'lucide-react';
 
 // Prescription interface matching backend model
@@ -63,8 +68,7 @@ interface MedicationItem {
 const prescriptionValidationSchema = yup.object({
   patientName: yup.string().required('Patient name is required'),
   patientPhone: yup.string().required('Phone number is required').matches(/^[0-9]{10}$/, 'Phone must be 10 digits'),
-  doctorName: yup.string().required('Doctor name is required'),
-  doctorLicense: yup.string(),
+  doctorName: yup.string(),
   hospitalName: yup.string(),
   notes: yup.string(),
 });
@@ -88,6 +92,14 @@ export const Prescriptions = () => {
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [ocrError, setOcrError] = useState('');
   const aiFileInputRef = useRef<HTMLInputElement>(null);
+  const [manualImageFile, setManualImageFile] = useState<File | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerResults, setCustomerResults] = useState<Customer[]>([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ firstName: '', lastName: '', phoneNumber: '' });
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'admin' || user?.role === 'staff';
 
   const statusMap = ['', 'pending', 'verified', 'dispensed', 'rejected'];
 
@@ -117,7 +129,6 @@ export const Prescriptions = () => {
       patientName: '',
       patientPhone: '',
       doctorName: '',
-      doctorLicense: '',
       hospitalName: '',
       notes: '',
     },
@@ -134,22 +145,32 @@ export const Prescriptions = () => {
             patientName: values.patientName,
             patientPhone: values.patientPhone,
             doctorName: values.doctorName,
-            doctorLicense: values.doctorLicense,
             hospitalName: values.hospitalName,
             medications: prescriptionMedicines,
             notes: values.notes,
           });
           setSnackbar({ open: true, message: 'Prescription updated successfully', severity: 'success' });
         } else {
+          // Upload image if we have one from AI scan or manual upload
+          let imageUrl: string | undefined;
+          const fileToUpload = aiFile || manualImageFile;
+          if (fileToUpload) {
+            try {
+              imageUrl = await prescriptionService.uploadImage(fileToUpload);
+            } catch {
+              // Image upload is optional, continue without it
+            }
+          }
+
           await prescriptionService.createPrescription({
             patientName: values.patientName,
             patientPhone: values.patientPhone,
             doctorName: values.doctorName,
-            doctorLicense: values.doctorLicense,
             hospitalName: values.hospitalName,
             medications: prescriptionMedicines,
             prescriptionDate: new Date().toISOString(),
             notes: values.notes,
+            ...(imageUrl && { imageUrl }),
           });
           setSnackbar({ open: true, message: 'Prescription created successfully', severity: 'success' });
         }
@@ -182,7 +203,7 @@ export const Prescriptions = () => {
         patientName: prescription.patientName || '',
         patientPhone: prescription.patientPhone || '',
         doctorName: prescription.doctorName || '',
-        doctorLicense: prescription.doctorLicense || '',
+
         hospitalName: prescription.hospitalName || '',
         notes: prescription.notes || '',
       });
@@ -200,12 +221,18 @@ export const Prescriptions = () => {
     formik.resetForm();
     setPrescriptionMedicines([]);
     setImagePreview('');
+    setManualImageFile(null);
     setFormTab('manual');
     setAiFile(null);
     setAiPreview('');
     setOcrResult(null);
     setOcrError('');
     setOcrProcessing(false);
+    setCustomerSearch('');
+    setCustomerResults([]);
+    setShowCustomerDropdown(false);
+    setShowNewCustomerForm(false);
+    setNewCustomer({ firstName: '', lastName: '', phoneNumber: '' });
   };
 
   const handleViewPrescription = (prescription: PrescriptionData) => {
@@ -216,6 +243,7 @@ export const Prescriptions = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setManualImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -367,7 +395,6 @@ export const Prescriptions = () => {
       patientName: ocrResult.extractedData.patientName || '',
       patientPhone: '',
       doctorName: ocrResult.extractedData.doctorName || '',
-      doctorLicense: '',
       hospitalName: ocrResult.extractedData.hospitalName || '',
       notes: `OCR Extracted - Confidence: ${(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}%${ocrResult.extractedData.date ? `\nDate: ${ocrResult.extractedData.date}` : ''}`,
     });
@@ -379,6 +406,10 @@ export const Prescriptions = () => {
       quantity: 0,
     }));
     setPrescriptionMedicines(medicines);
+    // Carry the AI scanned image to the manual entry tab
+    if (aiPreview) {
+      setImagePreview(aiPreview);
+    }
     setFormTab('manual');
     setSnackbar({ open: true, message: `${medicines.length} medication(s) applied. Review and submit.`, severity: 'success' });
   };
@@ -389,6 +420,57 @@ export const Prescriptions = () => {
     setOcrResult(null);
     setOcrError('');
     if (aiFileInputRef.current) aiFileInputRef.current.value = '';
+  };
+
+  // Customer search for admin
+  const handleCustomerSearch = async (query: string) => {
+    setCustomerSearch(query);
+    if (query.length < 2) {
+      setCustomerResults([]);
+      setShowCustomerDropdown(false);
+      return;
+    }
+    try {
+      const customers = await customerService.getAll();
+      const filtered = customers.filter((c: Customer) => {
+        const name = `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase();
+        const phone = c.phoneNumber || c.phone || '';
+        return name.includes(query.toLowerCase()) || phone.includes(query);
+      });
+      setCustomerResults(filtered.slice(0, 5));
+      setShowCustomerDropdown(true);
+    } catch {
+      setCustomerResults([]);
+    }
+  };
+
+  const handleSelectCustomer = (customer: Customer) => {
+    const name = `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+    const phone = customer.phoneNumber || customer.phone || '';
+    formik.setFieldValue('patientName', name);
+    formik.setFieldValue('patientPhone', phone);
+    setCustomerSearch(name);
+    setShowCustomerDropdown(false);
+  };
+
+  const handleCreateNewCustomer = async () => {
+    if (!newCustomer.firstName || !newCustomer.phoneNumber) {
+      setSnackbar({ open: true, message: 'First name and phone are required', severity: 'error' });
+      return;
+    }
+    try {
+      const created = await customerService.createCustomer(newCustomer);
+      const name = `${created.firstName || ''} ${created.lastName || ''}`.trim();
+      const phone = created.phoneNumber || '';
+      formik.setFieldValue('patientName', name);
+      formik.setFieldValue('patientPhone', phone);
+      setCustomerSearch(name);
+      setShowNewCustomerForm(false);
+      setNewCustomer({ firstName: '', lastName: '', phoneNumber: '' });
+      setSnackbar({ open: true, message: 'Customer created and selected', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err.response?.data?.error?.message || 'Failed to create customer', severity: 'error' });
+    }
   };
 
   const tabs = [
@@ -495,8 +577,7 @@ export const Prescriptions = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-primary">🏥</span>
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{prescription.doctorName}</p>
-                          <p className="text-xs text-gray-600">{prescription.doctorLicense || '—'}</p>
+                          <p className="text-sm font-semibold text-gray-900">{prescription.doctorName || '—'}</p>
                         </div>
                       </div>
                     </td>
@@ -592,6 +673,96 @@ export const Prescriptions = () => {
                 <form onSubmit={formik.handleSubmit}>
                   <div className="px-6 py-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Customer Search for Admin/Staff */}
+                      {isAdmin && !selectedPrescription && (
+                        <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <label className="block text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                            <Search size={14} />
+                            Search Existing Customer
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={customerSearch}
+                              onChange={(e) => handleCustomerSearch(e.target.value)}
+                              onFocus={() => customerResults.length > 0 && setShowCustomerDropdown(true)}
+                              placeholder="Type customer name or phone..."
+                              className="w-full px-3 py-2 pr-10 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            />
+                            <Search size={16} className="absolute right-3 top-2.5 text-blue-400" />
+                            {showCustomerDropdown && customerResults.length > 0 && (
+                              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                {customerResults.map((c) => (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => handleSelectCustomer(c)}
+                                    className="w-full px-4 py-2.5 text-left hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-0"
+                                  >
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {c.firstName} {c.lastName}
+                                    </span>
+                                    <span className="text-xs text-gray-500">{c.phoneNumber || c.phone}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs text-blue-700">Customer not found?</span>
+                            <button
+                              type="button"
+                              onClick={() => setShowNewCustomerForm(!showNewCustomerForm)}
+                              className="text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1"
+                            >
+                              <UserPlus size={12} />
+                              {showNewCustomerForm ? 'Cancel' : 'Create New Customer'}
+                            </button>
+                          </div>
+                          {showNewCustomerForm && (
+                            <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200 space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">First Name *</label>
+                                  <input
+                                    type="text"
+                                    value={newCustomer.firstName}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, firstName: e.target.value })}
+                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                                  <input
+                                    type="text"
+                                    value={newCustomer.lastName}
+                                    onChange={(e) => setNewCustomer({ ...newCustomer, lastName: e.target.value })}
+                                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number *</label>
+                                <input
+                                  type="text"
+                                  value={newCustomer.phoneNumber}
+                                  onChange={(e) => setNewCustomer({ ...newCustomer, phoneNumber: e.target.value })}
+                                  placeholder="10-digit phone number"
+                                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleCreateNewCustomer}
+                                className="w-full py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700"
+                              >
+                                Create & Select Customer
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name *</label>
                         <input
@@ -628,28 +799,11 @@ export const Prescriptions = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name</label>
                         <input
                           type="text"
                           name="doctorName"
                           value={formik.values.doctorName}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                            formik.touched.doctorName && formik.errors.doctorName ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                        />
-                        {formik.touched.doctorName && formik.errors.doctorName && (
-                          <p className="mt-1 text-xs text-red-600">{formik.errors.doctorName}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">License Number</label>
-                        <input
-                          type="text"
-                          name="doctorLicense"
-                          value={formik.values.doctorLicense}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -920,7 +1074,7 @@ export const Prescriptions = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Doctor Name *</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Doctor Name</label>
                             <input
                               type="text"
                               value={ocrResult.extractedData.doctorName || ''}
@@ -1072,10 +1226,7 @@ export const Prescriptions = () => {
 
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <h3 className="text-xs font-semibold text-gray-600 mb-2">Prescriber Information</h3>
-                    <p className="text-lg font-bold text-gray-900">{selectedPrescription.doctorName}</p>
-                    {selectedPrescription.doctorLicense && (
-                      <p className="text-sm text-gray-700">License: {selectedPrescription.doctorLicense}</p>
-                    )}
+                    <p className="text-lg font-bold text-gray-900">{selectedPrescription.doctorName || '—'}</p>
                     {selectedPrescription.hospitalName && (
                       <p className="text-sm text-gray-700">{selectedPrescription.hospitalName}</p>
                     )}
