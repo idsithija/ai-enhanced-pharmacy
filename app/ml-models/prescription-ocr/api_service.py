@@ -41,15 +41,16 @@ class OCRResponse(BaseModel):
 
 def load_model():
     """Initialize PaddleOCR engine on startup.
-    Loads custom-trained rec model if available, otherwise pretrained."""
+    Loads custom-trained det and/or rec models if available, otherwise pretrained."""
     global ocr_engine, MODEL_TYPE
 
     try:
         logger.info("Initializing PaddleOCR engine...")
         from paddleocr import PaddleOCR
 
-        # Check for custom-trained recognition model
-        custom_model_dir = Path(__file__).parent / "model" / "inference"
+        # Check for custom-trained models
+        custom_det_dir = Path(__file__).parent / "model" / "det_inference"
+        custom_rec_dir = Path(__file__).parent / "model" / "inference"
         custom_dict = Path(__file__).parent / "training_data" / "en_dict.txt"
 
         kwargs = {
@@ -58,11 +59,22 @@ def load_model():
             'show_log': False,
         }
 
-        if custom_model_dir.exists() and any(custom_model_dir.glob("*.pdmodel")):
-            logger.info(f"Loading CUSTOM rec model from {custom_model_dir}")
-            kwargs['rec_model_dir'] = str(custom_model_dir)
+        has_det = custom_det_dir.exists() and any(custom_det_dir.glob("*.pdmodel"))
+        has_rec = custom_rec_dir.exists() and any(custom_rec_dir.glob("*.pdmodel"))
+
+        if has_det:
+            logger.info(f"Loading CUSTOM det model from {custom_det_dir}")
+            kwargs['det_model_dir'] = str(custom_det_dir)
+
+        if has_rec:
+            logger.info(f"Loading CUSTOM rec model from {custom_rec_dir}")
+            kwargs['rec_model_dir'] = str(custom_rec_dir)
             if custom_dict.exists():
                 kwargs['rec_char_dict_path'] = str(custom_dict)
+
+        if has_det and has_rec:
+            MODEL_TYPE = "paddleocr-custom-fullpage"
+        elif has_rec:
             MODEL_TYPE = "paddleocr-custom"
         else:
             logger.info("Using PRETRAINED PaddleOCR model")

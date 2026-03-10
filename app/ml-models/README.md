@@ -6,39 +6,56 @@ This directory contains custom-trained machine learning models for the pharmacy 
 
 ```
 ml-models/
-├── prescription-ocr/          # Custom OCR model for prescriptions
-│   ├── model/                 # Trained model files
-│   │   ├── config.json
-│   │   ├── pytorch_model.bin
-│   │   └── preprocessor_config.json
-│   ├── training/              # Training scripts and data
-│   │   ├── train.py
-│   │   ├── generate_data.py
-│   │   └── test_accuracy.py
-│   └── README.md
-├── drug-interaction/          # Drug interaction prediction model (future)
-└── demand-forecasting/        # Inventory demand forecasting (future)
+├── prescription-ocr/              # PaddleOCR-based prescription processing
+│   ├── api_service.py             # FastAPI service for OCR inference
+│   ├── generate_test_prescriptions.py  # Test data generator
+│   ├── requirements.txt           # Python dependencies
+│   ├── model/                     # Trained model files
+│   │   ├── inference/             # Recognition model (rec)
+│   │   │   └── *.pdmodel, *.pdiparams
+│   │   └── det_inference/         # Detection model (det) — full-page trained
+│   │       └── *.pdmodel, *.pdiparams
+│   ├── training/                  # Training notebooks
+│   │   ├── PaddleOCR_Training_Colab.ipynb          # Line-level rec training
+│   │   └── PaddleOCR_FullPage_Training_Colab.ipynb # Full-page det+rec training
+│   ├── training_data/             # Generated after training
+│   │   └── en_dict.txt            # Character dictionary
+│   └── test_prescriptions/        # Test images + ground truth
+├── drug-interaction/              # Drug interaction prediction (future)
+└── demand-forecasting/            # Inventory demand forecasting (future)
 ```
 
 ## 🚀 Quick Start
 
-### 1. Train Custom OCR Model
+### Option A: Full-Page Training (Recommended)
 
-```powershell
-# Navigate to training directory
-cd ml-models/prescription-ocr/training
+Trains **both Detection + Recognition** on complete prescription images:
 
-# Install dependencies
+```bash
+# Open in Google Colab:
+# ml-models/prescription-ocr/training/PaddleOCR_FullPage_Training_Colab.ipynb
+
+# After training, download and extract:
+# Copy det_inference/ → ml-models/prescription-ocr/model/det_inference/
+# Copy inference/     → ml-models/prescription-ocr/model/inference/
+# Copy en_dict.txt    → ml-models/prescription-ocr/training_data/en_dict.txt
+```
+
+### Option B: Line-Level Training (Recognition Only)
+
+Trains only the recognition model on cropped text lines:
+
+```bash
+# Open in Google Colab:
+# ml-models/prescription-ocr/training/PaddleOCR_Training_Colab.ipynb
+```
+
+### Run the OCR API
+
+```bash
+cd ml-models/prescription-ocr
 pip install -r requirements.txt
-
-# Generate synthetic training data
-python generate_data.py
-
-# Train the model
-python train.py
-
-# Test accuracy
-python test_accuracy.py
+python api_service.py          # Starts FastAPI on 127.0.0.1:8000
 ```
 
 ### 2. Use in Backend
@@ -53,11 +70,12 @@ const result = await ocrService.processPrescription(imageUrl);
 
 ## 📊 Model Performance
 
-| Model | Accuracy | Speed | Use Case |
-|-------|----------|-------|----------|
-| **Tesseract (Default)** | 70-85% | Fast | Baseline OCR |
-| **Custom TrOCR** | 85-92% | Medium | Fine-tuned for medical prescriptions |
-| **Custom + Preprocessing** | 90-95% | Medium | Production recommended |
+| Model | Accuracy | Training | Use Case |
+|-------|----------|----------|----------|
+| **Tesseract (Default)** | 70-85% | None | Baseline fallback |
+| **PaddleOCR Pretrained** | 85-92% | None | Good out-of-box |
+| **Custom Rec Only** | 88-94% | Line-level notebook | Fine-tuned recognition |
+| **Custom Det + Rec (Full-Page)** | 90-95% | Full-page notebook | **Production recommended** |
 
 ## 🔧 Integration with Backend
 

@@ -5,6 +5,7 @@ import {
   FileImage,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   X,
   Send,
   Cpu,
@@ -13,6 +14,8 @@ import {
   Pill,
   Stethoscope,
   XCircle,
+  Camera,
+  FileText,
 } from 'lucide-react';
 import { prescriptionService } from '../services/prescriptionService';
 import { ocrService } from '../services/ocrService';
@@ -37,8 +40,6 @@ export const PlaceOrder = () => {
   // Manual tab state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [patientName, setPatientName] = useState('');
-  const [patientPhone, setPatientPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,12 +50,6 @@ export const PlaceOrder = () => {
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [ocrError, setOcrError] = useState('');
   const [aiSubmitting, setAiSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setPatientName(user.firstName ? `${user.firstName} ${user.lastName}` : user.username || '');
-    }
-  }, [user]);
 
   useEffect(() => {
     if (toast.show) {
@@ -101,16 +96,10 @@ export const PlaceOrder = () => {
       setToast({ show: true, message: 'Please upload a prescription image', type: 'error' });
       return;
     }
-    if (!patientPhone.trim() || !/^[0-9]{10}$/.test(patientPhone.trim())) {
-      setToast({ show: true, message: 'Please enter a valid 10-digit phone number', type: 'error' });
-      return;
-    }
     try {
       setSubmitting(true);
       const formData = new FormData();
       formData.append('image', selectedFile);
-      if (patientName) formData.append('patientName', patientName);
-      formData.append('patientPhone', patientPhone.trim());
       if (notes) formData.append('notes', notes);
 
       const response = await prescriptionService.createPrescriptionWithImage(formData);
@@ -219,9 +208,10 @@ export const PlaceOrder = () => {
           // Continue even if image upload fails
         }
       }
+      const fullName = user?.firstName ? `${user.firstName} ${user.lastName}` : user?.username || '';
       await prescriptionService.createPrescription({
         customerId: '',
-        customerName: extractedData.patientName || '',
+        customerName: fullName,
         customerPhone: '',
         doctorName: extractedData.doctorName || '',
         doctorLicense: '',
@@ -396,31 +386,6 @@ export const PlaceOrder = () => {
             />
           </div>
 
-          {/* Patient Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
-              <input
-                type="text"
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                placeholder="Your full name"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-              <input
-                type="tel"
-                value={patientPhone}
-                onChange={(e) => setPatientPhone(e.target.value)}
-                placeholder="10-digit phone number"
-                required
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
@@ -537,8 +502,61 @@ export const PlaceOrder = () => {
             </div>
           )}
 
+          {/* Low Confidence Warning */}
+          {ocrResult && ocrResult.belowThreshold && (
+            <div className="space-y-4">
+              <div className="p-5 rounded-lg border-2 border-amber-300 bg-amber-50">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-7 h-7 flex-shrink-0 text-amber-500 mt-0.5" />
+                  <div>
+                    <h3 className="text-base font-bold text-amber-800 mb-1">Low Scan Confidence</h3>
+                    <p className="text-sm text-amber-700 mb-3">
+                      The AI scan confidence is only <strong>{(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}%</strong>,
+                      which is below the required <strong>75%</strong> threshold. For patient safety,
+                      the scanned results cannot be used automatically.
+                    </p>
+                    <p className="text-sm text-amber-700 mb-4">
+                      Please switch to <strong>Manual Upload</strong> to enter the prescription details by hand,
+                      or retry with a clearer image.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => {
+                          if (aiPreview) setPreview(aiPreview);
+                          if (aiFile) setSelectedFile(aiFile);
+                          setActiveTab('manual');
+                          setOcrResult(null);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm"
+                        style={{ backgroundColor: '#f59e0b' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+                      >
+                        <FileText size={16} />
+                        Enter Details Manually
+                      </button>
+                      <button
+                        onClick={() => { setOcrResult(null); setAiFile(null); setAiPreview(''); }}
+                        className="inline-flex items-center gap-2 px-4 py-2 border-2 border-indigo-500 text-indigo-500 font-semibold rounded-lg transition-colors text-sm hover:bg-indigo-50"
+                      >
+                        <Camera size={16} />
+                        Retry with Better Image
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {aiPreview && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Uploaded prescription:</p>
+                  <img src={aiPreview} alt="Prescription" className="w-full max-h-40 object-contain border border-gray-200 rounded-lg opacity-75" />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Step 2: Review extracted details */}
-          {ocrResult && (
+          {ocrResult && !ocrResult.belowThreshold && (
             <>
               {/* Confidence Badge */}
               {(() => {
@@ -555,23 +573,25 @@ export const PlaceOrder = () => {
                 );
               })()}
 
-              {/* Patient & Doctor Info */}
+              {/* Uploaded Prescription Image */}
+              {aiPreview && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Uploaded Prescription</p>
+                  <img
+                    src={aiPreview}
+                    alt="Uploaded prescription"
+                    className="w-full max-h-48 object-contain border border-gray-200 rounded-lg bg-gray-50"
+                  />
+                </div>
+              )}
+
+              {/* Doctor Info */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Stethoscope size={16} className="text-indigo-500" />
-                  Patient & Doctor Information
+                  Doctor Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Patient Name</label>
-                    <input
-                      type="text"
-                      value={ocrResult.extractedData.patientName || ''}
-                      onChange={(e) => setOcrResult({ ...ocrResult, extractedData: { ...ocrResult.extractedData, patientName: e.target.value } })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Patient name"
-                    />
-                  </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Doctor Name *</label>
                     <input
@@ -663,16 +683,6 @@ export const PlaceOrder = () => {
                   </div>
                 )}
               </div>
-
-              {/* Raw text */}
-              {ocrResult.text && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Raw Extracted Text</p>
-                  <div className="p-3 bg-gray-50 rounded-lg max-h-28 overflow-auto">
-                    <pre className="text-xs font-mono text-gray-600 whitespace-pre-wrap">{ocrResult.text}</pre>
-                  </div>
-                </div>
-              )}
 
               {/* AI tab action buttons */}
               <div className="flex gap-3">

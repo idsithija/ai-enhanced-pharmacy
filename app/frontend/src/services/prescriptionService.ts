@@ -7,6 +7,7 @@ export interface PrescriptionRequest {
   doctorName?: string;
   doctorLicense?: string;
   hospitalName?: string;
+  ocrConfidence?: number;
   medications: {
     name: string;
     dosage: string;

@@ -12,6 +12,8 @@ import {
   Plus,
   Pill,
   Stethoscope,
+  AlertTriangle,
+  Camera,
 } from 'lucide-react';
 import { prescriptionService } from '../services/prescriptionService';
 import { ocrService } from '../services/ocrService';
@@ -158,6 +160,7 @@ export const MyPrescriptions = () => {
         customerPhone: '',
         doctorName: extractedData.doctorName || '',
         doctorLicense: '',
+        ocrConfidence: ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence,
         medicines: extractedData.medications.map((m) => ({
           medicineId: '',
           medicineName: m.name,
@@ -168,7 +171,7 @@ export const MyPrescriptions = () => {
         })),
         notes: `Submitted by user | Hospital: ${extractedData.hospitalName || 'N/A'} | Date: ${extractedData.date || 'N/A'}`,
         imageUrl: imageUrl || undefined,
-      });
+      } as any);
 
       setToast({ show: true, message: 'Prescription submitted successfully!', type: 'success' });
       handleCloseUpload();
@@ -191,6 +194,52 @@ export const MyPrescriptions = () => {
     setOcrResult(null);
     setOcrError('');
     setProcessing(false);
+  };
+
+  const handleSendToManualOrder = async () => {
+    try {
+      setUploading(true);
+      let imageUrl = '';
+      if (imageFile) {
+        try {
+          imageUrl = await prescriptionService.uploadImage(imageFile);
+        } catch {
+          // continue anyway
+        }
+      }
+
+      const confidencePct = ocrResult
+        ? (ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)
+        : '0';
+
+      await prescriptionService.createPrescription({
+        patientName: '',
+        patientPhone: '',
+        doctorName: 'Pending Manual Review',
+        notes: `[MANUAL ORDER] Low OCR confidence (${confidencePct}%). Prescription image uploaded for manual data entry by pharmacist.`,
+        imageUrl: imageUrl || undefined,
+        medications: [],
+      } as any);
+
+      setToast({ show: true, message: 'Prescription sent for manual order processing!', type: 'success' });
+      handleCloseUpload();
+      fetchPrescriptions();
+    } catch (err: any) {
+      setToast({
+        show: true,
+        message: err.response?.data?.message || 'Failed to submit manual order',
+        type: 'error',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRetryOCR = () => {
+    setOcrResult(null);
+    setImageFile(null);
+    setImagePreview('');
+    setOcrError('');
   };
 
   const getStatusBadge = (status: string) => {
@@ -423,8 +472,62 @@ export const MyPrescriptions = () => {
                 </div>
               )}
 
+              {/* Step 2: Low Confidence Warning */}
+              {ocrResult && ocrResult.belowThreshold && (
+                <div className="space-y-4">
+                  <div className="p-5 rounded-lg border-2 border-amber-300 bg-amber-50">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-7 h-7 flex-shrink-0 text-amber-500 mt-0.5" />
+                      <div>
+                        <h3 className="text-base font-bold text-amber-800 mb-1">Low Scan Confidence</h3>
+                        <p className="text-sm text-amber-700 mb-3">
+                          The AI scan confidence is only <strong>{(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}%</strong>, 
+                          which is below the required <strong>75%</strong> threshold. For your safety, 
+                          the scanned data cannot be used automatically.
+                        </p>
+                        <p className="text-sm text-amber-700 mb-4">
+                          You can enter the prescription details manually, or retry with a clearer image.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            onClick={() => {
+                              setOcrResult({
+                                text: '',
+                                confidence: ocrResult!.confidence,
+                                extractedData: { medications: [] },
+                                belowThreshold: false,
+                              });
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm"
+                            style={{ backgroundColor: '#f59e0b' }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+                          >
+                            <FileText size={16} />
+                            Enter Details Manually
+                          </button>
+                          <button
+                            onClick={handleRetryOCR}
+                            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-indigo-500 text-indigo-500 font-semibold rounded-lg transition-colors text-sm hover:bg-indigo-50"
+                          >
+                            <Camera size={16} />
+                            Retry with Better Image
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {imagePreview && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Uploaded prescription:</p>
+                      <img src={imagePreview} alt="Prescription" className="w-full max-h-40 object-contain border border-gray-200 rounded-lg opacity-75" />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Step 2: Review extracted details */}
-              {ocrResult && (
+              {ocrResult && !ocrResult.belowThreshold && (
                 <div className="space-y-5">
                   {/* Confidence Badge */}
                   {(() => {
@@ -646,7 +749,7 @@ export const MyPrescriptions = () => {
                 </>
               )}
 
-              {ocrResult && (
+              {ocrResult && !ocrResult.belowThreshold && (
                 <>
                   <button
                     onClick={() => {

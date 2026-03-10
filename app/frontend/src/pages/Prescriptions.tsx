@@ -22,6 +22,9 @@ import {
   XCircle,
   Search,
   UserPlus,
+  AlertTriangle,
+  Camera,
+  FileText,
 } from 'lucide-react';
 
 // Prescription interface matching backend model
@@ -1038,8 +1041,60 @@ export const Prescriptions = () => {
                     </div>
                   )}
 
+                  {/* Low Confidence Warning */}
+                  {ocrResult && ocrResult.belowThreshold && (
+                    <div className="space-y-4">
+                      <div className="p-5 rounded-lg border-2 border-amber-300 bg-amber-50">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="w-7 h-7 flex-shrink-0 text-amber-500 mt-0.5" />
+                          <div>
+                            <h3 className="text-base font-bold text-amber-800 mb-1">Low Scan Confidence</h3>
+                            <p className="text-sm text-amber-700 mb-3">
+                              The AI scan confidence is only <strong>{(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}%</strong>, 
+                              which is below the required <strong>75%</strong> threshold. For patient safety, 
+                              the scanned results cannot be used automatically.
+                            </p>
+                            <p className="text-sm text-amber-700 mb-4">
+                              Please switch to <strong>Manual Entry</strong> to enter the prescription details by hand, 
+                              or retry with a clearer image.
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                              <button
+                                onClick={() => {
+                                  if (aiPreview) setImagePreview(aiPreview);
+                                  setFormTab('manual');
+                                  setOcrResult(null);
+                                }}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors text-sm"
+                                style={{ backgroundColor: '#f59e0b' }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+                              >
+                                <FileText size={16} />
+                                Switch to Manual Entry
+                              </button>
+                              <button
+                                onClick={() => { setOcrResult(null); setAiFile(null); setAiPreview(''); }}
+                                className="inline-flex items-center gap-2 px-4 py-2 border-2 border-indigo-500 text-indigo-500 font-semibold rounded-lg transition-colors text-sm hover:bg-indigo-50"
+                              >
+                                <Camera size={16} />
+                                Retry with Better Image
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {aiPreview && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Uploaded prescription:</p>
+                          <img src={aiPreview} alt="Prescription" className="w-full max-h-40 object-contain border border-gray-200 rounded-lg opacity-75" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Step 2: Review extracted data */}
-                  {ocrResult && (
+                  {ocrResult && !ocrResult.belowThreshold && (
                     <>
                       {/* Confidence badge */}
                       {(() => {

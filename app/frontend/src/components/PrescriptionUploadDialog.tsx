@@ -7,7 +7,9 @@ import {
   Trash2, 
   Plus, 
   StopCircle, 
-  X 
+  X,
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { ocrService } from '../services/ocrService';
 import type { OCRResult, Medication } from '../services/ocrService';
@@ -17,9 +19,10 @@ interface PrescriptionUploadDialogProps {
   open: boolean;
   onClose: () => void;
   onUploadComplete: (result: OCRResult) => void;
+  onManualOrder?: (confidence: number, imageFile: File | null) => void;
 }
 
-export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete }: PrescriptionUploadDialogProps) => {
+export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete, onManualOrder }: PrescriptionUploadDialogProps) => {
   const [tabValue, setTabValue] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -131,6 +134,26 @@ export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete }: Pr
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleManualOrder = () => {
+    if (ocrResult) {
+      // Switch to editable form with empty fields but keep the image
+      setOcrResult({
+        text: '',
+        confidence: ocrResult.confidence,
+        extractedData: { medications: [] },
+        belowThreshold: false,
+      });
+    }
+  };
+
+  const handleRetry = () => {
+    setOcrResult(null);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setCapturedImage(null);
+    setError(null);
   };
 
   const handleMedicationEdit = (index: number, field: keyof Medication, value: string) => {
@@ -436,7 +459,63 @@ export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete }: Pr
           )}
 
           {/* OCR Results */}
-          {ocrResult && (
+          {ocrResult && ocrResult.belowThreshold && (
+            <div>
+              {/* Low Confidence Warning */}
+              <div className="mb-6 p-5 rounded-lg border-2 border-amber-300 bg-amber-50">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-8 h-8 flex-shrink-0 text-amber-500 mt-0.5" />
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-800 mb-1">Low Scan Confidence</h3>
+                    <p className="text-sm text-amber-700 mb-3">
+                      The AI scan confidence is only <strong>{(ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)}%</strong>, 
+                      which is below the required <strong>75%</strong> threshold. For patient safety, 
+                      the scanned results cannot be used automatically.
+                    </p>
+                    <p className="text-sm text-amber-700 mb-4">
+                      You can enter the prescription details manually, or retry with a clearer image.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={handleManualOrder}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-semibold rounded-lg transition-colors"
+                          style={{ backgroundColor: pharmacareColors.warning }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = pharmacareColors.warning}
+                        >
+                          <FileText className="w-4 h-4" />
+                          Enter Details Manually
+                        </button>
+                      <button
+                        onClick={handleRetry}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 border-2 font-semibold rounded-lg transition-colors"
+                        style={{ borderColor: pharmacareColors.primary, color: pharmacareColors.primary }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${pharmacareColors.primary}08`}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <Camera className="w-4 h-4" />
+                        Retry with Better Image
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Show image preview for reference */}
+              {previewUrl && (
+                <div className="mt-4">
+                  <p className="text-xs text-gray-500 mb-2">Uploaded prescription image:</p>
+                  <img
+                    src={previewUrl}
+                    alt="Prescription"
+                    className="w-full max-h-48 object-contain border border-gray-300 rounded-lg opacity-75"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {ocrResult && !ocrResult.belowThreshold && (
             <div>
               <div 
                 className="mb-6 p-4 rounded-lg flex items-start gap-2"
@@ -610,7 +689,7 @@ export const PrescriptionUploadDialog = ({ open, onClose, onUploadComplete }: Pr
           >
             Cancel
           </button>
-          {ocrResult && (
+          {ocrResult && !ocrResult.belowThreshold && (
             <button
               onClick={handleConfirm}
               className="px-6 py-2 text-white font-semibold rounded-lg transition-colors"

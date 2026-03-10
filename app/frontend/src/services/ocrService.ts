@@ -22,7 +22,17 @@ export interface OCRResult {
   text: string;
   confidence: number;
   extractedData: ExtractedData;
+  belowThreshold?: boolean;
 }
+
+/** Minimum confidence (0-1 scale) required to trust OCR results */
+export const CONFIDENCE_THRESHOLD = 0.75;
+
+/** Check if OCR confidence is too low to trust */
+export const isLowConfidence = (confidence: number): boolean => {
+  const normalized = confidence > 1 ? confidence / 100 : confidence;
+  return normalized < CONFIDENCE_THRESHOLD;
+};
 
 /**
  * Process prescription image using OCR
@@ -45,7 +55,9 @@ export const processPrescriptionImage = async (imageFile: File): Promise<OCRResu
       }
     );
 
-    return response.data.data;
+    const result: OCRResult = response.data.data;
+    result.belowThreshold = isLowConfidence(result.confidence);
+    return result;
   } catch (error: any) {
     console.error('Error processing prescription:', error);
     throw error;
@@ -114,4 +126,6 @@ export const ocrService = {
   processPrescriptionImage,
   analyzePrescriptionText,
   getConfidenceDisplay,
+  isLowConfidence,
+  CONFIDENCE_THRESHOLD,
 };
