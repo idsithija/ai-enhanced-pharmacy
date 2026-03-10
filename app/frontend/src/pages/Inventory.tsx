@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import type { InventoryItem, Medicine, Supplier } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import { medicineService } from '../services/medicineService';
+import { supplierService } from '../services/supplierService';
 import { Pagination } from '../components/Pagination';
 
 const validationSchema = yup.object({
@@ -38,11 +39,7 @@ export const Inventory = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
-  // TODO: Integrate with supplier API when available
-  const [suppliers] = useState<Supplier[]>([
-    { id: '1', name: 'MedSupply Co.', contactPerson: 'John Doe', phone: '1234567890', email: 'john@medsupply.com', createdAt: '', updatedAt: '' },
-    { id: '2', name: 'PharmaDist', contactPerson: 'Jane Smith', phone: '0987654321', email: 'jane@pharmadist.com', createdAt: '', updatedAt: '' },
-  ]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,13 +56,15 @@ export const Inventory = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [inventoryData, medicinesData] = await Promise.all([
+      const [inventoryData, medicinesData, suppliersData] = await Promise.all([
         inventoryService.getAll(),
         medicineService.getAll(),
+        supplierService.getAll().catch(() => []),
       ]);
       setInventory(inventoryData);
       setFilteredInventory(inventoryData);
       setMedicines(medicinesData);
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
       setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to load data', severity: 'error' });

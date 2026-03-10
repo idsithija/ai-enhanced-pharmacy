@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Plus,
   Minus,
@@ -15,11 +16,13 @@ import {
   CheckCircle,
   XCircle,
   Loader,
+  FileText,
 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine, Customer, InventoryItem } from '../types';
 import { saleService } from '../services/saleService';
+import type { SaleRequest } from '../services/saleService';
 import { inventoryService } from '../services/inventoryService';
 import { drugInteractionService, type DrugInteraction } from '../services/drugInteractionService';
 
@@ -53,6 +56,7 @@ const customerValidationSchema = yup.object({
 });
 
 export const POS = () => {
+  const location = useLocation();
   const [medicines, setMedicines] = useState<MedicineWithStock[]>([]);
   const [loading, setLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -66,6 +70,15 @@ export const POS = () => {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' });
   
+  // Linked prescription (from Prescriptions page)
+  const [linkedPrescription, setLinkedPrescription] = useState<{
+    id: number;
+    prescriptionNumber: string;
+    patientName: string;
+    patientPhone: string;
+    medications: { name: string; dosage: string; frequency: string; duration: string; quantity: number }[];
+  } | null>(null);
+  
   // Drug interaction checking
   const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
   const [checkingInteractions, setCheckingInteractions] = useState(false);
@@ -75,6 +88,66 @@ export const POS = () => {
   useEffect(() => {
     fetchMedicines();
   }, []);
+
+  // Process prescription data from navigation state
+  useEffect(() => {
+    const state = location.state as { prescription?: typeof linkedPrescription } | null;
+    if (state?.prescription && medicines.length > 0) {
+      const rx = state.prescription;
+      setLinkedPrescription(rx);
+
+      // Auto-search customer by phone
+      if (rx.patientPhone) {
+        setCustomerPhone(rx.patientPhone);
+        saleService.searchCustomerByPhone(rx.patientPhone).then((found) => {
+          if (found) setCustomer(found);
+        }).catch(() => {});
+      }
+
+      // Auto-populate cart by matching medication names to inventory
+      const newCart: CartItem[] = [];
+      for (const med of rx.medications) {
+        const medNameLower = med.name.toLowerCase();
+        const match = medicines.find(
+          (m) =>
+            m.name.toLowerCase() === medNameLower ||
+            m.genericName.toLowerCase() === medNameLower ||
+            m.name.toLowerCase().includes(medNameLower) ||
+            medNameLower.includes(m.name.toLowerCase())
+        );
+        if (match && match.stock > 0) {
+          const qty = Math.min(med.quantity || 1, match.stock);
+          newCart.push({
+            medicineId: match.id,
+            medicineName: match.name,
+            quantity: qty,
+            unitPrice: match.unitPrice,
+            inventoryId: match.inventoryId,
+            batchNumber: match.batchNumber,
+            stock: match.stock,
+          });
+        }
+      }
+
+      if (newCart.length > 0) {
+        setCart(newCart);
+        setSnackbar({
+          open: true,
+          message: `${newCart.length} of ${rx.medications.length} medications matched to inventory`,
+          severity: newCart.length < rx.medications.length ? 'warning' : 'success',
+        });
+      } else if (rx.medications.length > 0) {
+        setSnackbar({
+          open: true,
+          message: 'No prescription medications matched inventory. Please add items manually.',
+          severity: 'warning',
+        });
+      }
+
+      // Clear location state to prevent re-processing on re-render
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, medicines]);
   
   // Check drug interactions when cart changes
   useEffect(() => {
@@ -237,6 +310,7 @@ export const POS = () => {
     setCustomerPhone('');
     setDiscount(0);
     setPaymentMethod('cash');
+    setLinkedPrescription(null);
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -277,7 +351,7 @@ export const POS = () => {
       setLoading(true);
       
       // Prepare sale data
-      const saleData = {
+      const saleData: SaleRequest = {
         customerId: customer?.id,
         items: cart.map(item => ({
           medicineId: item.medicineId,
@@ -287,6 +361,7 @@ export const POS = () => {
         })),
         paymentMethod,
         discount: discount > 0 ? discount : undefined,
+        prescriptionId: linkedPrescription?.id,
       };
 
       // Create sale via API
@@ -335,6 +410,30 @@ export const POS = () => {
       <h1 className="text-3xl font-bold text-gray-900 mb-6">
         🛒 Point of Sale
       </h1>
+
+      {/* Linked Prescription Banner */}
+      {linkedPrescription && (
+        <div className="mb-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FileText className="h-6 w-6 text-indigo-600" />
+            <div>
+              <p className="font-semibold text-indigo-900">
+                Processing Prescription #{linkedPrescription.prescriptionNumber}
+              </p>
+              <p className="text-sm text-indigo-700">
+                Patient: {linkedPrescription.patientName} &bull; {linkedPrescription.medications.length} medication(s)
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setLinkedPrescription(null)}
+            className="p-1 text-indigo-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-100"
+            title="Unlink prescription"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Side - Product Search */}

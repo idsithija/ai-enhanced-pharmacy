@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { ocrService } from '../services/ocrService';
 import type { OCRResult } from '../services/ocrService';
 import { prescriptionService } from '../services/prescriptionService';
 import { customerService } from '../services/customerService';
+import { inventoryService } from '../services/inventoryService';
 import { useAuthStore } from '../store/authStore';
 import type { Customer } from '../types';
 
@@ -25,6 +27,8 @@ import {
   AlertTriangle,
   Camera,
   FileText,
+  ShoppingCart,
+  Package,
 } from 'lucide-react';
 
 // Prescription interface matching backend model
@@ -77,6 +81,7 @@ const prescriptionValidationSchema = yup.object({
 });
 
 export const Prescriptions = () => {
+  const navigate = useNavigate();
   const [prescriptions, setPrescriptions] = useState<PrescriptionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +106,7 @@ export const Prescriptions = () => {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ firstName: '', lastName: '', phoneNumber: '' });
+  const [inventoryStock, setInventoryStock] = useState<{ name: string; genericName: string; stock: number }[]>([]);
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin' || user?.role === 'staff';
 
@@ -126,6 +132,58 @@ export const Prescriptions = () => {
   useEffect(() => {
     fetchPrescriptions();
   }, [fetchPrescriptions]);
+
+  // Fetch inventory stock for availability checking
+  useEffect(() => {
+    const fetchStock = async () => {
+      try {
+        const response = await inventoryService.getInventory(1, 1000);
+        const items = response.data?.inventory || [];
+        setInventoryStock(items.map((item: any) => ({
+          name: (item.medicine?.name || item.medicineName || '').toLowerCase(),
+          genericName: (item.medicine?.genericName || '').toLowerCase(),
+          stock: item.quantity || 0,
+        })));
+      } catch { /* silent */ }
+    };
+    fetchStock();
+  }, []);
+
+  const getStockInfo = (medicineName: string): { status: 'available' | 'low' | 'out-of-stock' | 'not-found'; stock: number } => {
+    const nameLower = medicineName.toLowerCase().trim();
+    if (!nameLower) return { status: 'not-found', stock: 0 };
+    const match = inventoryStock.find(
+      (item) => item.name === nameLower || item.genericName === nameLower ||
+        item.name.includes(nameLower) || nameLower.includes(item.name) ||
+        (item.genericName && (item.genericName.includes(nameLower) || nameLower.includes(item.genericName)))
+    );
+    if (!match) return { status: 'not-found', stock: 0 };
+    if (match.stock <= 0) return { status: 'out-of-stock', stock: 0 };
+    if (match.stock < 10) return { status: 'low', stock: match.stock };
+    return { status: 'available', stock: match.stock };
+  };
+
+  const StockBadge = ({ medicineName }: { medicineName: string }) => {
+    const info = getStockInfo(medicineName);
+    const styles = {
+      'available': 'bg-green-100 text-green-800',
+      'low': 'bg-yellow-100 text-yellow-800',
+      'out-of-stock': 'bg-red-100 text-red-800',
+      'not-found': 'bg-gray-100 text-gray-600',
+    };
+    const labels = {
+      'available': `In Stock (${info.stock})`,
+      'low': `Low Stock (${info.stock})`,
+      'out-of-stock': 'Out of Stock',
+      'not-found': 'Not in Inventory',
+    };
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${styles[info.status]}`}>
+        <Package size={10} />
+        {labels[info.status]}
+      </span>
+    );
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -307,6 +365,20 @@ export const Prescriptions = () => {
     } catch (error: any) {
       setSnackbar({ open: true, message: error.response?.data?.error?.message || 'Failed to dispense', severity: 'error' });
     }
+  };
+
+  const handleProcessToSale = (prescription: PrescriptionData) => {
+    navigate('/pos', {
+      state: {
+        prescription: {
+          id: prescription.id,
+          prescriptionNumber: prescription.prescriptionNumber,
+          patientName: prescription.patientName,
+          patientPhone: prescription.patientPhone,
+          medications: prescription.medications,
+        },
+      },
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -618,6 +690,15 @@ export const Prescriptions = () => {
                           ✏️
                         </button>
                       )}
+                      {prescription.status === 'verified' && (
+                        <button
+                          onClick={() => handleProcessToSale(prescription)}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors mr-1"
+                          title="Process to Sale"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -854,7 +935,12 @@ export const Prescriptions = () => {
 
                       <div className="space-y-3">
                         {prescriptionMedicines.map((medicine, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-3">
+                          <div key={index} className={`border rounded-lg p-3 ${getStockInfo(medicine.name).status === 'out-of-stock' ? 'border-red-300 bg-red-50' : getStockInfo(medicine.name).status === 'not-found' && medicine.name ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`}>
+                            {medicine.name && (
+                              <div className="mb-2">
+                                <StockBadge medicineName={medicine.name} />
+                              </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Medicine Name</label>
@@ -1098,6 +1184,14 @@ export const Prescriptions = () => {
                   {/* Step 2: Review extracted data */}
                   {ocrResult && !ocrResult.belowThreshold && (
                     <>
+                      {/* Scanned Prescription Image */}
+                      {aiPreview && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-500 mb-1">Scanned Prescription</p>
+                          <img src={aiPreview} alt="Prescription" className="w-full max-h-48 object-contain border border-gray-200 rounded-lg" />
+                        </div>
+                      )}
+
                       {/* Confidence badge */}
                       {(() => {
                         const conf = ocrService.getConfidenceDisplay(ocrResult.confidence);
@@ -1189,11 +1283,14 @@ export const Prescriptions = () => {
                         ) : (
                           <div className="space-y-3">
                             {ocrResult.extractedData.medications.map((med, index) => (
-                              <div key={index} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                              <div key={index} className={`p-3 border rounded-lg ${getStockInfo(med.name).status === 'out-of-stock' ? 'border-red-300 bg-red-50' : getStockInfo(med.name).status === 'not-found' && med.name ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                                    Medicine {index + 1}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                                      Medicine {index + 1}
+                                    </span>
+                                    {med.name && <StockBadge medicineName={med.name} />}
+                                  </div>
                                   <button onClick={() => handleOcrMedicationDelete(index)} className="p-1 text-red-400 hover:text-red-600">
                                     <Trash2 size={14} />
                                   </button>
@@ -1221,16 +1318,6 @@ export const Prescriptions = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* Raw OCR text */}
-                      {ocrResult.text && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 mb-1">Raw Extracted Text</p>
-                          <div className="p-3 bg-gray-50 rounded-lg max-h-28 overflow-auto">
-                            <pre className="text-xs font-mono text-gray-600 whitespace-pre-wrap">{ocrResult.text}</pre>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Action buttons */}
                       <div className="flex gap-3">
@@ -1313,8 +1400,11 @@ export const Prescriptions = () => {
                   <h3 className="text-sm font-bold text-gray-900 mb-3">Prescribed Medicines</h3>
                   <div className="space-y-2">
                     {(selectedPrescription.medications || []).map((medicine, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-3">
-                        <p className="font-semibold text-gray-900">{medicine.name}</p>
+                      <div key={index} className={`border rounded-lg p-3 ${getStockInfo(medicine.name).status === 'out-of-stock' ? 'border-red-300 bg-red-50' : getStockInfo(medicine.name).status === 'not-found' ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">{medicine.name}</p>
+                          <StockBadge medicineName={medicine.name} />
+                        </div>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-700">
                           <p><strong>Dosage:</strong> {medicine.dosage || '—'}</p>
                           <p><strong>Frequency:</strong> {medicine.frequency || '—'}</p>
@@ -1392,12 +1482,20 @@ export const Prescriptions = () => {
                   </>
                 )}
                 {selectedPrescription.status === 'verified' && (
-                  <button
-                    onClick={() => handleDispensePrescription(selectedPrescription.id)}
-                    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center gap-2"
-                  >
-                    <span>💊</span> Dispense
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleProcessToSale(selectedPrescription)}
+                      className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                    >
+                      <ShoppingCart className="h-4 w-4" /> Process to Sale
+                    </button>
+                    <button
+                      onClick={() => handleDispensePrescription(selectedPrescription.id)}
+                      className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center gap-2"
+                    >
+                      <span>💊</span> Dispense
+                    </button>
+                  </>
                 )}
               </div>
             </div>

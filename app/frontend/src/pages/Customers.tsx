@@ -157,9 +157,15 @@ export const Customers = () => {
     formik.resetForm();
   };
 
-  const handleViewCustomer = (customer: Customer) => {
+  const handleViewCustomer = async (customer: Customer) => {
     setSelectedCustomer(customer);
-    setPurchaseHistory(mockPurchaseHistory[customer.id] || []);
+    try {
+      const history = await customerService.getPurchaseHistory(customer.id);
+      setPurchaseHistory(Array.isArray(history) ? history : []);
+    } catch (err) {
+      console.log('Could not fetch purchase history');
+      setPurchaseHistory([]);
+    }
     setOpenViewDialog(true);
   };
 

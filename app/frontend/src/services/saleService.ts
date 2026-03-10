@@ -12,6 +12,7 @@ export interface CartItem {
 
 export interface SaleRequest {
   customerId?: string;
+  prescriptionId?: number;
   items: {
     medicineId: string;
     inventoryId: string;

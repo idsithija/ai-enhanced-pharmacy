@@ -13,18 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { dashboardService } from "../services/dashboardService";
 import { prescriptionService } from "../services/prescriptionService";
+import { reportService } from "../services/reportService";
 import type { DashboardStats, Sale } from "../types";
-
-// Temporary mock data for sales chart (until sales-chart endpoint is implemented)
-const mockSalesData = [
-  { date: "Mon", sales: 4200 },
-  { date: "Tue", sales: 5100 },
-  { date: "Wed", sales: 3800 },
-  { date: "Thu", sales: 6200 },
-  { date: "Fri", sales: 7500 },
-  { date: "Sat", sales: 8300 },
-  { date: "Sun", sales: 6700 },
-];
 
 interface StatCardProps {
   title: string;
@@ -248,6 +238,7 @@ const StaffDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentSales, setRecentSales] = useState<Sale[]>([]);
   const [lowStock, setLowStock] = useState<any[]>([]);
+  const [salesChartData, setSalesChartData] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_expiringItems, setExpiringItems] = useState<any[]>([]);
 
@@ -284,6 +275,25 @@ const StaffDashboard = () => {
       } catch (err) {
         console.log("Expiring items data not available");
         setExpiringItems([]);
+      }
+
+      try {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 6);
+        const salesReport = await reportService.getSalesReport(
+          start.toISOString().split('T')[0],
+          end.toISOString().split('T')[0],
+          'day'
+        );
+        const chart = (salesReport?.chartData || []).map((d: any) => ({
+          date: new Date(d.period).toLocaleDateString('en-US', { weekday: 'short' }),
+          sales: Number(d.revenue || 0),
+        }));
+        setSalesChartData(chart);
+      } catch (err) {
+        console.log("Sales chart data not available");
+        setSalesChartData([]);
       }
     } catch (err: any) {
       console.error("Error fetching dashboard data:", err);
@@ -399,7 +409,7 @@ const StaffDashboard = () => {
             </h3>
             <div className="w-full h-80 mt-4">
               <ResponsiveContainer>
-                <LineChart data={mockSalesData}>
+                <LineChart data={salesChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
