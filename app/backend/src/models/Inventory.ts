@@ -98,7 +98,7 @@ Inventory.init(
     },
     manufacturingDate: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     expiryDate: {
       type: DataTypes.DATE,

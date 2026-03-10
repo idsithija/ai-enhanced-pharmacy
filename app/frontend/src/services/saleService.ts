@@ -26,13 +26,13 @@ export const saleService = {
   // Create new sale
   createSale: async (data: SaleRequest): Promise<Sale> => {
     const response = await api.post<ApiResponse<Sale>>('/sales', data);
-    return response.data.data;
+    return response.data.data?.sale || response.data.data;
   },
 
   // Get sale by ID
   getSale: async (id: string): Promise<Sale> => {
     const response = await api.get<ApiResponse<Sale>>(`/sales/${id}`);
-    return response.data.data;
+    return response.data.data?.sale || response.data.data;
   },
 
   // Get all sales
@@ -48,16 +48,16 @@ export const saleService = {
   // Search customer by phone
   searchCustomerByPhone: async (phone: string): Promise<Customer | null> => {
     try {
-      const response = await api.get<ApiResponse<Customer>>(`/customers/phone/${phone}`);
-      return response.data.data;
+      const response = await api.get(`/customers/phone/${phone}`);
+      return response.data.data?.customer || response.data.data;
     } catch (error) {
       return null;
     }
   },
 
   // Create quick customer
-  createQuickCustomer: async (data: { name: string; phone: string }): Promise<Customer> => {
-    const response = await api.post<ApiResponse<Customer>>('/customers', data);
-    return response.data.data;
+  createQuickCustomer: async (data: { firstName: string; lastName: string; phoneNumber: string }): Promise<Customer> => {
+    const response = await api.post('/customers', data);
+    return response.data.data?.customer || response.data.data;
   },
 };

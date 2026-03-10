@@ -10,14 +10,14 @@ export interface UserAttributes {
   firstName: string;
   lastName: string;
   role: 'admin' | 'staff' | 'user';
-  phoneNumber?: string;
+  phoneNumber: string;
   isActive: boolean;
   lastLogin?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isActive' | 'phoneNumber' | 'lastLogin'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'isActive' | 'lastLogin'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: number;
@@ -27,7 +27,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   declare firstName: string;
   declare lastName: string;
   declare role: 'admin' | 'staff' | 'user';
-  declare phoneNumber: string | undefined;
+  declare phoneNumber: string;
   declare isActive: boolean;
   declare lastLogin: Date | undefined;
 
@@ -96,7 +96,7 @@ User.init(
     },
     phoneNumber: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
     },
     isActive: {
       type: DataTypes.BOOLEAN,

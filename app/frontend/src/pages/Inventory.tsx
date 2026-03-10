@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import type { InventoryItem, Medicine, Supplier } from '../types';
 import { inventoryService } from '../services/inventoryService';
 import { medicineService } from '../services/medicineService';
+import { Pagination } from '../components/Pagination';
 
 const validationSchema = yup.object({
   medicineId: yup.string().required('Medicine is required'),
@@ -88,10 +89,10 @@ export const Inventory = () => {
       setLoading(true);
       try {
         if (editingItem) {
-          await inventoryService.update(editingItem.id, values);
+          await inventoryService.updateStock(editingItem.id, values);
           setSnackbar({ open: true, message: 'Stock updated successfully', severity: 'success' });
         } else {
-          await inventoryService.create(values);
+          await inventoryService.addStock(values);
           setSnackbar({ open: true, message: 'Stock added successfully', severity: 'success' });
         }
         handleCloseDialog();
@@ -143,7 +144,7 @@ export const Inventory = () => {
         batchNumber: item.batchNumber,
         quantity: item.quantity,
         expiryDate: item.expiryDate,
-        purchasePrice: item.purchasePrice,
+        purchasePrice: item.unitPrice,
         sellingPrice: item.sellingPrice,
         supplierId: item.supplierId,
       });
@@ -163,7 +164,7 @@ export const Inventory = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this stock entry?')) {
       try {
-        await inventoryService.delete(id);
+        await inventoryService.deleteStock(id);
         setSnackbar({ open: true, message: 'Stock deleted successfully', severity: 'success' });
         fetchData(); // Refresh the list
       } catch (error: any) {
@@ -173,14 +174,7 @@ export const Inventory = () => {
     }
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
 
   return (
     <div>
@@ -292,7 +286,7 @@ export const Inventory = () => {
                         {new Date(item.expiryDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                        Rs {Number(item.purchasePrice || 0).toFixed(2)}
+                        Rs {Number(item.unitPrice || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
                         Rs {Number(item.sellingPrice || 0).toFixed(2)}
@@ -331,63 +325,13 @@ export const Inventory = () => {
           </table>
         </div>
         
-        {/* Pagination */}
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => handleChangePage(null, Math.max(0, page - 1))}
-              disabled={page === 0}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => handleChangePage(null, page + 1)}
-              disabled={page >= Math.ceil(filteredInventory.length / rowsPerPage) - 1}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{page * rowsPerPage + 1}</span> to{' '}
-                <span className="font-medium">
-                  {Math.min((page + 1) * rowsPerPage, filteredInventory.length)}
-                </span>{' '}
-                of <span className="font-medium">{filteredInventory.length}</span> results
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <select
-                value={rowsPerPage}
-                onChange={handleChangeRowsPerPage}
-                className="border border-gray-300 rounded-md text-sm px-2 py-1"
-              >
-                <option value={5}>5 per page</option>
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-              </select>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button
-                  onClick={() => handleChangePage(null, Math.max(0, page - 1))}
-                  disabled={page === 0}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => handleChangePage(null, page + 1)}
-                  disabled={page >= Math.ceil(filteredInventory.length / rowsPerPage) - 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalItems={filteredInventory.length}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(val) => { setRowsPerPage(val); setPage(0); }}
+        />
       </div>
 
       {/* Add/Edit Dialog */}

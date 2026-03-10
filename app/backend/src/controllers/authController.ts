@@ -251,6 +251,51 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
   }
 };
 
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+export const changePassword = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
+      return;
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      res.status(400).json({ success: false, error: { message: 'Please provide old and new passwords' } });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ success: false, error: { message: 'New password must be at least 8 characters' } });
+      return;
+    }
+
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      res.status(404).json({ success: false, error: { message: 'User not found' } });
+      return;
+    }
+
+    const isPasswordValid = await user.comparePassword(oldPassword);
+
+    if (!isPasswordValid) {
+      res.status(400).json({ success: false, error: { message: 'Current password is incorrect' } });
+      return;
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ success: true, data: { message: 'Password changed successfully' } });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
 // @desc    Register staff member (admin only)
 // @route   POST /api/auth/register-staff
 // @access  Private (admin only)

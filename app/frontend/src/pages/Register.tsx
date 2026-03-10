@@ -14,7 +14,7 @@ const validationSchema = yup.object({
   confirmPassword: yup.string()
     .oneOf([yup.ref('password')], 'Passwords must match')
     .required('Confirm password is required'),
-  phoneNumber: yup.string().optional(),
+  phoneNumber: yup.string().required('Phone number is required').matches(/^[0-9]{10}$/, 'Phone must be 10 digits'),
 });
 
 export const Register = () => {
@@ -45,7 +45,7 @@ export const Register = () => {
           username: values.username,
           email: values.email,
           password: values.password,
-          phoneNumber: values.phoneNumber || undefined,
+          phoneNumber: values.phoneNumber,
         });
 
         login(response.user, response.token);
@@ -182,7 +182,7 @@ export const Register = () => {
             {/* Phone */}
             <div>
               <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number <span className="text-gray-400">(optional)</span>
+                Phone Number *
               </label>
               <input
                 id="phoneNumber"

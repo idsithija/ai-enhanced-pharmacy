@@ -87,7 +87,12 @@ export const getInventoryItem = async (req: AuthRequest, res: Response, next: Ne
 // @access  Private (inventory_manager, admin)
 export const addInventoryItem = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const item = await Inventory.create(req.body);
+    const { purchasePrice, supplierId, ...rest } = req.body;
+    const item = await Inventory.create({
+      ...rest,
+      unitPrice: purchasePrice ?? rest.unitPrice,
+      supplierId: supplierId || undefined,
+    });
 
     res.status(201).json({
       success: true,
@@ -113,7 +118,12 @@ export const updateInventoryItem = async (req: AuthRequest, res: Response, next:
       return;
     }
 
-    await item.update(req.body);
+    const { purchasePrice, supplierId, ...rest } = req.body;
+    const updateData = { ...rest };
+    if (purchasePrice !== undefined) updateData.unitPrice = purchasePrice;
+    if (supplierId) updateData.supplierId = supplierId;
+
+    await item.update(updateData);
 
     res.status(200).json({
       success: true,

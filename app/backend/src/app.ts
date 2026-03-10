@@ -31,7 +31,9 @@ const __dirname = path.dirname(__filename);
 const app: Application = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // CORS configuration
 app.use(

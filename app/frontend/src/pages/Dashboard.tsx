@@ -99,7 +99,7 @@ const UserDashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
         <p className="text-gray-600">
-          Hello, {user?.fullName}! What would you like to do today?
+          Hello, {user?.firstName}! What would you like to do today?
         </p>
       </div>
 
@@ -302,7 +302,7 @@ const StaffDashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
         <p className="text-gray-600">
-          Welcome back, {user?.fullName}! Here's what's happening today.
+          Welcome back, {user?.firstName}! Here's what's happening today.
         </p>
       </div>
 
@@ -408,7 +408,7 @@ const StaffDashboard = () => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-sm font-medium text-gray-900">
-                        {sale.customer?.name || `Sale #${sale.id.slice(0, 8)}`}
+                        {sale.customer?.name || `Sale #${String(sale.id).slice(0, 8)}`}
                       </p>
                       <p className="text-sm font-bold text-gray-900">
                         Rs {Number(sale.total || 0).toFixed(2)}

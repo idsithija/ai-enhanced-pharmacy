@@ -218,10 +218,11 @@ export const verifyPrescription = async (req: AuthRequest, res: Response, next: 
       return;
     }
 
-    prescription.status = 'verified';
-    prescription.verifiedBy = req.user.id;
-    prescription.verifiedAt = new Date();
-    await prescription.save();
+    await prescription.update({
+      status: 'verified',
+      verifiedBy: req.user.id,
+      verifiedAt: new Date(),
+    });
 
     res.status(200).json({
       success: true,
@@ -247,9 +248,46 @@ export const rejectPrescription = async (req: AuthRequest, res: Response, next: 
       return;
     }
 
-    prescription.status = 'rejected';
-    prescription.notes = req.body.notes || prescription.notes;
-    await prescription.save();
+    await prescription.update({
+      status: 'rejected',
+      notes: req.body.notes || prescription.notes,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { prescription },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Dispense prescription
+// @route   PUT /api/prescriptions/:id/dispense
+// @access  Private (pharmacist, admin)
+export const dispensePrescription = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
+      return;
+    }
+
+    const prescription = await Prescription.findByPk(req.params.id);
+
+    if (!prescription) {
+      res.status(404).json({ success: false, error: { message: 'Prescription not found' } });
+      return;
+    }
+
+    if (prescription.status !== 'verified') {
+      res.status(400).json({ success: false, error: { message: 'Only verified prescriptions can be dispensed' } });
+      return;
+    }
+
+    await prescription.update({
+      status: 'dispensed',
+      notes: req.body.notes || prescription.notes,
+    });
 
     res.status(200).json({
       success: true,

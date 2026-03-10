@@ -7,6 +7,7 @@ import {
   updatePrescription,
   verifyPrescription,
   rejectPrescription,
+  dispensePrescription,
   uploadPrescription,
   upload,
 } from '../controllers/prescriptionController.js';
@@ -27,5 +28,6 @@ router.post('/', createPrescription);
 router.put('/:id', authorize('admin', 'staff'), updatePrescription);
 router.put('/:id/verify', authorize('admin', 'staff'), verifyPrescription);
 router.put('/:id/reject', authorize('admin', 'staff'), rejectPrescription);
+router.put('/:id/dispense', authorize('admin', 'staff'), dispensePrescription);
 
 export default router;

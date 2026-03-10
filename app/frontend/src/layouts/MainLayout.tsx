@@ -82,10 +82,10 @@ export const MainLayout = () => {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-dark font-bold">
-              {user?.fullName?.charAt(0) || 'U'}
+              {user?.firstName?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.fullName || 'User'}</p>
+              <p className="text-sm font-medium text-white truncate">{user ? `${user.firstName} ${user.lastName}` : 'User'}</p>
               <p className="text-xs text-gray-400 truncate capitalize">{user?.role || 'Role'}</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export const MainLayout = () => {
                 className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg"
               >
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-dark font-bold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
+                  {user?.firstName?.charAt(0) || 'U'}
                 </div>
               </button>
 
@@ -132,13 +132,13 @@ export const MainLayout = () => {
                   <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">{user?.fullName}</p>
+                      <p className="text-sm font-medium text-gray-900">{user ? `${user.firstName} ${user.lastName}` : ''}</p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
                     <button
                       onClick={() => {
                         setUserMenuOpen(false);
-                        navigate('/profile');
+                        navigate('/settings');
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >

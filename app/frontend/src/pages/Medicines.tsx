@@ -4,13 +4,13 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import type { Medicine } from '../types';
 import { medicineService } from '../services/medicineService';
+import { Pagination } from '../components/Pagination';
 
 const validationSchema = yup.object({
   name: yup.string().required('Medicine name is required'),
   genericName: yup.string().required('Generic name is required'),
   category: yup.string().required('Category is required'),
   manufacturer: yup.string().required('Manufacturer is required'),
-  unitPrice: yup.number().positive('Price must be positive').required('Price is required'),
   requiresPrescription: yup.boolean(),
   description: yup.string(),
 });
@@ -51,7 +51,6 @@ export const Medicines = () => {
       category: '',
       manufacturer: '',
       description: '',
-      unitPrice: 0,
       requiresPrescription: false,
     },
     validationSchema,
@@ -103,7 +102,6 @@ export const Medicines = () => {
         category: medicine.category,
         manufacturer: medicine.manufacturer,
         description: medicine.description || '',
-        unitPrice: medicine.unitPrice,
         requiresPrescription: medicine.requiresPrescription,
       });
     } else {
@@ -122,9 +120,9 @@ export const Medicines = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this medicine?')) {
       try {
-        await medicineService.delete(id);
+        await medicineService.deleteMedicine(id);
+        setMedicines((prev) => prev.filter((m) => m.id !== id));
         setSnackbar({ open: true, message: 'Medicine deleted successfully', severity: 'success' });
-        fetchMedicines(); // Refresh the list
       } catch (error: any) {
         console.error('Error deleting medicine:', error);
         setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to delete medicine', severity: 'error' });
@@ -190,9 +188,6 @@ export const Medicines = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Manufacturer
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price
-                </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prescription
                 </th>
@@ -222,9 +217,6 @@ export const Medicines = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {medicine.manufacturer}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      Rs {Number(medicine.unitPrice || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span
@@ -256,62 +248,13 @@ export const Medicines = () => {
             </tbody>
           </table>
         </div>
-        {/* Pagination */}
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => setPage(Math.max(0, page - 1))}
-              disabled={page === 0}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage(Math.min(Math.ceil(filteredMedicines.length / rowsPerPage) - 1, page + 1))}
-              disabled={page >= Math.ceil(filteredMedicines.length / rowsPerPage) - 1}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{page * rowsPerPage + 1}</span> to{' '}
-                <span className="font-medium">{Math.min((page + 1) * rowsPerPage, filteredMedicines.length)}</span> of{' '}
-                <span className="font-medium">{filteredMedicines.length}</span> results
-              </p>
-            </div>
-            <div className="flex gap-2 items-center">
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setPage(0);
-                }}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-              >
-                <option value={5}>5 per page</option>
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-              </select>
-              <button
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(Math.min(Math.ceil(filteredMedicines.length / rowsPerPage) - 1, page + 1))}
-                disabled={page >=Math.ceil(filteredMedicines.length / rowsPerPage) - 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalItems={filteredMedicines.length}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setPage}
+          onRowsPerPageChange={(val) => { setRowsPerPage(val); setPage(0); }}
+        />
       </div>
 
       {/* Add/Edit Dialog */}
@@ -400,25 +343,6 @@ export const Medicines = () => {
                     />
                     {formik.touched.manufacturer && formik.errors.manufacturer && (
                       <p className="mt-1 text-sm text-red-600">{formik.errors.manufacturer}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit Price (Rs) *
-                    </label>
-                    <input
-                      type="number"
-                      id="unitPrice"
-                      name="unitPrice"
-                      value={formik.values.unitPrice}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                        formik.touched.unitPrice && formik.errors.unitPrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {formik.touched.unitPrice && formik.errors.unitPrice && (
-                      <p className="mt-1 text-sm text-red-600">{formik.errors.unitPrice}</p>
                     )}
                   </div>
                   <div>

@@ -7,7 +7,7 @@ export interface PrescriptionAttributes {
   prescriptionNumber: string;
   patientName: string;
   patientAge?: number;
-  patientPhone?: string;
+  patientPhone: string;
   doctorName: string;
   doctorLicense?: string;
   hospitalName?: string;
@@ -33,38 +33,38 @@ export interface PrescriptionAttributes {
   updatedAt?: Date;
 }
 
-export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'patientPhone' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'createdBy' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
+export interface PrescriptionCreationAttributes extends Optional<PrescriptionAttributes, 'id' | 'patientAge' | 'doctorLicense' | 'hospitalName' | 'validUntil' | 'imageUrl' | 'ocrText' | 'ocrConfidence' | 'createdBy' | 'verifiedBy' | 'verifiedAt' | 'notes' | 'aiWarnings' | 'status'> {}
 
 class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAttributes> implements PrescriptionAttributes {
-  public id!: number;
-  public prescriptionNumber!: string;
-  public patientName!: string;
-  public patientAge?: number;
-  public patientPhone?: string;
-  public doctorName!: string;
-  public doctorLicense?: string;
-  public hospitalName?: string;
-  public medications!: {
+  declare id: number;
+  declare prescriptionNumber: string;
+  declare patientName: string;
+  declare patientAge: number | undefined;
+  declare patientPhone: string;
+  declare doctorName: string;
+  declare doctorLicense: string | undefined;
+  declare hospitalName: string | undefined;
+  declare medications: {
     name: string;
     dosage: string;
     frequency: string;
     duration: string;
     quantity: number;
   }[];
-  public prescriptionDate!: Date;
-  public validUntil?: Date;
-  public imageUrl?: string;
-  public ocrText?: string;
-  public ocrConfidence?: number;
-  public createdBy?: number;
-  public verifiedBy?: number;
-  public verifiedAt?: Date;
-  public status!: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
-  public notes?: string;
-  public aiWarnings?: string[];
+  declare prescriptionDate: Date;
+  declare validUntil: Date | undefined;
+  declare imageUrl: string | undefined;
+  declare ocrText: string | undefined;
+  declare ocrConfidence: number | undefined;
+  declare createdBy: number | undefined;
+  declare verifiedBy: number | undefined;
+  declare verifiedAt: Date | undefined;
+  declare status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
+  declare notes: string | undefined;
+  declare aiWarnings: string[] | undefined;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 Prescription.init(
@@ -93,7 +93,7 @@ Prescription.init(
     },
     patientPhone: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
     },
     doctorName: {
       type: DataTypes.STRING(200),

@@ -1,32 +1,22 @@
 import api from './api';
-import type { ApiResponse, Prescription } from '../types';
 
 export interface PrescriptionRequest {
-  customerId: string;
-  customerName: string;
-  customerPhone: string;
+  patientName: string;
+  patientPhone: string;
+  patientAge?: number;
   doctorName: string;
-  doctorLicense: string;
-  medicines: {
-    medicineId: string;
-    medicineName: string;
+  doctorLicense?: string;
+  hospitalName?: string;
+  medications: {
+    name: string;
     dosage: string;
     frequency: string;
     duration: string;
     quantity: number;
   }[];
+  prescriptionDate?: string;
   notes?: string;
   imageUrl?: string;
-}
-
-export interface VerifyPrescriptionRequest {
-  verifiedBy: string;
-  verificationNotes?: string;
-}
-
-export interface DispensePrescriptionRequest {
-  dispensedBy: string;
-  dispensedNotes?: string;
 }
 
 export const prescriptionService = {
@@ -40,7 +30,7 @@ export const prescriptionService = {
       params.append('status', status);
     }
     const response = await api.get(`/prescriptions?${params}`);
-    return response.data;
+    return response.data.data;
   },
 
   // Get current user's prescriptions
@@ -57,33 +47,39 @@ export const prescriptionService = {
   },
 
   // Get single prescription
-  getPrescription: async (id: string): Promise<Prescription> => {
-    const response = await api.get<ApiResponse<Prescription>>(`/prescriptions/${id}`);
-    return response.data.data;
+  getPrescription: async (id: string) => {
+    const response = await api.get(`/prescriptions/${id}`);
+    return response.data.data?.prescription || response.data.data;
   },
 
   // Create prescription
-  createPrescription: async (data: PrescriptionRequest): Promise<Prescription> => {
-    const response = await api.post<ApiResponse<Prescription>>('/prescriptions', data);
-    return response.data.data;
+  createPrescription: async (data: PrescriptionRequest) => {
+    const response = await api.post('/prescriptions', data);
+    return response.data.data?.prescription || response.data.data;
   },
 
   // Update prescription
-  updatePrescription: async (id: string, data: Partial<PrescriptionRequest>): Promise<Prescription> => {
-    const response = await api.put<ApiResponse<Prescription>>(`/prescriptions/${id}`, data);
-    return response.data.data;
+  updatePrescription: async (id: string, data: Partial<PrescriptionRequest>) => {
+    const response = await api.put(`/prescriptions/${id}`, data);
+    return response.data.data?.prescription || response.data.data;
   },
 
   // Verify prescription
-  verifyPrescription: async (id: string, data: VerifyPrescriptionRequest): Promise<Prescription> => {
-    const response = await api.post<ApiResponse<Prescription>>(`/prescriptions/${id}/verify`, data);
-    return response.data.data;
+  verifyPrescription: async (id: string) => {
+    const response = await api.put(`/prescriptions/${id}/verify`);
+    return response.data.data?.prescription || response.data.data;
+  },
+
+  // Reject prescription
+  rejectPrescription: async (id: string, notes?: string) => {
+    const response = await api.put(`/prescriptions/${id}/reject`, { notes });
+    return response.data.data?.prescription || response.data.data;
   },
 
   // Dispense prescription
-  dispensePrescription: async (id: string, data: DispensePrescriptionRequest): Promise<Prescription> => {
-    const response = await api.post<ApiResponse<Prescription>>(`/prescriptions/${id}/dispense`, data);
-    return response.data.data;
+  dispensePrescription: async (id: string, notes?: string) => {
+    const response = await api.put(`/prescriptions/${id}/dispense`, { notes });
+    return response.data.data?.prescription || response.data.data;
   },
 
   // Upload prescription image

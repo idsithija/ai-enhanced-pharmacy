@@ -177,15 +177,10 @@ class OCRService {
   }
 
   /**
-   * Process prescription image - Uses custom TrOCR model API only
+   * Process prescription image - Uses PaddleOCR API
    */
   async processPrescription(imageSource: string): Promise<OCRResult> {
-    console.log('Starting OCR processing with custom TrOCR model API...');
-    
-    // Check if model files exist
-    if (!this.checkCustomModelFiles()) {
-      throw new Error('Custom TrOCR model files not found at: ' + this.customModelPath);
-    }
+    console.log('Starting OCR processing with PaddleOCR API...');
     
     // Check if API is available
     const apiAvailable = await this.checkCustomModelApi();
@@ -198,11 +193,11 @@ class OCRService {
     
     try {
       const result = await this.processWithCustomModel(imageSource);
-      console.log('✅ Custom TrOCR model processing successful');
+      console.log('✅ PaddleOCR processing successful');
       return result;
     } catch (error: any) {
-      console.error('❌ Custom model processing failed:', error);
-      throw new Error(`Custom TrOCR model processing failed: ${error.message}`);
+      console.error('❌ OCR processing failed:', error);
+      throw new Error(`OCR processing failed: ${error.message}`);
     }
   }
 

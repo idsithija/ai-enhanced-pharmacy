@@ -52,7 +52,7 @@ export const PlaceOrder = () => {
 
   useEffect(() => {
     if (user) {
-      setPatientName(user.fullName || user.username || '');
+      setPatientName(user.firstName ? `${user.firstName} ${user.lastName}` : user.username || '');
     }
   }, [user]);
 
@@ -101,12 +101,16 @@ export const PlaceOrder = () => {
       setToast({ show: true, message: 'Please upload a prescription image', type: 'error' });
       return;
     }
+    if (!patientPhone.trim() || !/^[0-9]{10}$/.test(patientPhone.trim())) {
+      setToast({ show: true, message: 'Please enter a valid 10-digit phone number', type: 'error' });
+      return;
+    }
     try {
       setSubmitting(true);
       const formData = new FormData();
       formData.append('image', selectedFile);
       if (patientName) formData.append('patientName', patientName);
-      if (patientPhone) formData.append('patientPhone', patientPhone);
+      formData.append('patientPhone', patientPhone.trim());
       if (notes) formData.append('notes', notes);
 
       const response = await prescriptionService.createPrescriptionWithImage(formData);
@@ -405,12 +409,13 @@ export const PlaceOrder = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
               <input
                 type="tel"
                 value={patientPhone}
                 onChange={(e) => setPatientPhone(e.target.value)}
-                placeholder="Contact number"
+                placeholder="10-digit phone number"
+                required
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>

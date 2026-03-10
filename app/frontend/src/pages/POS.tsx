@@ -47,8 +47,9 @@ interface CartItem {
 }
 
 const customerValidationSchema = yup.object({
-  name: yup.string().required('Name is required'),
-  phone: yup.string().matches(/^[0-9]{10}$/, 'Phone must be 10 digits').required('Phone is required'),
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string().required('Last name is required'),
+  phoneNumber: yup.string().matches(/^[0-9]{10}$/, 'Phone must be 10 digits').required('Phone is required'),
 });
 
 export const POS = () => {
@@ -99,7 +100,7 @@ export const POS = () => {
         genericName: item.medicine?.genericName || '',
         category: item.medicine?.category || '',
         manufacturer: item.medicine?.manufacturer || '',
-        unitPrice: item.medicine?.unitPrice || 0,
+        unitPrice: item.sellingPrice || 0,
         requiresPrescription: item.medicine?.requiresPrescription || false,
         stock: item.quantity || 0,
         batchNumber: item.batchNumber || '',
@@ -144,18 +145,20 @@ export const POS = () => {
 
   const customerFormik = useFormik({
     initialValues: {
-      name: '',
-      phone: '',
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
     },
     validationSchema: customerValidationSchema,
     onSubmit: async (values) => {
       try {
         const newCustomer = await saleService.createQuickCustomer({
-          name: values.name,
-          phone: values.phone,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phoneNumber: values.phoneNumber,
         });
         setCustomer(newCustomer);
-        setCustomerPhone(values.phone);
+        setCustomerPhone(values.phoneNumber);
         setOpenCustomerDialog(false);
         setSnackbar({ open: true, message: 'Customer added successfully', severity: 'success' });
         customerFormik.resetForm();
@@ -291,16 +294,16 @@ export const POS = () => {
 
       // Prepare invoice data
       const invoice = {
-        invoiceNumber: `INV${createdSale.id.slice(0, 8).toUpperCase()}`,
+        invoiceNumber: `INV${String(createdSale.id).slice(0, 8).toUpperCase()}`,
         date: new Date(createdSale.createdAt).toLocaleString(),
-        customer: customer || { name: 'Walk-in Customer', phone: 'N/A' },
+        customer: customer || { firstName: 'Walk-in', lastName: 'Customer', phoneNumber: 'N/A' },
         items: cart,
         subtotal,
         discount: discountAmount,
         tax,
-        total: createdSale.total,
+        total: Number(createdSale.total || total),
         paymentMethod,
-        loyaltyPointsEarned: Math.floor(createdSale.total / 10),
+        loyaltyPointsEarned: Math.floor(Number(createdSale.total || total) / 10),
       };
 
       setInvoiceData(invoice);
@@ -406,10 +409,10 @@ export const POS = () => {
             {customer ? (
               <div>
                 <p className="font-bold text-gray-900">
-                  {customer.name}
+                  {`${customer.firstName || ''} ${customer.lastName || ''}`.trim()}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {customer.phone}
+                  {customer.phoneNumber}
                 </p>
                 <span className="inline-block mt-2 text-xs px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">
                   {customer.loyaltyPoints} Loyalty Points
@@ -676,45 +679,66 @@ export const POS = () => {
             <form onSubmit={customerFormik.handleSubmit}>
               <div className="p-6 space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name
                   </label>
                   <input
                     type="text"
-                    id="name"
-                    name="name"
-                    value={customerFormik.values.name}
+                    id="firstName"
+                    name="firstName"
+                    value={customerFormik.values.firstName}
                     onChange={customerFormik.handleChange}
                     onBlur={customerFormik.handleBlur}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                      customerFormik.touched.name && customerFormik.errors.name
+                      customerFormik.touched.firstName && customerFormik.errors.firstName
                         ? 'border-red-500'
                         : 'border-gray-300'
                     }`}
                   />
-                  {customerFormik.touched.name && customerFormik.errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.name}</p>
+                  {customerFormik.touched.firstName && customerFormik.errors.firstName && (
+                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.firstName}</p>
                   )}
                 </div>
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    value={customerFormik.values.lastName}
+                    onChange={customerFormik.handleChange}
+                    onBlur={customerFormik.handleBlur}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                      customerFormik.touched.lastName && customerFormik.errors.lastName
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                  />
+                  {customerFormik.touched.lastName && customerFormik.errors.lastName && (
+                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.lastName}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number
                   </label>
                   <input
                     type="text"
-                    id="phone"
-                    name="phone"
-                    value={customerFormik.values.phone}
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={customerFormik.values.phoneNumber}
                     onChange={customerFormik.handleChange}
                     onBlur={customerFormik.handleBlur}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                      customerFormik.touched.phone && customerFormik.errors.phone
+                      customerFormik.touched.phoneNumber && customerFormik.errors.phoneNumber
                         ? 'border-red-500'
                         : 'border-gray-300'
                     }`}
                   />
-                  {customerFormik.touched.phone && customerFormik.errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.phone}</p>
+                  {customerFormik.touched.phoneNumber && customerFormik.errors.phoneNumber && (
+                    <p className="mt-1 text-sm text-red-600">{customerFormik.errors.phoneNumber}</p>
                   )}
                 </div>
               </div>
@@ -765,10 +789,10 @@ export const POS = () => {
                   </p>
                   <hr className="my-4 border-gray-200" />
                   <p className="font-medium text-gray-900 mb-1">
-                    Customer: {invoiceData.customer.name}
+                    Customer: {`${invoiceData.customer.firstName || ''} ${invoiceData.customer.lastName || ''}`.trim()}
                   </p>
                   <p className="text-sm text-gray-500 mb-4">
-                    Phone: {invoiceData.customer.phone}
+                    Phone: {invoiceData.customer.phoneNumber}
                   </p>
                   <hr className="my-4 border-gray-200" />
                   <div className="space-y-3 mb-4">

@@ -30,87 +30,10 @@ interface PurchaseHistory {
   pointsEarned: number;
 }
 
-// Mock data
-const mockCustomers: (Customer & { totalSpent: number; totalPurchases: number })[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    phone: '9876543210',
-    email: 'john.doe@email.com',
-    address: '123 Main St, Springfield',
-    dateOfBirth: '1985-06-15',
-    loyaltyPoints: 450,
-    totalSpent: 15680.50,
-    totalPurchases: 42,
-    createdAt: '2023-01-15T10:00:00',
-    updatedAt: '2024-03-05T10:00:00',
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    phone: '9876543211',
-    email: 'jane.smith@email.com',
-    address: '456 Oak Ave, Springfield',
-    dateOfBirth: '1990-03-22',
-    loyaltyPoints: 1250,
-    totalSpent: 28500.75,
-    totalPurchases: 78,
-    createdAt: '2022-08-20T09:00:00',
-    updatedAt: '2024-03-05T11:00:00',
-  },
-  {
-    id: '3',
-    name: 'Robert Brown',
-    phone: '9876543212',
-    email: 'robert.brown@email.com',
-    address: '789 Pine Rd, Springfield',
-    loyaltyPoints: 180,
-    totalSpent: 5420.25,
-    totalPurchases: 18,
-    createdAt: '2023-11-10T14:00:00',
-    updatedAt: '2024-03-04T15:00:00',
-  },
-  {
-    id: '4',
-    name: 'Emily Davis',
-    phone: '9876543213',
-    email: 'emily.davis@email.com',
-    address: '321 Elm St, Springfield',
-    dateOfBirth: '1988-12-08',
-    loyaltyPoints: 820,
-    totalSpent: 19250.00,
-    totalPurchases: 56,
-    createdAt: '2023-03-05T11:00:00',
-    updatedAt: '2024-03-05T09:00:00',
-  },
-  {
-    id: '5',
-    name: 'Michael Wilson',
-    phone: '9876543214',
-    loyaltyPoints: 65,
-    totalSpent: 1850.00,
-    totalPurchases: 7,
-    createdAt: '2024-02-01T13:00:00',
-    updatedAt: '2024-03-02T10:00:00',
-  },
-];
-
-const mockPurchaseHistory: { [customerId: string]: PurchaseHistory[] } = {
-  '1': [
-    { id: '1', invoiceNumber: 'INV001', date: '2024-03-05T10:00:00', totalAmount: 450.50, paymentMethod: 'card', itemCount: 5, pointsEarned: 45 },
-    { id: '2', invoiceNumber: 'INV002', date: '2024-03-01T14:30:00', totalAmount: 280.00, paymentMethod: 'cash', itemCount: 3, pointsEarned: 28 },
-    { id: '3', invoiceNumber: 'INV003', date: '2024-02-28T09:15:00', totalAmount: 620.75, paymentMethod: 'mobile', itemCount: 7, pointsEarned: 62 },
-    { id: '4', invoiceNumber: 'INV004', date: '2024-02-25T16:45:00', totalAmount: 150.25, paymentMethod: 'cash', itemCount: 2, pointsEarned: 15 },
-  ],
-  '2': [
-    { id: '5', invoiceNumber: 'INV005', date: '2024-03-05T11:00:00', totalAmount: 890.00, paymentMethod: 'card', itemCount: 8, pointsEarned: 89 },
-    { id: '6', invoiceNumber: 'INV006', date: '2024-03-03T12:30:00', totalAmount: 1250.50, paymentMethod: 'card', itemCount: 12, pointsEarned: 125 },
-  ],
-};
-
 const customerValidationSchema = yup.object({
-  name: yup.string().required('Name is required'),
-  phone: yup.string().matches(/^[0-9]{10}$/, 'Phone must be 10 digits').required('Phone is required'),
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string().required('Last name is required'),
+  phoneNumber: yup.string().matches(/^[0-9]{10}$/, 'Phone must be 10 digits').required('Phone is required'),
   email: yup.string().email('Invalid email format'),
   dateOfBirth: yup.string(),
   address: yup.string(),
@@ -149,8 +72,9 @@ export const Customers = () => {
 
   const formik = useFormik({
     initialValues: {
-      name: '',
-      phone: '',
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
       email: '',
       address: '',
       dateOfBirth: '',
@@ -198,11 +122,13 @@ export const Customers = () => {
 
     // Filter by search query
     if (query) {
+      const q = query.toLowerCase();
       filtered = filtered.filter(
         (c) =>
-          c.name.toLowerCase().includes(query.toLowerCase()) ||
-          c.phone.includes(query) ||
-          c.email?.toLowerCase().includes(query.toLowerCase())
+          (c.firstName || '').toLowerCase().includes(q) ||
+          (c.lastName || '').toLowerCase().includes(q) ||
+          (c.phoneNumber || '').includes(query) ||
+          (c.email || '').toLowerCase().includes(q)
       );
     }
 
@@ -212,8 +138,9 @@ export const Customers = () => {
   const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
       formik.setValues({
-        name: customer.name,
-        phone: customer.phone,
+        firstName: customer.firstName || '',
+        lastName: customer.lastName || '',
+        phoneNumber: customer.phoneNumber || '',
         email: customer.email || '',
         address: customer.address || '',
         dateOfBirth: customer.dateOfBirth || '',
@@ -236,10 +163,16 @@ export const Customers = () => {
     setOpenViewDialog(true);
   };
 
-  const handleDeleteCustomer = (id: string) => {
-    setCustomers(customers.filter((c) => c.id !== id));
-    setFilteredCustomers(filteredCustomers.filter((c) => c.id !== id));
-    setSnackbar({ open: true, message: 'Customer deleted successfully', severity: 'success' });
+  const handleDeleteCustomer = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await customerService.deleteCustomer(id);
+        setCustomers((prev) => prev.filter((c) => c.id !== id));
+        setSnackbar({ open: true, message: 'Customer deleted successfully', severity: 'success' });
+      } catch (error: any) {
+        setSnackbar({ open: true, message: error.response?.data?.message || 'Failed to delete customer', severity: 'error' });
+      }
+    }
   };
 
   const getTierBadge = (points: number) => {
@@ -402,8 +335,8 @@ export const Customers = () => {
               ) : (
                 filteredCustomers.map((customer) => {
                   const tier = getTierBadge(customer.loyaltyPoints);
-                  const customerName = customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
-                  const customerPhone = customer.phone || customer.phoneNumber || '';
+                  const customerName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unknown';
+                  const customerPhone = customer.phoneNumber || '';
                   return (
                     <tr key={customer.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -496,38 +429,61 @@ export const Customers = () => {
             </div>
             <form onSubmit={formik.handleSubmit}>
               <div className="p-6 space-y-4">
-                {/* Full Name */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User size={18} className="text-gray-400" />
+                {/* First Name and Last Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User size={18} className="text-gray-400" />
+                      </div>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        value={formik.values.firstName}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`pl-10 block w-full rounded-lg border ${
+                          formik.touched.firstName && formik.errors.firstName
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        } px-4 py-2`}
+                      />
                     </div>
+                    {formik.touched.firstName && formik.errors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.firstName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
                     <input
-                      id="name"
-                      name="name"
+                      id="lastName"
+                      name="lastName"
                       type="text"
-                      value={formik.values.name}
+                      value={formik.values.lastName}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      className={`pl-10 block w-full rounded-lg border ${
-                        formik.touched.name && formik.errors.name
+                      className={`block w-full rounded-lg border ${
+                        formik.touched.lastName && formik.errors.lastName
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                           : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                       } px-4 py-2`}
                     />
+                    {formik.touched.lastName && formik.errors.lastName && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.lastName}</p>
+                    )}
                   </div>
-                  {formik.touched.name && formik.errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{formik.errors.name}</p>
-                  )}
                 </div>
 
                 {/* Phone and Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                       Phone Number
                     </label>
                     <div className="relative">
@@ -535,21 +491,21 @@ export const Customers = () => {
                         <Phone size={18} className="text-gray-400" />
                       </div>
                       <input
-                        id="phone"
-                        name="phone"
+                        id="phoneNumber"
+                        name="phoneNumber"
                         type="text"
-                        value={formik.values.phone}
+                        value={formik.values.phoneNumber}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                         className={`pl-10 block w-full rounded-lg border ${
-                          formik.touched.phone && formik.errors.phone
+                          formik.touched.phoneNumber && formik.errors.phoneNumber
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                             : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                         } px-4 py-2`}
                       />
                     </div>
-                    {formik.touched.phone && formik.errors.phone && (
-                      <p className="mt-1 text-sm text-red-600">{formik.errors.phone}</p>
+                    {formik.touched.phoneNumber && formik.errors.phoneNumber && (
+                      <p className="mt-1 text-sm text-red-600">{formik.errors.phoneNumber}</p>
                     )}
                   </div>
 
@@ -669,10 +625,10 @@ export const Customers = () => {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-4">
                 <div className="h-14 w-14 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
-                  {(selectedCustomer.name || '?').charAt(0).toUpperCase()}
+                  {(selectedCustomer.firstName || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{selectedCustomer.name}</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{`${selectedCustomer.firstName || ''} ${selectedCustomer.lastName || ''}`.trim()}</h2>
                   <span className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getTierBadge(selectedCustomer.loyaltyPoints).colorClass}`}>
                     {getTierBadge(selectedCustomer.loyaltyPoints).icon}
                     {getTierBadge(selectedCustomer.loyaltyPoints).label}
@@ -690,7 +646,7 @@ export const Customers = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-900">
                       <Phone size={16} className="text-indigo-600" />
-                      {selectedCustomer.phone || selectedCustomer.phoneNumber || 'N/A'}
+                      {selectedCustomer.phoneNumber || 'N/A'}
                     </div>
                     {selectedCustomer.email && (
                       <div className="flex items-center gap-2 text-sm text-gray-900">
