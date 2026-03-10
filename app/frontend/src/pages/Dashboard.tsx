@@ -12,7 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { dashboardService } from "../services/dashboardService";
-import { saleService } from "../services/saleService";
+import { prescriptionService } from "../services/prescriptionService";
 import type { DashboardStats, Sale } from "../types";
 
 // Temporary mock data for sales chart (until sales-chart endpoint is implemented)
@@ -69,10 +69,29 @@ export const Dashboard = () => {
 // ============================================
 // USER DASHBOARD - Order history & quick actions
 // ============================================
+const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
+  pending: { color: 'text-amber-700', bg: 'bg-amber-50', label: 'Pending Review' },
+  verified: { color: 'text-blue-700', bg: 'bg-blue-50', label: 'Verified' },
+  dispensed: { color: 'text-emerald-700', bg: 'bg-emerald-50', label: 'Dispensed' },
+  rejected: { color: 'text-red-700', bg: 'bg-red-50', label: 'Rejected' },
+  expired: { color: 'text-gray-500', bg: 'bg-gray-50', label: 'Expired' },
+  cancelled: { color: 'text-orange-700', bg: 'bg-orange-50', label: 'Cancelled' },
+};
+
+interface PrescriptionOrder {
+  id: number;
+  prescriptionNumber: string;
+  patientName: string;
+  doctorName?: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+}
+
 const UserDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [orders, setOrders] = useState<Sale[]>([]);
+  const [orders, setOrders] = useState<PrescriptionOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,9 +101,9 @@ const UserDashboard = () => {
   const fetchMyOrders = async () => {
     try {
       setLoading(true);
-      const response = await saleService.getSales(1, 5);
-      const salesData = response.data?.sales || response.data || [];
-      setOrders(Array.isArray(salesData) ? salesData : []);
+      const response = await prescriptionService.getMyPrescriptions(1, 5);
+      const data = response?.data?.prescriptions || [];
+      setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       console.log("Could not fetch orders");
       setOrders([]);
@@ -92,6 +111,8 @@ const UserDashboard = () => {
       setLoading(false);
     }
   };
+
+  const getStatus = (s: string) => statusConfig[s] || statusConfig.pending;
 
   return (
     <div className="p-6">
@@ -179,33 +200,36 @@ const UserDashboard = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-indigo-50 rounded-lg">
-                    <Package size={20} className="text-indigo-600" />
+            {orders.map((order) => {
+              const st = getStatus(order.status);
+              return (
+                <div
+                  key={order.id}
+                  onClick={() => navigate('/my-orders')}
+                  className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-indigo-50 rounded-lg">
+                      <Package size={20} className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {order.prescriptionNumber || `#${order.id?.toString().slice(0, 8)}`}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {order.doctorName ? `Dr. ${order.doctorName} • ` : ''}{new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      Order #{order.id?.toString().slice(0, 8)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {order.items?.length || 0} items • {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${st.bg} ${st.color}`}>
+                      <Clock size={10} />
+                      {st.label}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">Rs {Number(order.total || 0).toFixed(2)}</p>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                    <Clock size={10} />
-                    {order.paymentMethod}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

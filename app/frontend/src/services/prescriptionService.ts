@@ -83,6 +83,12 @@ export const prescriptionService = {
     return response.data.data?.prescription || response.data.data;
   },
 
+  // Cancel prescription (user cancels their own pending order)
+  cancelPrescription: async (id: string) => {
+    const response = await api.put(`/prescriptions/${id}/cancel`);
+    return response.data.data?.prescription || response.data.data;
+  },
+
   // Upload prescription image only (returns URL)
   uploadImage: async (file: File): Promise<string> => {
     const formData = new FormData();

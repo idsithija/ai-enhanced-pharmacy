@@ -49,7 +49,7 @@ interface PrescriptionData {
   imageUrl?: string;
   ocrText?: string;
   ocrConfidence?: number;
-  status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
+  status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired' | 'cancelled';
   notes?: string;
   aiWarnings?: string[];
   verifiedBy?: number;
@@ -316,6 +316,7 @@ export const Prescriptions = () => {
       case 'dispensed': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'expired': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -326,6 +327,7 @@ export const Prescriptions = () => {
       case 'dispensed': return '💊';
       case 'rejected': return '✕';
       case 'expired': return '⏰';
+      case 'cancelled': return '🚫';
       default: return '⏱️';
     }
   };

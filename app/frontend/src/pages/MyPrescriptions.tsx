@@ -19,8 +19,10 @@ import { prescriptionService } from '../services/prescriptionService';
 import { ocrService } from '../services/ocrService';
 import type { OCRResult, Medication } from '../services/ocrService';
 import type { Prescription } from '../types';
+import { useAuthStore } from '../store/authStore';
 
 export const MyPrescriptions = () => {
+  const { user } = useAuthStore();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,24 +156,25 @@ export const MyPrescriptions = () => {
         }
       }
 
+      const fullName = user?.firstName ? `${user.firstName} ${user.lastName}` : user?.username || '';
       await prescriptionService.createPrescription({
-        customerId: '',
-        customerName: extractedData.patientName || '',
-        customerPhone: '',
+        patientName: extractedData.patientName || fullName,
+        patientPhone: user?.phoneNumber || '',
         doctorName: extractedData.doctorName || '',
         doctorLicense: '',
+        hospitalName: extractedData.hospitalName || '',
         ocrConfidence: ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence,
-        medicines: extractedData.medications.map((m) => ({
-          medicineId: '',
-          medicineName: m.name,
+        medications: extractedData.medications.map((m) => ({
+          name: m.name,
           dosage: m.dosage || '',
           frequency: m.frequency || '',
           duration: m.duration || '',
           quantity: 0,
         })),
+        prescriptionDate: new Date().toISOString(),
         notes: `Submitted by user | Hospital: ${extractedData.hospitalName || 'N/A'} | Date: ${extractedData.date || 'N/A'}`,
         imageUrl: imageUrl || undefined,
-      } as any);
+      });
 
       setToast({ show: true, message: 'Prescription submitted successfully!', type: 'success' });
       handleCloseUpload();
@@ -212,14 +215,16 @@ export const MyPrescriptions = () => {
         ? (ocrResult.confidence <= 1 ? ocrResult.confidence * 100 : ocrResult.confidence).toFixed(1)
         : '0';
 
+      const fullName = user?.firstName ? `${user.firstName} ${user.lastName}` : user?.username || '';
       await prescriptionService.createPrescription({
-        patientName: '',
-        patientPhone: '',
+        patientName: fullName,
+        patientPhone: user?.phoneNumber || '',
         doctorName: 'Pending Manual Review',
+        prescriptionDate: new Date().toISOString(),
         notes: `[MANUAL ORDER] Low OCR confidence (${confidencePct}%). Prescription image uploaded for manual data entry by pharmacist.`,
         imageUrl: imageUrl || undefined,
         medications: [],
-      } as any);
+      });
 
       setToast({ show: true, message: 'Prescription sent for manual order processing!', type: 'success' });
       handleCloseUpload();

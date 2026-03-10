@@ -26,7 +26,7 @@ export interface PrescriptionAttributes {
   createdBy?: number;
   verifiedBy?: number;
   verifiedAt?: Date;
-  status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
+  status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired' | 'cancelled';
   notes?: string;
   aiWarnings?: string[];
   createdAt?: Date;
@@ -59,7 +59,7 @@ class Prescription extends Model<PrescriptionAttributes, PrescriptionCreationAtt
   declare createdBy: number | undefined;
   declare verifiedBy: number | undefined;
   declare verifiedAt: Date | undefined;
-  declare status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired';
+  declare status: 'pending' | 'verified' | 'dispensed' | 'rejected' | 'expired' | 'cancelled';
   declare notes: string | undefined;
   declare aiWarnings: string[] | undefined;
 
@@ -157,7 +157,7 @@ Prescription.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'verified', 'dispensed', 'rejected', 'expired'),
+      type: DataTypes.ENUM('pending', 'verified', 'dispensed', 'rejected', 'expired', 'cancelled'),
       allowNull: false,
       defaultValue: 'pending',
     },

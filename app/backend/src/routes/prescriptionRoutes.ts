@@ -8,6 +8,7 @@ import {
   verifyPrescription,
   rejectPrescription,
   dispensePrescription,
+  cancelPrescription,
   uploadPrescription,
   uploadPrescriptionImage,
   upload,
@@ -31,5 +32,6 @@ router.put('/:id', authorize('admin', 'staff'), updatePrescription);
 router.put('/:id/verify', authorize('admin', 'staff'), verifyPrescription);
 router.put('/:id/reject', authorize('admin', 'staff'), rejectPrescription);
 router.put('/:id/dispense', authorize('admin', 'staff'), dispensePrescription);
+router.put('/:id/cancel', cancelPrescription);
 
 export default router;

@@ -159,6 +159,10 @@ export const createPrescription = async (req: AuthRequest, res: Response, next: 
     const prescription = await Prescription.create({
       ...req.body,
       prescriptionNumber,
+      patientName: req.body.patientName || req.user?.username || 'Unknown',
+      patientPhone: req.body.patientPhone || '',
+      prescriptionDate: req.body.prescriptionDate || new Date(),
+      medications: req.body.medications || [],
       createdBy: req.user?.id,
       status: req.body.status || 'pending',
     });
@@ -291,6 +295,44 @@ export const dispensePrescription = async (req: AuthRequest, res: Response, next
       status: 'dispensed',
       notes: req.body.notes || prescription.notes,
     });
+
+    res.status(200).json({
+      success: true,
+      data: { prescription },
+    });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+// @desc    Cancel prescription (user can cancel their own pending orders)
+// @route   PUT /api/prescriptions/:id/cancel
+// @access  Private
+export const cancelPrescription = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Not authenticated' } });
+      return;
+    }
+
+    const prescription = await Prescription.findByPk(req.params.id);
+
+    if (!prescription) {
+      res.status(404).json({ success: false, error: { message: 'Prescription not found' } });
+      return;
+    }
+
+    if (prescription.createdBy !== req.user.id) {
+      res.status(403).json({ success: false, error: { message: 'You can only cancel your own orders' } });
+      return;
+    }
+
+    if (prescription.status !== 'pending') {
+      res.status(400).json({ success: false, error: { message: 'Only pending orders can be cancelled' } });
+      return;
+    }
+
+    await prescription.update({ status: 'cancelled' });
 
     res.status(200).json({
       success: true,

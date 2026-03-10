@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Eye,
   FileText,
+  XCircle,
 } from 'lucide-react';
 import { prescriptionService } from '../services/prescriptionService';
 
@@ -29,6 +30,7 @@ const statusConfig: Record<string, { color: string; bg: string; icon: typeof Clo
   dispensed: { color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: Package, label: 'Dispensed' },
   rejected: { color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: AlertCircle, label: 'Rejected' },
   expired: { color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', icon: Clock, label: 'Expired' },
+  cancelled: { color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', icon: XCircle, label: 'Cancelled' },
 };
 
 export const MyOrders = () => {
@@ -38,6 +40,7 @@ export const MyOrders = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -55,6 +58,20 @@ export const MyOrders = () => {
       setOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async (id: number) => {
+    if (!window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
+    try {
+      setCancellingId(id);
+      await prescriptionService.cancelPrescription(String(id));
+      fetchOrders();
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      alert('Failed to cancel order. Please try again.');
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -102,6 +119,7 @@ export const MyOrders = () => {
           <option value="verified">Verified</option>
           <option value="dispensed">Dispensed</option>
           <option value="rejected">Rejected</option>
+          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
@@ -180,6 +198,16 @@ export const MyOrders = () => {
                           <Eye size={14} />
                           View Image
                         </a>
+                      )}
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => handleCancel(order.id)}
+                          disabled={cancellingId === order.id}
+                          className="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-800 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <XCircle size={14} />
+                          {cancellingId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                        </button>
                       )}
                     </div>
                   </div>

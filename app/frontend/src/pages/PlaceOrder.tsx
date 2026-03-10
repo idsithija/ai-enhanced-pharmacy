@@ -210,19 +210,19 @@ export const PlaceOrder = () => {
       }
       const fullName = user?.firstName ? `${user.firstName} ${user.lastName}` : user?.username || '';
       await prescriptionService.createPrescription({
-        customerId: '',
-        customerName: fullName,
-        customerPhone: '',
+        patientName: fullName,
+        patientPhone: user?.phoneNumber || '',
         doctorName: extractedData.doctorName || '',
         doctorLicense: '',
-        medicines: extractedData.medications.map((m) => ({
-          medicineId: '',
-          medicineName: m.name,
+        hospitalName: extractedData.hospitalName || '',
+        medications: extractedData.medications.map((m) => ({
+          name: m.name,
           dosage: m.dosage || '',
           frequency: m.frequency || '',
           duration: m.duration || '',
           quantity: 0,
         })),
+        prescriptionDate: new Date().toISOString(),
         notes: `AI Scanned | Hospital: ${extractedData.hospitalName || 'N/A'} | Date: ${extractedData.date || 'N/A'}`,
         imageUrl: imageUrl || undefined,
       });
