@@ -1,6 +1,5 @@
 import natural from 'natural';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import axios from 'axios';
@@ -63,30 +62,7 @@ class OCRService {
     }
   }
   
-  /**
-   * Check if custom model files exist (for reference)
-   */
-  private checkCustomModelFiles(): boolean {
-    // Check if model files exist (either pytorch_model.bin or model.safetensors)
-    const modelExists = fs.existsSync(this.customModelPath);
-    const configExists = fs.existsSync(path.join(this.customModelPath, 'config.json'));
-    const pytorchModelExists = fs.existsSync(path.join(this.customModelPath, 'pytorch_model.bin'));
-    const safetensorsExists = fs.existsSync(path.join(this.customModelPath, 'model.safetensors'));
-    
-    const filesExist = modelExists && configExists && (pytorchModelExists || safetensorsExists);
-    
-    if (filesExist) {
-      console.log('✅ Custom TrOCR model files found at:', this.customModelPath);
-    } else {
-      console.error('❌ Model files not found at:', this.customModelPath);
-      console.error('   Model directory exists:', modelExists);
-      console.error('   Config exists:', configExists);
-      console.error('   PyTorch model exists:', pytorchModelExists);
-      console.error('   Safetensors model exists:', safetensorsExists);
-    }
-    
-    return filesExist;
-  }
+
 
   /**
    * Process prescription with custom TrOCR model via API

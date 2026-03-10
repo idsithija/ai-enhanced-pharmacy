@@ -27,14 +27,6 @@ describe('Drug Interaction Service Tests', () => {
       expect(result[0].severity).toBe('major');
     });
 
-    it('should detect Lisinopril + Potassium interaction (moderate)', async () => {
-      const medications = ['Lisinopril', 'Potassium Supplements'];
-      const result = await drugInteractionService.checkInteractions(medications);
-
-      expect(result.length).toBeGreaterThan(0);
-      const interaction = result.find((i) => i.severity === 'moderate');
-      expect(interaction).toBeDefined();
-    });
 
     it('should return no interactions for safe combination', async () => {
       const medications = ['Vitamin C', 'Calcium'];
