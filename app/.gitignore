@@ -58,6 +58,10 @@ Thumbs.db
 *.temp
 .cache/
 
+# Uploaded files (keep directory structure)
+backend/uploads/prescriptions/*
+!backend/uploads/prescriptions/.gitkeep
+
 # Backend specific
 backend/uploads/
 backend/logs/

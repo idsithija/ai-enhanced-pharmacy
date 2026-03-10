@@ -1,73 +1,88 @@
-# React + TypeScript + Vite
+# Pharmacy Management System — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript + Vite single-page application with Tailwind CSS.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework:** React 19 with TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS
+- **State Management:** Zustand
+- **Routing:** React Router 7
+- **HTTP Client:** Axios
+- **Charts:** Recharts
+- **Icons:** Lucide React
+- **Forms:** Formik + Yup
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+frontend/src/
+├── App.tsx               # Root component with routes
+├── main.tsx              # Entry point
+├── pages/                # Page components
+│   ├── Dashboard.tsx
+│   ├── Login.tsx
+│   ├── Register.tsx
+│   ├── Medicines.tsx
+│   ├── Inventory.tsx
+│   ├── POS.tsx
+│   ├── Prescriptions.tsx
+│   ├── Customers.tsx
+│   ├── Reports.tsx
+│   ├── Settings.tsx
+│   ├── Chatbot.tsx
+│   ├── DrugInteractionChecker.tsx
+│   ├── DemandPrediction.tsx
+│   ├── PlaceOrder.tsx
+│   └── MyOrders.tsx
+├── components/           # Shared components
+├── services/             # API client services
+├── store/                # Zustand stores
+├── layouts/              # Page layouts
+├── hooks/                # Custom hooks
+├── types/                # TypeScript types
+├── theme/                # Theme configuration
+└── utils/                # Utilities
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev        # Start dev server (http://localhost:5173)
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run lint       # Run ESLint
 ```
+
+## Environment Variables
+
+Create a `.env` file in the `frontend/` directory:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+## Pages
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/login` | Login | User authentication |
+| `/register` | Register | New user registration |
+| `/dashboard` | Dashboard | Overview with stats and charts |
+| `/medicines` | Medicines | Medicine catalog management |
+| `/inventory` | Inventory | Stock management |
+| `/pos` | POS | Point of sale interface |
+| `/prescriptions` | Prescriptions | Prescription management |
+| `/customers` | Customers | Customer profiles and loyalty |
+| `/reports` | Reports | Sales and inventory reports |
+| `/settings` | Settings | User settings |
+| `/drug-checker` | Drug Checker | Drug interaction checker |
+| `/chatbot` | Chatbot | AI pharmacy assistant |
+| `/demand-prediction` | Demand Prediction | Inventory forecasting |
+| `/place-order` | Place Order | Create purchase orders |
+| `/my-orders` | My Orders | Order history |
+
+## License
+
+MIT © @idsithija

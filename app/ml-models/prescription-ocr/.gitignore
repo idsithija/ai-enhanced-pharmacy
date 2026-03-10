@@ -24,6 +24,9 @@ __pycache__/
 training_output.log
 *.log
 
+# Test prescriptions (generated test data)
+test_prescriptions/
+
 # Test results
 test_results.json
 
