@@ -109,16 +109,21 @@ export interface Prescription {
 // Sale Types
 export interface Sale {
   id: string;
+  invoiceNumber?: string;
   customerId?: string;
   customer?: Customer;
+  customerName?: string;
+  customerPhone?: string;
   userId: string;
   user?: User;
   subtotal: number;
   discount: number;
   tax: number;
   total: number;
+  totalAmount?: number;
   paymentMethod: 'cash' | 'card' | 'mobile';
   items: SaleItem[];
+  saleDate?: string;
   createdAt: string;
   updatedAt: string;
 }

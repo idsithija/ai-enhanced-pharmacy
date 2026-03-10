@@ -25,8 +25,8 @@
     "db:setup": "npm run db:setup --workspace=backend",
     "db:migrate": "npm run migrate --workspace=backend",
     "db:seed": "npm run seed --workspace=backend",
-    "db:demo": "npm run db:demo --workspace=backend",
-    "db:reset": "npm run db:reset --workspace=backend"
+    "db:reset": "npm run db:reset --workspace=backend",
+    "run-ocr": "python ./ml-models/prescription-ocr/api_service.py"
   },
   "keywords": [
     "pharmacy",

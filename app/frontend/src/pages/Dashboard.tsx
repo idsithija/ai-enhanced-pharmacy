@@ -442,10 +442,10 @@ const StaffDashboard = () => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-sm font-medium text-gray-900">
-                        {sale.customer?.name || `Sale #${String(sale.id).slice(0, 8)}`}
+                        {sale.customerName || `Sale #${sale.id}`}
                       </p>
                       <p className="text-sm font-bold text-gray-900">
-                        Rs {Number(sale.total || 0).toFixed(2)}
+                        Rs {Number(sale.totalAmount || sale.total || 0).toFixed(2)}
                       </p>
                     </div>
                     <div className="flex justify-between items-center">
@@ -453,7 +453,7 @@ const StaffDashboard = () => {
                         {sale.items?.length || 0} items
                       </span>
                       <span className="text-xs text-gray-500">
-                        {new Date(sale.createdAt).toLocaleTimeString()}
+                        {new Date(sale.saleDate || sale.createdAt).toLocaleTimeString()}
                       </span>
                     </div>
                   </div>
