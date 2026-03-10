@@ -21,11 +21,13 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
 
     const start = new Date(startDate as string);
     const end = new Date(endDate as string);
+    // Include the full end date by setting time to end of day
+    end.setHours(23, 59, 59, 999);
 
     // Get all sales in date range
     const sales = await Sale.findAll({
       where: {
-        createdAt: {
+        saleDate: {
           [Op.between]: [start, end],
         },
       },
@@ -33,7 +35,7 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
         { model: User, as: 'cashier', attributes: ['id', 'firstName', 'lastName'] },
         { model: Customer, as: 'customer', attributes: ['id', 'firstName', 'lastName', 'phoneNumber'] },
       ],
-      order: [['createdAt', 'ASC']],
+      order: [['saleDate', 'ASC']],
     } as any);
 
     // Calculate statistics
@@ -47,7 +49,9 @@ export const getSalesReport = async (req: AuthRequest, res: Response, next: Next
     
     sales.forEach((sale) => {
       let key = '';
-      const date = new Date(sale.createdAt);
+      const raw = (sale as any).saleDate ?? (sale as any).sale_date ?? (sale as any).createdAt ?? (sale as any).created_at;
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return; // skip records with invalid dates
       
       if (groupBy === 'day') {
         key = date.toISOString().split('T')[0];
@@ -174,11 +178,12 @@ export const getProfitLossReport = async (req: AuthRequest, res: Response, next:
 
     const start = new Date(startDate as string);
     const end = new Date(endDate as string);
+    end.setHours(23, 59, 59, 999);
 
     // Get sales revenue
     const salesData: any = await Sale.findAll({
       where: {
-        createdAt: {
+        saleDate: {
           [Op.between]: [start, end],
         },
       },
@@ -325,7 +330,7 @@ export const getTopMedicines = async (req: AuthRequest, res: Response, next: Nex
       FROM sales s
       CROSS JOIN LATERAL jsonb_array_elements(s.items) as item
       JOIN medicines m ON (item->>'medicineId')::int = m.id
-      WHERE s.created_at BETWEEN :startDate AND :endDate
+      WHERE s.sale_date BETWEEN :startDate AND :endDate
       GROUP BY m.id, m.name, m.generic_name, m.category
       ORDER BY total_revenue DESC
       LIMIT :limit
@@ -368,7 +373,7 @@ export const getCustomerPurchaseHistory = async (req: AuthRequest, res: Response
 
     const sales = await Sale.findAll({
       where: { customerId },
-      order: [['createdAt', 'DESC']],
+      order: [['saleDate', 'DESC']],
       include: [
         { model: User, as: 'cashier', attributes: ['id', 'firstName', 'lastName'] },
       ],
