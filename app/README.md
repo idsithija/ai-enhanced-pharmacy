@@ -118,7 +118,7 @@ cd ai-enhanced-pharmacy
 npm install
 ```
 
-This installs dependencies for both the frontend and backend workspaces automatically.
+```
 
 ### 2. Set Up PostgreSQL
 
@@ -139,27 +139,13 @@ psql -U postgres
 
 # Create the database
 CREATE DATABASE pharmacy_db;
+The OCR service uses PaddleOCR to scan prescription images. You can start it with a single npm command from the project root:
 
-# Verify it was created
-\l
-
-# Exit
-\q
+```bash
+npm run run-ocr
 ```
 
-#### Option C: Windows Quick Setup (one command)
-
-```powershell
-psql -U postgres -c "CREATE DATABASE pharmacy_db"
-```
-
-> **Tip:** If `psql` is not recognized, add PostgreSQL to your PATH:
-> ```powershell
-> # Replace 16 with your PostgreSQL version number
-> $env:Path += ";C:\Program Files\PostgreSQL\16\bin"
-> ```
-
-### 3. Configure Environment Variables
+This will run the Python OCR service (api_service.py) in ml-models/prescription-ocr. Make sure you have Python 3.9+ and the required dependencies installed (see ml-models/prescription-ocr/requirements.txt). The backend connects to it automatically when `OCR_API_URL` is set in your `.env`.
 
 #### Backend
 
@@ -191,9 +177,9 @@ JWT_REFRESH_EXPIRE=30d
 # OCR service (optional — only if running the Python OCR service)
 OCR_API_URL=http://127.0.0.1:8000
 
-# Frontend URL for CORS
-CLIENT_URL=http://localhost:5173
-```
+| `npm run db:setup` | Create DB, run migrations, and seed the database |
+| `npm run db:reset` | Drop, recreate, and re-seed the database |
+| `npm run run-ocr` | Start the Python OCR service (from project root) |
 
 #### Frontend
 
@@ -213,8 +199,6 @@ VITE_API_URL=http://localhost:5000/api
 # Run migrations and seed with sample data
 npm run db:setup
 
-# Or seed with more comprehensive demo data
-npm run db:demo
 ```
 
 This creates all database tables and populates them with sample medicines, customers, and user accounts.
